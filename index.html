@@ -75,9 +75,9 @@ function clean(text) {
 function parseJavaDate(dateStr) {
     const parts = dateStr.split('/');
     if (parts.length !== 3) return null;
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; 
-    const year = parseInt(parts[2], 10);
+    const day = parseInt(parts, 10);
+    const month = parseInt(parts, 10) - 1; 
+    const year = parseInt(parts, 10);
     return new Date(year, month, day);
 }
 
@@ -91,7 +91,7 @@ function processAndDisplay() {
         return;
     }
 
-    const file = fileInput.files[0];
+    const file = fileInput.files;
     const startDate = new Date(startDateInput);
     const endDate = new Date(endDateInput);
     endDate.setHours(23, 59, 59, 999); 
@@ -106,7 +106,7 @@ function processAndDisplay() {
             return;
         }
 
-        const headerLine = lines[0];
+        const headerLine = lines;
         const separator = headerLine.includes('\t') ? '\t' : ',';
         
         let monthlyAnalysis = {};
@@ -126,20 +126,19 @@ function processAndDisplay() {
             if (columns.length < 7) continue;
 
             try {
-                // استخدام دالة .at الصريحة لضمان بقاء الفهارس البرمجية متطابقة مع الجافا والإكسل ومنع اختفائها
-                let dateStr = clean(columns.at(0));       // الفهرس 0 لعمود التاريخ
-                let category = clean(columns.at(2));      // الفهرس 2 لعمود التصنيف (Category)
-                let amountStr = clean(columns.at(5));     // الفهرس 5 لعمود دولار الـ converted amount
+                let dateStr = clean(columns.at(0));       // الفهرس 0 التاريخ
+                let category = clean(columns.at(2));      // الفهرس 2 التصنيف
+                let amountStr = clean(columns.at(5));     // الفهرس 5 مبالغ الـ USD
                 
+                // 🛠️ تم التصحيح للفهرس 4 وهو عمود الـ Description الحقيقي والفعلي داخل ملف مونييفي
                 let description = "بدون وصف";
-                if (columns.length >= 8 && clean(columns.at(3))) {
-                    description = clean(columns.at(3));   // الفهرس 3 لعمود الوصف (Description) الحقيقي المالي
+                if (columns.length >= 5 && clean(columns.at(4)).length > 0) {
+                    description = clean(columns.at(4));   
                 }
 
                 let rowDate = parseJavaDate(dateStr);
                 if (!rowDate || isNaN(rowDate.getTime())) continue;
 
-                // تصفية النطاق وجعل تاريخ النهاية مشمولاً بالكامل (<= endDate)
                 if (rowDate >= startDate && rowDate <= endDate) {
                     if (category.startsWith("To '") || category.startsWith("From '") || 
                         category.toLowerCase().includes("to '") || category.toLowerCase().includes("from '")) {
@@ -260,7 +259,6 @@ function processAndDisplay() {
             previousMonthTotal = monthTotal;
         });
 
-        // 👑 المخطط التحليلي الكلي الشامل التراكمي لكافة الأشهر معاً بالأسفل
         let globalBlock = document.createElement('div');
         globalBlock.className = 'global-block-wrapper';
         
@@ -290,6 +288,6 @@ function processAndDisplay() {
     reader.readAsText(file, 'UTF-8');
 }
 </script>
-<div class="footer">تحديث السرعة وإصلاح مؤشرات الفهارس الشاملة لميزانية حمودة الشخصية 🚀</div>
+<div class="footer">تم تحديث وقراءة عمود الأوصاف الحقيقية بنجاح لميزانية حمودة الشخصية 🚀</div>
 </body>
 </html>
