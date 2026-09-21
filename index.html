@@ -75,9 +75,9 @@ function clean(text) {
 function parseJavaDate(dateStr) {
     const parts = dateStr.split('/');
     if (parts.length !== 3) return null;
-    const day = parseInt(parts, 10);
-    const month = parseInt(parts, 10) - 1; 
-    const year = parseInt(parts, 10);
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; 
+    const year = parseInt(parts[2], 10);
     return new Date(year, month, day);
 }
 
@@ -91,7 +91,7 @@ function processAndDisplay() {
         return;
     }
 
-    const file = fileInput.files;
+    const file = fileInput.files[0];
     const startDate = new Date(startDateInput);
     const endDate = new Date(endDateInput);
     endDate.setHours(23, 59, 59, 999); 
@@ -106,7 +106,7 @@ function processAndDisplay() {
             return;
         }
 
-        const headerLine = lines;
+        const headerLine = lines[0];
         const separator = headerLine.includes('\t') ? '\t' : ',';
         
         let monthlyAnalysis = {};
