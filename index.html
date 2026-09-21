@@ -115,7 +115,7 @@ function processAndDisplay() {
     const endDateInput = document.getElementById('endDate').value;
 
     if (!fileInput.files.length || !startDateInput || !endDateInput) {
-        alert('الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً حامودة!');
+        alert('الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً حمودة!');
         return;
     }
 
@@ -188,7 +188,7 @@ function processAndDisplay() {
         let sortedMonths = Object.keys(monthlyAnalysis).sort();
 
         if (sortedMonths.length === 0) {
-            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ حامودة!</div>";
+            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ حمودة!</div>";
             return;
         }
 
@@ -317,6 +317,6 @@ function processAndDisplay() {
     reader.readAsText(file, 'UTF-8');
 }
 </script>
-<div class="footer">لوحة تحكم مالية حركية مدعومة بمخططات Google ثلاثية الأبعاد حامودة 🚀</div>
+<div class="footer">لوحة تحكم مالية حركية مدعومة بمخططات Google ثلاثية الأبعاد حمودة 🚀</div>
 </body>
 </html>
