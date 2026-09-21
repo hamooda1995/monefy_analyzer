@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة (أونلاين)</title>
+    
+    <!-- تحميل مكتبة المخططات الرسمية من جوجل بشكل آمن -->
+    <script type="text/javascript" src="https://gstatic.com"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F7FAFC; color: #2D3748; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; width: 100%; box-sizing: border-box; margin-bottom: 30px; }
+        h2 { color: #1A365D; text-align: center; margin-bottom: 25px; font-weight: bold; }
+        .form-group { margin-bottom: 20px; display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 8px; color: #4A5568; }
+        input[type="file"], input[type="date"] { padding: 10px; border: 2px solid #E2E8F0; border-radius: 6px; font-size: 15px; font-family: inherit; }
+        input[type="date"] { width: 100%; box-sizing: border-box; }
+        .date-row { display: flex; gap: 15px; }
+        .date-row .form-group { flex: 1; }
+        button { background-color: #1A365D; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: background 0.2s; }
+        button:hover { background-color: #2B6CB0; }
+        button:disabled { background-color: #CBD5E0; cursor: not-allowed; }
+        
+        /* لوحة العرض والكتل الحاضرة */
+        #resultsContainer { max-width: 800px; width: 100%; display: none; }
+        .month-block-wrapper, .global-block-wrapper { background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 35px; padding: 20px; border: 1px solid #E2E8F0; }
+        .global-block-wrapper { border: 2px solid #2B6CB0; background-color: #F8FAFC; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-weight: bold; margin-bottom: 20px; }
+        th { background-color: #1A365D; color: white; padding: 12px 10px; border: 1px solid #A0AEC0; font-size: 14pt; text-align: center; }
+        td { padding: 11px 10px; border: 1px solid #CBD5E0; text-align: right; font-size: 14pt; color: #2D3748; }
+        tr:nth-child(even) { background-color: #F7FAFC; }
+        
+        .month-header-row td { background-color: #EBF8FF; color: #2B6CB0; text-align: center; font-size: 15pt; border: 2px solid #90CDF4; }
+        .category-header-row td { background-color: #EDF2F7; color: #2D3748; font-size: 14pt; border-top: 1px solid #CBD5E0; border-bottom: 1px solid #CBD5E0; }
+        .alert-row td { background-color: #FFF5F5; color: #C53030; border: 1px solid #FEB2B2; } 
+        .category-total-row td { background-color: #E6FFFA; color: #234E52; border-top: 1px solid #319795; border-bottom: 1px solid #319795; font-style: italic; font-size: 14pt; }
+        .month-total-row td { background-color: #CBD5E0; color: #1A202C; border: 2px solid #4A5568; font-size: 14pt; }
+        
+        .chart-div { width: 100%; height: 420px; margin-top: 15px; border-radius: 8px; border: 1px dashed #CBD5E0; background-color: #FAFAFA; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #A0AEC0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة</h2>
+    
+    <div class="form-group">
+        <label for="csvFile">1. اختر ملف البيانات الصادر (CSV):</label>
+        <input type="file" id="csvFile" accept=".csv">
+    </div>
+
+    <div class="date-row">
+        <div class="form-group">
+            <label for="startDate">تاريخ البدء:</label>
+            <input type="date" id="startDate" value="2026-05-01">
+        </div>
+        <div class="form-group">
+            <label for="endDate">تاريخ النهاية:</label>
+            <input type="date" id="endDate">
+
+            <script>
+                const today = new Date().toISOString().split('T')[0];
+
+                // تعيين التاريخ كقيمة افتراضية للحقل
+                document.getElementById('endDate').value = today;
+            </script>
+
+        </div>
+    </div>
+
+    <button id="submitBtn" onclick="processAndDisplay()" disabled>جاري تهيئة خوادم المخططات... ⏳</button>
+</div>
+
+<div id="resultsContainer"></div>
+<script>
+let isChartsLibraryLoaded = false;
+
+// تهيئة وضمان تحميل المكتبة الرسمية من جوجل أولاً
+try {
+    if (typeof google !== 'undefined') {
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(() => {
+            isChartsLibraryLoaded = true;
+            const btn = document.getElementById('submitBtn');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = "تحليل وعرض الحسابات والمخططات الدائرية 🚀";
+            }
+        });
+    }
+} catch (e) {
+    console.error("خطأ تحميل مكتبة الرسوم: " + e);
+}
+
+function clean(text) {
+    if (!text) return "";
+    return text.replace(/"/g, "").trim();
+}
+
+function parseJavaDate(dateStr) {
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return null;
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; 
+    const year = parseInt(parts[2], 10);
+    return new Date(year, month, day);
+}
+
+function processAndDisplay() {
+    const fileInput = document.getElementById('csvFile');
+    const startDateInput = document.getElementById('startDate').value;
+    const endDateInput = document.getElementById('endDate').value;
+
+    if (!fileInput.files.length || !startDateInput || !endDateInput) {
+        alert('الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً حامودة!');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const startDate = new Date(startDateInput);
+    const endDate = new Date(endDateInput);
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/);
+        if (lines.length < 2) {
+            alert('الملف فارغ أو غير صالح!');
+            return;
+        }
+
+        const headerLine = lines[0];
+        const separator = headerLine.includes('\t') ? '\t' : ',';
+        
+        let monthlyAnalysis = {};
+        let globalCategorySums = {}; 
+
+        for (let i = 1; i < lines.length; i++) {
+            let line = lines[i];
+            if (!line.trim()) continue;
+
+            let columns = [];
+            if (separator === ',') {
+                columns = line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/);
+            } else {
+                columns = line.split('\t');
+            }
+
+            if (columns.length < 7) continue;
+
+            try {
+                // الفهارس الدقيقة المتوافقة مع ملف إكسل الأصلي لجلب الـ Category وليس الحساب
+                let dateStr = clean(columns[0]);
+                let category = clean(columns[2]); // الـ Category الحقيقي
+                let convertedAmountStr = clean(columns[5]); // الـ converted amount بالدولار
+                let description = (columns.length >= 8 && clean(columns[7])) ? clean(columns[7]) : "بدون وصف";
+
+                let rowDate = parseJavaDate(dateStr);
+                if (!rowDate || isNaN(rowDate.getTime())) continue;
+
+                if (rowDate >= startDate && rowDate <= endDate) {
+                    if (category.startsWith("To '") || category.startsWith("From '") || 
+                        category.toLowerCase().includes("to '") || category.toLowerCase().includes("from '")) {
+                        continue;
+                    }
+
+                    let convertedAmount = parseFloat(convertedAmountStr);
+                    if (convertedAmount >= 0) continue; 
+
+                    let actualExpense = Math.abs(convertedAmount);
+                    let monthKey = rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, '0');
+
+                    if (!monthlyAnalysis[monthKey]) monthlyAnalysis[monthKey] = {};
+                    if (!monthlyAnalysis[monthKey][category]) monthlyAnalysis[monthKey][category] = {};
+                    monthlyAnalysis[monthKey][category][description] = (monthlyAnalysis[monthKey][category][description] || 0) + actualExpense;
+
+                    globalCategorySums[category] = (globalCategorySums[category] || 0) + actualExpense;
+                }
+            } catch (err) {}
+        }
+        const resultsContainer = document.getElementById('resultsContainer');
+        resultsContainer.innerHTML = ""; 
+        resultsContainer.style.display = "block";
+
+        let sortedMonths = Object.keys(monthlyAnalysis).sort();
+
+        if (sortedMonths.length === 0) {
+            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ حامودة!</div>";
+            return;
+        }
+
+        let previousMonthTotal = 0;
+        let chartsToRender = [];
+
+        sortedMonths.forEach((monthName, mIdx) => {
+            let monthTotal = 0;
+            let categoriesMap = monthlyAnalysis[monthName];
+            let categorySums = {};
+
+            Object.keys(categoriesMap).forEach(cat => {
+                let sum = Object.values(categoriesMap[cat]).reduce((a, b) => a + b, 0);
+                categorySums[cat] = sum;
+                monthTotal += sum;
+            });
+
+            let monthBlock = document.createElement('div');
+            monthBlock.className = 'month-block-wrapper';
+
+            let htmlTable = `<table>
+            <tr class='month-header-row'><td colspan='4'>📅 بداية بيانات فترة شهر: ${monthName}</td></tr>
+            <tr><th>الشهر</th><th>التصنيف (Category)</th><th>الوصف (Description)</th><th>إجمالي الصرف (USD)</th></tr>`;
+
+            let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
+            let chartDataArray = [['Category', 'Amount']];
+
+            sortedCats.forEach(categoryName => {
+                let categoryTotal = categorySums[categoryName];
+                let categoryPercentage = monthTotal > 0 ? (categoryTotal / monthTotal) * 100 : 0;
+
+                chartDataArray.push([categoryName, categoryTotal]);
+
+                htmlTable += `<tr class='category-header-row'><td colspan='4'>📁 قسم تصنيف الصرف الحالي: [${categoryName}]</td></tr>`;
+
+                let descMap = categoriesMap[categoryName];
+                let sortedDescs = Object.keys(descMap).sort((a, b) => descMap[b] - descMap[a]);
+
+                sortedDescs.forEach(descriptionName => {
+                    let amount = descMap[descriptionName];
+                    let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
+                    let alertTag = amount >= 50.0 ? " ⚠️ [مصروف مرتفع طارئ]" : "";
+
+                    htmlTable += `<tr${rowClass}>
+                        <td style='text-align:center;'>${monthName}</td>
+                        <td>${categoryName}</td>
+                        <td>${descriptionName}${alertTag}</td>
+                        <td style='font-weight: bold;'>$${amount.toFixed(2)}</td>
+                    </tr>`;
+                });
+
+                htmlTable += `<tr class='category-total-row'>
+                    <td colspan='3' style='text-align:right; padding-right:30px;'> ── إجمالي نفقات تصنيف [${categoryName}] (يستهلك ${categoryPercentage.toFixed(1)}% من نفقات الشهر الحالية)</td>
+                    <td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td>
+                </tr>`;
+            });
+
+            let momTrendText = "";
+            if (previousMonthTotal > 0) {
+                let difference = monthTotal - previousMonthTotal;
+                let percentChange = (difference / previousMonthTotal) * 100;
+                if (difference > 0) {
+                    momTrendText = ` 📈 (زيادة بمقدار ${percentChange.toFixed(1)}% عن الشهر السابق)`;
+                } else if (difference < 0) {
+                    momTrendText = ` 📉 (وفر وانخفاض بمقدار ${Math.abs(percentChange).toFixed(1)}% عن الشهر السابق)`;
+                } else {
+                    momTrendText = " ⚖️ (مساوي تماماً للمصروف السابق)";
+                }
+            } else {
+                momTrendText = " 🏁 [شهر الأساس الأول]";
+            }
+
+            htmlTable += `<tr class='month-total-row'>
+                <td colspan='3' style='padding-right:20px;'>💰 إجمالي حجم الصرف الكلي لشهر (${monthName})${momTrendText}</td>
+                <td style='font-weight: bold;'>$${monthTotal.toFixed(2)}</td>
+            </tr>`;
+            htmlTable += `</table>`;
+
+            let chartDivId = `piechart_${monthName}`;
+            let chartHtml = `<h3 style='color:#1A365D; margin-top:25px; text-align:center;'>📊 المخطط الدائري التفاعلي لتوزيع نفقات شهر ${monthName}</h3>
+                             <div id='${chartDivId}' class='chart-div'></div>`;
+
+            monthBlock.innerHTML = htmlTable + chartHtml;
+            resultsContainer.appendChild(monthBlock);
+
+            chartsToRender.push({ id: chartDivId, data: chartDataArray, title: `توزيع مصاريف شهر ${monthName}` });
+            previousMonthTotal = monthTotal;
+        });
+
+        // 👑 بناء المخطط الشامل التراكمي النهائي لكافة الأشهر معاً بالأسفل
+        let globalBlock = document.createElement('div');
+        globalBlock.className = 'global-block-wrapper';
+        
+        let globalChartDivId = 'piechart_global_summary';
+        globalBlock.innerHTML = `
+            <h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط الشامل والنهائي لكافة الأشهر المحددة معاً</h2>
+            <p style='text-align:center; color:#718096; font-size:14px;'>يوضح هذا المخطط النسبة التراكمية الاستهلاكية لكل تصنيف على مدار كامل فترة الفلترة المحددة</p>
+            <div id='${globalChartDivId}' class='chart-div' style='border:2px dashed #2B6CB0;'></div>
+        `;
+        resultsContainer.appendChild(globalBlock);
+
+        let globalChartDataArray = [['Category', 'Amount']];
+        Object.keys(globalCategorySums).sort((a,b) => globalCategorySums[b] - globalCategorySums[a]).forEach(cat => {
+            globalChartDataArray.push([cat, globalCategorySums[cat]]);
+        });
+        chartsToRender.push({ id: globalChartDivId, data: globalChartDataArray, title: 'التحليل الاستراتيجي التراكمي لكافة المصاريف' });
+
+        // تشغيل محرك رسم المخططات الحركية 3D بأمان أونلاين
+        if (isChartsLibraryLoaded && typeof google !== 'undefined' && google.visualization) {
+            chartsToRender.forEach(c => {
+                let dataTable = google.visualization.arrayToDataTable(c.data);
+                let options = {
+                    title: c.title,
+                    is3D: true, 
+                    fontName: 'Segoe UI',
+                    fontSize: 13,
+                    legend: { position: 'right', alignment: 'center' },
+                    chartArea: { left: 40, top: 40, width: '90%', height: '80%' }
+                };
+                let chart = new google.visualization.PieChart(document.getElementById(c.id));
+                chart.draw(dataTable, options);
+            });
+        }
+    };
+
+    reader.readAsText(file, 'UTF-8');
+}
+</script>
+<div class="footer">لوحة تحكم مالية حركية مدعومة بمخططات Google ثلاثية الأبعاد حامودة 🚀</div>
+</body>
+</html>
