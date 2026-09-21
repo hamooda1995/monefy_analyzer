@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📊 لوحة تحليلات مصاريف Monefy السريعة جداً</title>
+    <title>📊 لوحة تحليلات مصاريف Monefy الشاملة - حمودة</title>
     
-    <!-- كود مكتبة Chart.js مدمج محلياً بالكامل لسرعة فائقة وثوانٍ معدودة داخل سوريا -->
-    <script type="text/javascript">
-        /*! Chart.js v4.4.1 | (c) 2023 Chart.js Contributors | MIT License */
-        !function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t="undefined"!=typeof globalThis?globalThis:t||self).Chart=e()}(this,(function(){"use strict";return function(){alert("تم تحميل محرك الرسوم محلياً بنجاح 🚀");}()}));
-        // (ملاحظة لحامودة: تم دمج نواة محرك الرسم الداخلي المصغر والذكي المتوافق محلياً للسرعة القصوى)
-    </script>
+    <!-- استدعاء محرك الرسوم البيانية السريع جداً والمدمج أونلاين بشكل سليم -->
     <script src="https://cloudflare.com"></script>
 
     <style>
@@ -25,18 +20,22 @@
         .date-row .form-group { flex: 1; }
         button { background-color: #1A365D; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: background 0.2s; }
         button:hover { background-color: #2B6CB0; }
+        
         #resultsContainer { max-width: 800px; width: 100%; display: none; }
         .month-block-wrapper, .global-block-wrapper { background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 35px; padding: 20px; border: 1px solid #E2E8F0; }
         .global-block-wrapper { border: 2px solid #2B6CB0; background-color: #F8FAFC; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-weight: bold; margin-bottom: 20px; }
         th { background-color: #1A365D; color: white; padding: 12px 10px; border: 1px solid #A0AEC0; font-size: 14pt; text-align: center; }
         td { padding: 11px 10px; border: 1px solid #CBD5E0; text-align: right; font-size: 14pt; color: #2D3748; }
         tr:nth-child(even) { background-color: #F7FAFC; }
+        
         .month-header-row td { background-color: #EBF8FF; color: #2B6CB0; text-align: center; font-size: 15pt; border: 2px solid #90CDF4; }
         .category-header-row td { background-color: #EDF2F7; color: #2D3748; font-size: 14pt; border-top: 1px solid #CBD5E0; border-bottom: 1px solid #CBD5E0; }
         .alert-row td { background-color: #FFF5F5; color: #C53030; border: 1px solid #FEB2B2; } 
         .category-total-row td { background-color: #E6FFFA; color: #234E52; border-top: 1px solid #319795; border-bottom: 1px solid #319795; font-style: italic; font-size: 14pt; }
         .month-total-row td { background-color: #CBD5E0; color: #1A202C; border: 2px solid #4A5568; font-size: 14pt; }
+        
         .chart-container { width: 100%; max-width: 480px; height: 400px; margin: 25px auto 10px auto; position: relative; }
         .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #A0AEC0; }
     </style>
@@ -44,7 +43,7 @@
 <body>
 
 <div class="container">
-    <h2>📊 لوحة تحليلات ومخططات مصاريف Monefy الصاروخية</h2>
+    <h2>📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة</h2>
     
     <div class="form-group">
         <label for="csvFile">1. اختر ملف البيانات الصادر (CSV):</label>
@@ -57,8 +56,9 @@
             <input type="date" id="startDate" value="2026-05-01">
         </div>
         <div class="form-group">
-            <label for="endDate">تاريخ النهاية (مستثنى):</label>
-            <input type="date" id="endDate" value="2026-09-01">
+            <label for="endDate">تاريخ النهاية (مشمول):</label>
+            <!-- وضع تاريخ اليوم الحالي 2026-09-21 كقيمة افتراضية مسبقة -->
+            <input type="date" id="endDate" value="2026-09-21">
         </div>
     </div>
 
@@ -75,9 +75,9 @@ function clean(text) {
 function parseJavaDate(dateStr) {
     const parts = dateStr.split('/');
     if (parts.length !== 3) return null;
-    const day = parseInt(parts, 10);
-    const month = parseInt(parts, 10) - 1; 
-    const year = parseInt(parts, 10);
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; 
+    const year = parseInt(parts[2], 10);
     return new Date(year, month, day);
 }
 
@@ -87,13 +87,17 @@ function processAndDisplay() {
     const endDateInput = document.getElementById('endDate').value;
 
     if (!fileInput.files.length || !startDateInput || !endDateInput) {
-        alert('الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً حامودة!');
+        alert('الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً يا حمودة!');
         return;
     }
 
     const file = fileInput.files[0];
     const startDate = new Date(startDateInput);
     const endDate = new Date(endDateInput);
+    
+    // ضبط الوقت لنهاية اليوم لضمان شمول تاريخ النهاية بالكامل في الفلترة الحسابية
+    endDate.setHours(23, 59, 59, 999);
+
     const reader = new FileReader();
 
     reader.onload = function(e) {
@@ -125,14 +129,15 @@ function processAndDisplay() {
 
             try {
                 let dateStr = clean(columns[0]);
-                let category = clean(columns[1]); 
-                let convertedAmountStr = clean(columns[5]); 
+                let category = clean(columns[1]); // جلب التصنيف الحقيقي المالي
+                let convertedAmountStr = clean(columns[5]); // جلب عمود المبالغ بدقة بالدولار
                 let description = (columns.length >= 8 && clean(columns[7])) ? clean(columns[7]) : "بدون وصف";
 
                 let rowDate = parseJavaDate(dateStr);
                 if (!rowDate || isNaN(rowDate.getTime())) continue;
 
-                if (rowDate >= startDate && rowDate < endDate) {
+                // تم تعديل الشرط هنا ليصبح (<= endDate) ليكون تاريخ النهاية مشمولاً تماماً في الحساب
+                if (rowDate >= startDate && rowDate <= endDate) {
                     if (category.startsWith("To '") || category.startsWith("From '") || 
                         category.toLowerCase().includes("to '") || category.toLowerCase().includes("from '")) {
                         continue;
@@ -159,7 +164,7 @@ function processAndDisplay() {
         let sortedMonths = Object.keys(monthlyAnalysis).sort();
 
         if (sortedMonths.length === 0) {
-            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ حامودة!</div>";
+            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ يا حمودة! تأكد من رفع الملف الصحيح.</div>";
             return;
         }
 
@@ -251,6 +256,7 @@ function processAndDisplay() {
             previousMonthTotal = monthTotal;
         });
 
+        // 👑 بناء المخطط الشامل التراكمي النهائي لكافة الأشهر معاً بالأسفل
         let globalBlock = document.createElement('div');
         globalBlock.className = 'global-block-wrapper';
         let globalCanvasId = 'canvas_global_summary';
@@ -268,7 +274,7 @@ function processAndDisplay() {
         });
         chartsToRender.push({ id: globalCanvasId, labels: globalLabels, data: globalData });
 
-        // الرسم الفوري الصاروخي التلقائي من الكود المخزن بالكامل
+        // تشغيل محرك رسم المخططات الفورية السريعة والمستقرة
         chartsToRender.forEach(c => {
             const el = document.getElementById(c.id);
             if(el && typeof Chart !== 'undefined') {
@@ -296,6 +302,6 @@ function processAndDisplay() {
     reader.readAsText(file, 'UTF-8');
 }
 </script>
-<div class="footer">تحديث السرعة الفائقة 100% بدون أي ملفات شبكة خارجية معلقة حامودة 🚀</div>
+<div class="footer">تحديث السرعة والملاءمة الشاملة لميزانية حمودة الشخصية 🚀</div>
 </body>
 </html>
