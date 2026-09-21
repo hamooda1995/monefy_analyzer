@@ -32,13 +32,12 @@
         .category-total-row td { background-color: #E6FFFA; color: #234E52; border-top: 1px solid #319795; border-bottom: 1px solid #319795; font-style: italic; font-size: 14pt; }
         .month-total-row td { background-color: #CBD5E0; color: #1A202C; border: 2px solid #4A5568; font-size: 14pt; }
         
-        /* 📊 ستايلات مصمم الأعمدة البيانية المدمج (Native Dashboard CSS) */
         .native-chart-wrapper { background: #FFF; border-radius: 8px; padding: 15px; margin-top: 20px; border: 1px solid #E2E8F0; }
         .chart-bar-row { display: flex; align-items: center; margin-bottom: 12px; font-size: 13px; font-weight: bold; }
         .chart-label { width: 150px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #4A5568; }
         .chart-bar-container { flex: 1; background-color: #EDF2F7; height: 24px; border-radius: 4px; overflow: hidden; margin: 0 15px; position: relative; }
         .chart-bar-fill { background: linear-gradient(90deg, #3182CE, #4299E1); height: 100%; border-radius: 4px; transition: width 0.5s ease-in-out; }
-        .chart-value { width: 90px; text-align: left; color: #2D3748; }
+        .chart-value { width: 110px; text-align: left; color: #2D3748; }
         .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #A0AEC0; }
     </style>
 </head>
@@ -76,9 +75,9 @@ function clean(text) {
 function parseJavaDate(dateStr) {
     const parts = dateStr.split('/');
     if (parts.length !== 3) return null;
-    const day = parseInt(parts, 10);
-    const month = parseInt(parts, 10) - 1; 
-    const year = parseInt(parts, 10);
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; 
+    const year = parseInt(parts[2], 10);
     return new Date(year, month, day);
 }
 
@@ -95,7 +94,7 @@ function processAndDisplay() {
     const file = fileInput.files[0];
     const startDate = new Date(startDateInput);
     const endDate = new Date(endDateInput);
-    endDate.setHours(23, 59, 59, 999); // لضمان شمل تاريخ النهاية بالكامل
+    endDate.setHours(23, 59, 59, 999); 
 
     const reader = new FileReader();
 
@@ -127,22 +126,27 @@ function processAndDisplay() {
             if (columns.length < 7) continue;
 
             try {
-                // 🛠️ تثبيت الفهارس الصحيحة والمطابقة للكود الفاينال لجافا لإلغاء قراءة الـ Account
-                let dateStr = clean(columns[0]);
-                let category = clean(columns[2]); // الفهرس 2 هو عمود التصنيف (Category) الحقيقي دائماً
-                let convertedAmountStr = clean(columns[5]); // الفهرس 5 هو عمود مبلغ الـ USD الحقيقي
-                let description = (columns.length >= 8 && clean(columns[7])) ? clean(columns[7]) : "بدون وصف";
+                // استخدام دالة .at الصريحة لضمان بقاء الفهارس البرمجية متطابقة مع الجافا والإكسل ومنع اختفائها
+                let dateStr = clean(columns.at(0));       // الفهرس 0 لعمود التاريخ
+                let category = clean(columns.at(2));      // الفهرس 2 لعمود التصنيف (Category)
+                let amountStr = clean(columns.at(5));     // الفهرس 5 لعمود دولار الـ converted amount
+                
+                let description = "بدون وصف";
+                if (columns.length >= 8 && clean(columns.at(3))) {
+                    description = clean(columns.at(3));   // الفهرس 3 لعمود الوصف (Description) الحقيقي المالي
+                }
 
                 let rowDate = parseJavaDate(dateStr);
                 if (!rowDate || isNaN(rowDate.getTime())) continue;
 
+                // تصفية النطاق وجعل تاريخ النهاية مشمولاً بالكامل (<= endDate)
                 if (rowDate >= startDate && rowDate <= endDate) {
                     if (category.startsWith("To '") || category.startsWith("From '") || 
                         category.toLowerCase().includes("to '") || category.toLowerCase().includes("from '")) {
                         continue;
                     }
 
-                    let convertedAmount = parseFloat(convertedAmountStr);
+                    let convertedAmount = parseFloat(amountStr);
                     if (convertedAmount >= 0) continue; 
 
                     let actualExpense = Math.abs(convertedAmount);
@@ -163,7 +167,7 @@ function processAndDisplay() {
         let sortedMonths = Object.keys(monthlyAnalysis).sort();
 
         if (sortedMonths.length === 0) {
-            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ يا حمودة! تأكد من الفترات الزمنية والملف.</div>";
+            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ يا حمودة! تأكد من الفترات الزمنية والملف المختار.</div>";
             return;
         }
 
@@ -188,15 +192,12 @@ function processAndDisplay() {
             <tr><th>الشهر</th><th>التصنيف (Category)</th><th>الوصف (Description)</th><th>إجمالي الصرف (USD)</th></tr>`;
 
             let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
-            
-            // بناء المخطط الشريطي الأصلي للشهر (Native HTML Bars)
             let chartHtml = `<div class='native-chart-wrapper'><h3 style='color:#1A365D; text-align:center; margin-bottom:15px;'>📊 التوزيع المرئي لنفقات شهر ${monthName}</h3>`;
 
             sortedCats.forEach(categoryName => {
                 let categoryTotal = categorySums[categoryName];
                 let categoryPercentage = monthTotal > 0 ? (categoryTotal / monthTotal) * 100 : 0;
 
-                // إضافة سطر الرسم البياني الشريطي المدمج
                 chartHtml += `
                     <div class='chart-bar-row'>
                         <div class='chart-label'>📁 ${categoryName}</div>
@@ -259,12 +260,12 @@ function processAndDisplay() {
             previousMonthTotal = monthTotal;
         });
 
-        // 👑 بناء المخطط الشامل التراكمي الاستراتيجي لكافة الأشهر مجتمعة معاً بالأسفل
+        // 👑 المخطط التحليلي الكلي الشامل التراكمي لكافة الأشهر معاً بالأسفل
         let globalBlock = document.createElement('div');
         globalBlock.className = 'global-block-wrapper';
         
         let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل والنهائي لكافة الأشهر المحددة معاً</h2>
-                               <p style='text-align:center; color:#718096; font-size:14px; margin-bottom:20px;'>يوضح هذا المخطط المدمج الحجم الإجمالي والأكبر للمصاريف المتراكمة</p>`;
+                               <p style='text-align:center; color:#718096; font-size:14px; margin-bottom:20px;'>يوضح الحجم الإجمالي التراكمي الاستهلاكي لكل تصنيف على مدار كامل فترة الفلترة المشمولة</p>`;
 
         let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
         Object.keys(globalCategorySums).sort((a,b) => globalCategorySums[b] - globalCategorySums[a]).forEach(cat => {
@@ -289,6 +290,6 @@ function processAndDisplay() {
     reader.readAsText(file, 'UTF-8');
 }
 </script>
-<div class="footer">تم التحديث الصاروخي بنجاح فائق وتثبيت الفهارس الشاملة لميزانية حمودة الشخصية 🚀</div>
+<div class="footer">تحديث السرعة وإصلاح مؤشرات الفهارس الشاملة لميزانية حمودة الشخصية 🚀</div>
 </body>
 </html>
