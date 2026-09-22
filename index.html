@@ -87,9 +87,9 @@ function clean(text) {
 function parseJavaDate(dateStr) {
     const parts = dateStr.split('/');
     if (parts.length !== 3) return null;
-    const day = parseInt(parts, 10);
-    const month = parseInt(parts, 10) - 1; 
-    const year = parseInt(parts, 10);
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; 
+    const year = parseInt(parts[2], 10);
     return new Date(year, month, day);
 }
 
@@ -143,8 +143,8 @@ function processAndDisplay() {
                 let amountStr = clean(columns.at(5));     
                 
                 let description = "بدون وصف";
-                if (columns.length >= 5 && clean(columns.at(4)).length > 0) {
-                    description = clean(columns.at(4));   
+                if (columns.length >= 8 && clean(columns.at(7)).length > 0) {
+                    description = clean(columns.at(7));   
                 }
 
                 let rowDate = parseJavaDate(dateStr);
