@@ -294,6 +294,52 @@ function processAndDisplay() {
         let globalBlock = document.createElement('div');
         globalBlock.className = 'global-block-wrapper';
         
+		        // 📦 كود مستقل تماماً: كاشف الاشتراكات والمصاريف المتكررة
+        let descriptionMonths = {}; 
+        let descriptionAmounts = {}; 
+
+        // المرور على شجرة البيانات المخزنة مسبقاً دون تعديلها
+        Object.keys(monthlyAnalysis).forEach(month => {
+            Object.keys(monthlyAnalysis[month]).forEach(cat => {
+                Object.keys(monthlyAnalysis[month][cat]).forEach(desc => {
+                    if (desc === "بدون وصف") return; 
+                    
+                    if (!descriptionMonths[desc]) descriptionMonths[desc] = new Set();
+                    descriptionMonths[desc].add(month);
+                    
+                    if (!descriptionAmounts[desc]) descriptionAmounts[desc] = [];
+                    descriptionAmounts[desc].push(monthlyAnalysis[month][cat][desc]);
+                });
+            });
+        });
+
+        let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'>
+            <h2 style='color:#234E52; text-align:center; margin-top:10px;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2>
+            <p style='text-align:center; color:#4A5568; font-size:14px; margin-bottom:20px;'>الأوصاف التي تكررت بنفس الاسم على مدار أشهر مختلفة</p>
+            <table>
+                <tr><th>الوصف (Subscription)</th><th>عدد أشهر التكرار</th><th>متوسط الصرف الشهري</th></tr>`;
+
+        let hasSubscriptions = false;
+        Object.keys(descriptionMonths).forEach(desc => {
+            // إذا تكرر الوصف في شهرين أو أكثر، يعتبر اشتراكاً دورياً
+            if (descriptionMonths[desc].size >= 2) {
+                hasSubscriptions = true;
+                let sum = descriptionAmounts[desc].reduce((a, b) => a + b, 0);
+                let avg = sum / descriptionMonths[desc].size;
+                
+                subscriptionHtml += `<tr>
+                    <td style='color:#234E52;'>🔄 ${desc}</td>
+                    <td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td>
+                    <td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td>
+                </tr>`;
+            }
+        });
+
+        if (!hasSubscriptions) {
+            subscriptionHtml += `<tr><td colspan='3' style='text-align:center; color:#718096;'>لم يتم اكتشاف أي نفقات أو اشتراكات متكررة في هذه الفترة يا حمودة.</td></tr>`;
+        }
+        subscriptionHtml += `</table></div>`;
+
         let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل والنهائي لكافة الأشهر المحددة معاً</h2>
                                <p style='text-align:center; color:#718096; font-size:14px; margin-bottom:20px;'>يوضح الحجم الإجمالي التراكمي الاستهلاكي لكل تصنيف على مدار كامل فترة الفلترة المشمولة</p>`;
 
@@ -315,6 +361,11 @@ function processAndDisplay() {
         
         globalBlock.innerHTML = globalChartHtml;
         resultsContainer.appendChild(globalBlock);
+		        // حقن جدول كاشف الاشتراكات المطور في نهاية لوحة العرض
+        let subBlock = document.createElement('div');
+        subBlock.innerHTML = subscriptionHtml;
+        resultsContainer.appendChild(subBlock);
+
     };
 
     reader.readAsText(file, 'UTF-8');
