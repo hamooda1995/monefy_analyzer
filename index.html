@@ -26,8 +26,13 @@
         td { padding: 11px 10px; border: 1px solid #CBD5E0; text-align: right; font-size: 14pt; color: #2D3748; }
         tr:nth-child(even) { background-color: #F7FAFC; }
         
-        .month-header-row td { background-color: #EBF8FF; color: #2B6CB0; text-align: center; font-size: 15pt; border: 2px solid #90CDF4; }
-        .category-header-row td { background-color: #EDF2F7; color: #2D3748; font-size: 14pt; border-top: 1px solid #CBD5E0; border-bottom: 1px solid #CBD5E0; }
+        /* 🛠️ إضافة خاصية cursor: pointer لجعل السطور تبدو قابلة للضغط والتفاعل كأزرار الطي */
+        .month-header-row { cursor: pointer; }
+        .month-header-row td { background-color: #EBF8FF; color: #2B6CB0; text-align: center; font-size: 15pt; border: 2px solid #90CDF4; user-select: none; }
+        
+        .category-header-row { cursor: pointer; }
+        .category-header-row td { background-color: #EDF2F7; color: #2D3748; font-size: 14pt; border-top: 1px solid #CBD5E0; border-bottom: 1px solid #CBD5E0; user-select: none; }
+        
         .alert-row td { background-color: #FFF5F5; color: #C53030; border: 1px solid #FEB2B2; } 
         .category-total-row td { background-color: #E6FFFA; color: #234E52; border-top: 1px solid #319795; border-bottom: 1px solid #319795; font-style: italic; font-size: 14pt; }
         .month-total-row td { background-color: #CBD5E0; color: #1A202C; border: 2px solid #4A5568; font-size: 14pt; }
@@ -38,6 +43,7 @@
         .chart-bar-container { flex: 1; background-color: #EDF2F7; height: 24px; border-radius: 4px; overflow: hidden; margin: 0 15px; position: relative; }
         .chart-bar-fill { background: linear-gradient(90deg, #3182CE, #4299E1); height: 100%; border-radius: 4px; transition: width 0.5s ease-in-out; }
         .chart-value { width: 110px; text-align: left; color: #2D3748; }
+        .collapse-icon { font-size: 11pt; margin-left: 8px; float: right; color: #A0AEC0; }
         .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #A0AEC0; }
     </style>
 </head>
@@ -126,11 +132,10 @@ function processAndDisplay() {
             if (columns.length < 7) continue;
 
             try {
-                let dateStr = clean(columns.at(0));       // الفهرس 0 التاريخ
-                let category = clean(columns.at(2));      // الفهرس 2 التصنيف
-                let amountStr = clean(columns.at(5));     // الفهرس 5 مبالغ الـ USD
+                let dateStr = clean(columns.at(0));       
+                let category = clean(columns.at(2));      
+                let amountStr = clean(columns.at(5));     
                 
-                // 🛠️ تم التصحيح للفهرس 4 وهو عمود الـ Description الحقيقي والفعلي داخل ملف مونييفي
                 let description = "بدون وصف";
                 if (columns.length >= 8 && clean(columns.at(7)).length > 0) {
                     description = clean(columns.at(7));   
@@ -146,8 +151,7 @@ function processAndDisplay() {
                     }
 
                     let convertedAmount = parseFloat(amountStr);
-                    if (convertedAmount >= 0) continue; 
-
+                    if (convertedAmount >= 0) continue;
                     let actualExpense = Math.abs(convertedAmount);
                     let monthKey = rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, '0');
 
@@ -172,7 +176,7 @@ function processAndDisplay() {
 
         let previousMonthTotal = 0;
 
-        sortedMonths.forEach((monthName) => {
+        sortedMonths.forEach((monthName, mIdx) => {
             let monthTotal = 0;
             let categoriesMap = monthlyAnalysis[monthName];
             let categorySums = {};
@@ -186,14 +190,19 @@ function processAndDisplay() {
             let monthBlock = document.createElement('div');
             monthBlock.className = 'month-block-wrapper';
 
+            // معرف فريد لجدول الشهر والمخطط للتحكم بالطي
+            let monthBodyId = `month_body_${mIdx}`;
+
             let htmlTable = `<table>
-            <tr class='month-header-row'><td colspan='4'>📅 بداية بيانات فترة شهر: ${monthName}</td></tr>
-            <tr><th>الشهر</th><th>التصنيف (Category)</th><th>الوصف (Description)</th><th>إجمالي الصرف (USD)</th></tr>`;
+            <tr class='month-header-row' onclick="toggleCollapseSection('${monthBodyId}', this)">
+                <td colspan='4'><span class='collapse-icon'>▲</span>📅 بداية بيانات فترة شهر: ${monthName}</td>
+            </tr>
+            <tbody id='${monthBodyId}'>`;
 
             let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
             let chartHtml = `<div class='native-chart-wrapper'><h3 style='color:#1A365D; text-align:center; margin-bottom:15px;'>📊 التوزيع المرئي لنفقات شهر ${monthName}</h3>`;
 
-            sortedCats.forEach(categoryName => {
+            sortedCats.forEach((categoryName, cIdx) => {
                 let categoryTotal = categorySums[categoryName];
                 let categoryPercentage = monthTotal > 0 ? (categoryTotal / monthTotal) * 100 : 0;
 
@@ -207,7 +216,13 @@ function processAndDisplay() {
                     </div>
                 `;
 
-                htmlTable += `<tr class='category-header-row'><td colspan='4'>📁 قسم تصنيف الصرف الحالي: [${categoryName}]</td></tr>`;
+                // معرف فريد لأسطر المصاريف الخاصة بالتصنيف الحالي
+                let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
+
+                htmlTable += `
+                <tr class='category-header-row' onclick="toggleCollapseSection('${catRowsClass}', this)">
+                    <td colspan='4'><span class='collapse-icon'>▲</span>📁 قسم تصنيف الصرف الحالي: [${categoryName}]</td>
+                </tr>`;
 
                 let descMap = categoriesMap[categoryName];
                 let sortedDescs = Object.keys(descMap).sort((a, b) => descMap[b] - descMap[a]);
@@ -217,7 +232,7 @@ function processAndDisplay() {
                     let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
                     let alertTag = amount >= 50.0 ? " ⚠️ [مصروف مرتفع طارئ]" : "";
 
-                    htmlTable += `<tr${rowClass}>
+                    htmlTable += `<tr${rowClass} name='${catRowsClass}'>
                         <td style='text-align:center;'>${monthName}</td>
                         <td>${categoryName}</td>
                         <td>${descriptionName}${alertTag}</td>
@@ -225,7 +240,7 @@ function processAndDisplay() {
                     </tr>`;
                 });
 
-                htmlTable += `<tr class='category-total-row'>
+                htmlTable += `<tr class='category-total-row' name='${catRowsClass}'>
                     <td colspan='3' style='text-align:right; padding-right:30px;'> ── إجمالي نفقات تصنيف [${categoryName}] (يستهلك ${categoryPercentage.toFixed(1)}% من نفقات الشهر الحالية)</td>
                     <td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td>
                 </tr>`;
@@ -248,13 +263,20 @@ function processAndDisplay() {
                 momTrendText = " 🏁 [شهر الأساس الأول]";
             }
 
-            htmlTable += `<tr class='month-total-row'>
+            htmlTable += `
+            <tr class='month-total-row'>
                 <td colspan='3' style='padding-right:20px;'>💰 إجمالي حجم الصرف الكلي لشهر (${monthName})${momTrendText}</td>
                 <td style='font-weight: bold;'>$${monthTotal.toFixed(2)}</td>
-            </tr>`;
-            htmlTable += `</table>`;
+            </tr>
+            </tbody>
+            </table>`;
 
-            monthBlock.innerHTML = htmlTable + chartHtml;
+            // تغليف الجدول والمخطط البياني في مجلد الشهر الموحد
+            let monthDataDiv = document.createElement('div');
+            monthDataDiv.id = `wrapper_div_${monthBodyId}`;
+            monthDataDiv.innerHTML = htmlTable + chartHtml;
+            
+            monthBlock.appendChild(monthDataDiv);
             resultsContainer.appendChild(monthBlock);
             previousMonthTotal = monthTotal;
         });
@@ -287,7 +309,40 @@ function processAndDisplay() {
 
     reader.readAsText(file, 'UTF-8');
 }
+
+// 🛠️ دالة الجافا سكريبت السحرية للتحكم بالطي والتوسيع (Collapse Engine)
+function toggleCollapseSection(targetId, headerElement) {
+    const iconElement = headerElement.querySelector('.collapse-icon');
+    
+    // فحص إذا كان المستهدف هو مجلد شهر كامل (عبر الـ ID) أو مجموعة أسطر تصنيف (عبر الـ Name)
+    const element = document.getElementById(targetId);
+    if (element) {
+        // التحكم بكتلة بيانات الشهر
+        const wrapper = document.getElementById(`wrapper_div_${targetId}`);
+        const chartWrapper = wrapper ? wrapper.querySelector('.native-chart-wrapper') : null;
+        
+        if (element.style.display === "none") {
+            element.style.display = "";
+            if (chartWrapper) chartWrapper.style.display = "";
+            if (iconElement) iconElement.innerHTML = "▲";
+        } else {
+            element.style.display = "none";
+            if (chartWrapper) chartWrapper.style.display = "none";
+            if (iconElement) iconElement.innerHTML = "▼";
+        }
+    } else {
+        // التحكم بأسطر التصنيفات الفردية العادية داخل الجدول
+        const rows = document.getElementsByName(targetId);
+        if (rows.length > 0) {
+            const isHidden = rows[0].style.display === "none";
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].style.display = isHidden ? "" : "none";
+            }
+            if (iconElement) iconElement.innerHTML = isHidden ? "▲" : "▼";
+        }
+    }
+}
 </script>
-<div class="footer">تم تحديث وقراءة عمود الأوصاف الحقيقية بنجاح لميزانية حمودة الشخصية 🚀</div>
+<div class="footer">تم تفعيل ميزة الـ Collapse التفاعلية بنجاح لميزانية حمودة الشخصية 🚀</div>
 </body>
 </html>
