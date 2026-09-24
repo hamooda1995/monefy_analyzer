@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,7 +51,6 @@
         .toggle-all-btn { background-color: #2B6CB0; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11pt; font-weight: bold; cursor: pointer; float: left; margin-top: -2px; transition: background 0.2s; }
         .toggle-all-btn:hover { background-color: #1A365D; }
         
-        /* الأنماط المستقرة التابعة للـ Native CSS الخمسة للأظرف الرقمية */
         .jars-section-box { background: #F8FAFC; border: 2px dashed #CBD5E0; padding: 18px; border-radius: 8px; margin-top: 15px; margin-bottom: 15px; }
         .jars-bar-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: bold; }
         .jars-bar-container { flex: 1; background-color: #E2E8F0; height: 16px; border-radius: 8px; overflow: hidden; margin: 0 15px; position: relative; border: 1px solid #CBD5E0; }
@@ -71,26 +68,14 @@
                 .then(() => console.log("Service Worker Registered"))
                 .catch(err => console.log("Service Worker Failed", err));
         }
-
         let deferredPrompt = null;
         const installBtn = document.getElementById('installBtn');
-
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            console.log("'beforeinstallprompt' event fired and stashed.");
+            e.preventDefault(); deferredPrompt = e;
         });
-
         installBtn.addEventListener('click', async () => {
             if (!deferredPrompt) return;
-            installBtn.style.display = 'none';
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            deferredPrompt = null;
-        });
-
-        window.addEventListener('appinstalled', () => {
-            installBtn.style.display = 'none';
+            installBtn.style.display = 'none'; deferredPrompt.prompt();
             deferredPrompt = null;
         });
     </script>
@@ -113,40 +98,42 @@
         </div>
     </div>
 
-    <!-- حقل الدخل اليدوي الذكي التزامني لشهور الخطة الخماسية -->
-    <div class="form-group" style="background: #EDF2F7; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #CBD5E0;">
-        <label for="monthly-income-input" style="color: #1A365D; display: flex; align-items: center; gap: 5px;">💰 الدخل الشهري المستهدف ($):</label>
-        <input type="number" id="monthly-income-input" value="1000" min="0" oninput="processAndDisplay()" style="width: 100%; box-sizing: border-box; font-weight: bold; color: #1A365D; font-size: 16px;">
-        <small style="color: #718096; margin-top: 5px; display: block;">تغيير هذا الرقم يعيد حساب الأظرف الخمسة لكافة الشهور بشكل فوري متزامن!</small>
+    <!-- حقول الدخل والمدوّر البداعي المحدثة والمحمية من الحساب العشوائي المسبق -->
+    <div class="date-row" style="background: #EDF2F7; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #CBD5E0;">
+        <div class="form-group">
+            <label for="monthly-income-input" style="color: #1A365D;">💰 الدخل الشهري المستهدف ($):</label>
+            <input type="number" id="monthly-income-input" value="1000" min="0" oninput="triggerConditionalCalculation()">
+        </div>
+        <div class="form-group">
+            <label for="initial-carryover-input" style="color: #2C5282;">📥 مبلغ مدوّر من الشهر السابق ($):</label>
+            <input type="number" id="initial-carryover-input" value="100" min="0" oninput="triggerConditionalCalculation()">
+        </div>
     </div>
 
-    <button onclick="processAndDisplay()">تحليل وعرض الحسابات والمخططات البيانية فورا 🚀</button>
+    <button onclick="processAndDisplay(true)">تحليل وعرض الحسابات والمخططات البيانية فورا 🚀</button>
 </div>
 
 <div id="resultsContainer"></div>
-
 <script>
-// النواة المقدسة والمستقرة لفهارس الـ CSV
-const CSV_INDICES = {
-    DATE: 0,        // dd/MM/yyyy
-    CATEGORY: 2,    // التصنيف الحقيقي المالي
-    AMOUNT: 5,      // المبالغ بالدولار
-    DESC: 7         // الوصف الفعلي
-};
+// الحفاظ الصارم على فهارس النواة المقدسة والمستقرة
+const CSV_INDICES = { DATE: 0, CATEGORY: 2, AMOUNT: 5, DESC: 7 };
 
-// مصفوفة الربط المحدثة شاملة إدراج الـ Taxi والـ Real estate ضمن المصاريف الثابتة
+// خريطة التوزيع المعتمدة والمحذوف منها Debt بناء على توجيهك
 const JARS_MAPPING = {
     fixed: { name: "مصاريف ثابتة وأساسية (55%)", targetPercent: 0.55, color: "#3182CE", categories: ["Rent", "Bills", "Food", "Transport", "House", "Home", "Babies", "Communications", "Mobile", "Android", "Car", "Health", "Moony", "Real estate", "Taxi"] },
-    guiltFree: { name: "متعة دون تأنيب ضمير - Guilt-Free (10%)", targetPercent: 0.10, color: "#DD6B20", categories: ["Eating out", "Entertainment", "Sports", "Shaving", "Clothes", "Electronics", "Gifts", "Shop", "YYY"] },
-    debt: { name: "سداد ديون (10%)", targetPercent: 0.10, color: "#E53E3E", categories: ["Debt"] },
+    guiltFree: { name: "متعة دون تأنيب ضمير (10%)", targetPercent: 0.10, color: "#DD6B20", categories: ["Eating out", "Entertainment", "Sports", "Shaving", "Clothes", "Electronics", "Gifts", "Shop", "YYY"] },
+    debt: { name: "سداد ديون (10%)", targetPercent: 0.10, color: "#E53E3E", categories: [] }, 
     savings: { name: "تحويش للمستقبل (10%)", targetPercent: 0.10, color: "#38A169", categories: ["Savings", "Study"] },
     investing: { name: "استثمار وتنمية الثروة (15%)", targetPercent: 0.15, color: "#805AD5", categories: ["Investment", "Gold"] }
 };
 
-function clean(text) {
-    if (!text) return "";
-    return text.replace(/"/g, "").trim();
+let isDataAnalyzed = false; // راية حماية لمنع العمل التلقائي قبل الضغط على الزر
+
+function triggerConditionalCalculation() {
+    if (isDataAnalyzed) { processAndDisplay(false); }
 }
+
+function clean(text) { return text ? text.replace(/"/g, "").trim() : ""; }
 
 function parseJavaDate(dateStr) {
     const parts = dateStr.split('/');
@@ -156,9 +143,10 @@ function parseJavaDate(dateStr) {
     const year = parseInt(parts[2], 10);
     return new Date(year, month, day);
 }
-
-// محرك توليد أشرطة التقدم الخمسة (Native CSS) للشهر المحدد بدون قيم صفرية معلقة
-function generateJarsHtmlForMonth(monthCategoriesMap) {
+</script>
+<script>
+// محرك حساب الأظرف وضخ فائض الوفر المالي بداخل خانة تحويش المستقبل
+function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, currentMonthCarryover) {
     const totalIncome = parseFloat(document.getElementById('monthly-income-input').value) || 0;
     let monthJarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
     
@@ -172,8 +160,18 @@ function generateJarsHtmlForMonth(monthCategoriesMap) {
         }
     });
 
+    // معادلة الموازنة الكلية = الراتب + المدوّر من الشهر الماضي
+    const totalAvailableBudget = totalIncome + currentMonthCarryover;
+    const unspentSurplus = totalAvailableBudget - totalMonthExpense;
+    
+    // حقن وتوجيه كل ما لم ينصرف بداخل ظرف تحويش المستقبل تلقائياً
+    if (unspentSurplus > 0) {
+        monthJarsTotals.savings += unspentSurplus;
+    }
+
     let html = `<div class='jars-section-box'>
-        <h3 style='color:#1A365D; text-align:center; margin-top:0; margin-bottom:15px; font-size:14pt;'>🎯 خطة الأظرف الخمسة الرقمية لهذا الشهر (الفعلي vs المستهدف)</h3>`;
+        <h3 style='color:#1A365D; text-align:center; margin-top:0; margin-bottom:10px; font-size:14pt;'>🎯 ميزانية الأظرف الخمسة لهذا الشهر</h3>
+        <p style='text-align:center; font-size:13px; color:#4A5568; margin:0 0 15px 0;'>📈 المدوّر السابق: <strong>$${currentMonthCarryover.toFixed(2)}</strong> | وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${Math.max(0, unspentSurplus).toFixed(2)}</strong></p>`;
 
     for (const key in JARS_MAPPING) {
         const jar = JARS_MAPPING[key];
@@ -197,19 +195,21 @@ function generateJarsHtmlForMonth(monthCategoriesMap) {
         `;
     }
     html += `</div>`;
-    return html;
+    return { html: html, monthSurplus: unspentSurplus };
 }
-
-// الجزء 4-أ: قراءة ملف الـ CSV وتفكيك النواة المقدسة للفهارس
-function processAndDisplay() {
+</script>
+<script>
+function processAndDisplay(isExplicitClick) {
     const fileInput = document.getElementById('csvFile');
     const startDateInput = document.getElementById('startDate').value;
     const endDateInput = document.getElementById('endDate').value;
 
-    if (!fileInput.files || !fileInput.files.length || !startDateInput || !endDateInput) {
-        alert('الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً يا حمودة!');
+    if (!fileInput.files || !fileInput.files.length) {
+        if (isExplicitClick) alert('الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً يا حمودة!');
         return;
     }
+
+    if (isExplicitClick) { isDataAnalyzed = true; }
 
     const file = fileInput.files[0];
     const startDate = new Date(startDateInput);
@@ -217,7 +217,6 @@ function processAndDisplay() {
     endDate.setHours(23, 59, 59, 999); 
 
     const reader = new FileReader();
-
     reader.onload = function(e) {
         const text = e.target.result;
         const lines = text.split(/\r?\n/);
@@ -225,16 +224,13 @@ function processAndDisplay() {
 
         const headerLine = lines[0];
         const separator = headerLine.includes('\t') ? '\t' : ',';
-        
         let monthlyAnalysis = {};
         let globalCategorySums = {}; 
         let descriptionMonths = {}; 
         let descriptionAmounts = {}; 
 
         for (let i = 1; i < lines.length; i++) {
-            let line = lines[i];
-            if (!line.trim()) continue;
-
+            let line = lines[i]; if (!line.trim()) continue;
             let columns = (separator === ',') ? line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/) : line.split('\t');
             if (columns.length < 7) continue;
 
@@ -270,18 +266,17 @@ function processAndDisplay() {
                 }
             } catch (err) {}
         }
-
-// الجزء 4-ب: بناء الكتل الشهرية وحقن الأظرف الخمسة والمخططات المرئية بالتزامن
         const resultsContainer = document.getElementById('resultsContainer');
-        resultsContainer.innerHTML = ""; 
-        resultsContainer.style.display = "block";
+        resultsContainer.innerHTML = ""; resultsContainer.style.display = "block";
 
         let sortedMonths = Object.keys(monthlyAnalysis).sort();
         if (sortedMonths.length === 0) {
-            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ يا حمودة!</div>";
+            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ!</div>";
             return;
         }
 
+        // التقاط القيمة البدائية المدوّرة وتمريرها تصاعدياً بين الشهور تلقائياً
+        let runningCarryover = parseFloat(document.getElementById('initial-carryover-input').value) || 0;
         let previousMonthTotal = 0;
 
         sortedMonths.forEach((monthName, mIdx) => {
@@ -291,207 +286,97 @@ function processAndDisplay() {
 
             Object.keys(categoriesMap).forEach(cat => {
                 let sum = Object.values(categoriesMap[cat]).reduce((a, b) => a + b, 0);
-                categorySums[cat] = sum;
-                monthTotal += sum;
+                categorySums[cat] = sum; monthTotal += sum;
             });
 
             let monthBlock = document.createElement('div');
             monthBlock.className = 'month-block-wrapper';
             let monthBodyId = `month_body_${mIdx}`;
 
-            let htmlTable = `<table>
-            <tr class='month-header-row'>
-                <td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)">
-                    <button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button>
-                    <span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}
-                </td>
-            </tr>
-            <tbody id='${monthBodyId}'>`;
+            let htmlTable = `<table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}'>`;
 
             let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
-            let chartHtml = `<div class='native-chart-wrapper' id='chart_wrapper_${monthBodyId}'><h3 style='color:#1A365D; text-align:center; margin-bottom:15px;'>📊 التوزيع المرئي لنفقات شهر ${monthName}</h3>`;
+            let chartHtml = `<div class='native-chart-wrapper'><h3 style='color:#1A365D; text-align:center; margin-bottom:15px;'>📊 التوزيع المرئي لنفقات شهر ${monthName}</h3>`;
 
             sortedCats.forEach((categoryName, cIdx) => {
                 let categoryTotal = categorySums[categoryName];
                 let categoryPercentage = monthTotal > 0 ? (categoryTotal / monthTotal) * 100 : 0;
-
-                chartHtml += `
-                    <div class='chart-bar-row'>
-                        <div class='chart-label'>📁 ${categoryName}</div>
-                        <div class='chart-bar-container'>
-                            <div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div>
-                        </div>
-                        <div class='chart-value'>$${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</div>
-                    </div>
-                `;
+                chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
 
                 let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
-                htmlTable += `
-                <tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'>
-                    <td colspan='4'>
-                        <div class='cat-header-flex'>
-                            <span><span class='collapse-icon'>▲</span> 📁 [${categoryName}]</span>
-                            <span style='color: #2B6CB0; font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span>
-                        </div>
-                    </td>
-                </tr>`;
+                htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▲</span> 📁 [${categoryName}]</span><span style='color: #2B6CB0; font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
 
                 let descMap = categoriesMap[categoryName];
-                let sortedDescs = Object.keys(descMap).sort((a, b) => descMap[b] - descMap[a]);
-
-                sortedDescs.forEach(descriptionName => {
+                Object.keys(descMap).sort((a, b) => descMap[b] - descMap[a]).forEach(descriptionName => {
                     let amount = descMap[descriptionName];
                     let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
-                    let alertTag = amount >= 50.0 ? " ⚠️ [مصروف مرتفع طارئ]" : "";
-
-                    htmlTable += `<tr${rowClass} name='${catRowsClass}'>
-                        <td style='text-align:center;'>${monthName}</td>
-                        <td>${categoryName}</td>
-                        <td>${descriptionName}${alertTag}</td>
-                        <td style='font-weight: bold;'>$${amount.toFixed(2)}</td>
-                    </tr>`;
+                    htmlTable += `<tr${rowClass} name='${catRowsClass}'><td style='text-align:center;'>${monthName}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${amount.toFixed(2)}</td></tr>`;
                 });
-
-                htmlTable += `<tr class='category-total-row' name='${catRowsClass}'>
-                    <td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات تصنيف [${categoryName}]</td>
-                    <td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td>
-                </tr>`;
+                htmlTable += `<tr class='category-total-row' name='${catRowsClass}'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td></tr>`;
             });
 
             chartHtml += `</div>`;
-
-            let momTrendText = "";
-            if (previousMonthTotal > 0) {
-                let difference = monthTotal - previousMonthTotal;
-                let percentChange = (difference / previousMonthTotal) * 100;
-                momTrendText = difference > 0 ? ` 📈 (زيادة بمقدار ${percentChange.toFixed(1)}% عن الشهر السابق)` : ` 📉 (وفر وانخفاض بمقدار ${Math.abs(percentChange).toFixed(1)}% عن الشهر السابق)`;
-            } else {
-                momTrendText = " 🏁 [شهر الأساس الأول]";
-            }
-
+            let momTrendText = previousMonthTotal > 0 ? ((monthTotal - previousMonthTotal) > 0 ? ` 📈 (زيادة عن الشهر السابق)` : ` 📉 (وفر عن الشهر السابق)`) : " 🏁 [شهر الأساس الأول]";
             htmlTable += `</tbody></table>`;
 
-            let totalTableHtml = `
-            <table class='month-total-table'>
-                <tr class='month-total-row'>
-                    <td style='padding-right:20px;'>💰 إجمالي حجم الصرف الكلي لشهر (${monthName})${momTrendText}</td>
-                    <td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td>
-                </tr>
-            </table>`;
+            let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td></tr></table>`;
 
-            let jarsHtml = generateJarsHtmlForMonth(categoriesMap);
-            let monthDataDiv = document.createElement('div');
-            monthDataDiv.innerHTML = jarsHtml + htmlTable + totalTableHtml + chartHtml;
+            // تشغيل محرك الأظرف بالتزامن مع تمرير المدوّر وحساب الوفر الفعلي
+            let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover);
             
+            let monthDataDiv = document.createElement('div');
+            monthDataDiv.innerHTML = jarsResult.html + htmlTable + totalTableHtml + chartHtml;
             monthBlock.appendChild(monthDataDiv);
             resultsContainer.appendChild(monthBlock);
+            
+            // تدوير الفائض والمتبقي تلقائياً للشهر الذي يليه
+            runningCarryover = jarsResult.monthSurplus > 0 ? jarsResult.monthSurplus : 0;
             previousMonthTotal = monthTotal;
         });
-// الجزء 4-ج: بناء المخطط التحليلي الشامل التراكمي وجدول كاشف ومجمع الاشتراكات المطور
-        let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل والنهائي لكافة الأشهر المحددة معاً</h2>
-                               <p style='text-align:center; color:#718096; font-size:14px; margin-bottom:20px;'>يوضح الحجم الإجمالي التراكمي الاستهلاكي لكل تصنيف على مدار كامل فترة الفلترة المشمولة</p>`;
-
+        // المخطط التراكمي الشامل لكافة الشهور المحددة
+        let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل لكافة الأشهر</h2>`;
         let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
         Object.keys(globalCategorySums).sort((a,b) => globalCategorySums[b] - globalCategorySums[a]).forEach(cat => {
             let amount = globalCategorySums[cat];
-            let percentage = globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0;
-            
-            globalChartHtml += `
-                <div class='chart-bar-row'>
-                    <div class='chart-label' style='color:#2B6CB0;'>👑 ${cat}</div>
-                    <div class='chart-bar-container'>
-                        <div class='chart-bar-fill' style='width: ${percentage.toFixed(1)}%; background: linear-gradient(90deg, #2B6CB0, #3182CE);'></div>
-                    </div>
-                    <div class='chart-value' style='font-weight:bold;'>$${amount.toFixed(2)} (${percentage.toFixed(1)}%)</div>
-                </div>
-            `;
+            globalChartHtml += `<div class='chart-bar-row'><div class='chart-label' style='color:#2B6CB0;'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${amount.toFixed(2)}</div></div>`;
         });
-        
-        let globalBlock = document.createElement('div');
-        globalBlock.className = 'global-block-wrapper';
-        globalBlock.innerHTML = globalChartHtml;
-        resultsContainer.appendChild(globalBlock);
+        let globalBlock = document.createElement('div'); globalBlock.className = 'global-block-wrapper';
+        globalBlock.innerHTML = globalChartHtml; resultsContainer.appendChild(globalBlock);
 
-        let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'>
-            <h2 style='color:#234E52; text-align:center; margin-top:10px;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2>
-            <p style='text-align:center; color:#4A5568; font-size:14px; margin-bottom:20px;'>الأوصاف التي تكررت بنفس الاسم على مدار أشهر مختلفة</p>
-            <table>
-                <tr><th>الوصف (Subscription)</th><th>عدد أشهر التكرار</th><th>متوسط الصرف الشهري</th></tr>`;
-
-        let hasSubscriptions = false;
+        // جدول مجمع كاشف الاشتراكات المطور بمتوسط النفقات الدورية
+        let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
         Object.keys(descriptionMonths).forEach(desc => {
             if (descriptionMonths[desc].size >= 2) {
-                hasSubscriptions = true;
-                let sum = descriptionAmounts[desc].reduce((a, b) => a + b, 0);
-                let avg = sum / descriptionMonths[desc].size;
-                
-                subscriptionHtml += `<tr>
-                    <td style='color:#234E52;'>🔄 ${desc}</td>
-                    <td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td>
-                    <td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td>
-                </tr>`;
+                let avg = descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
+                subscriptionHtml += `<tr><td style='color:#234E52;'>🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td></tr>`;
             }
         });
-
-        if (!hasSubscriptions) {
-            subscriptionHtml += `<tr><td colspan='3' style='text-align:center; color:#718096;'>لم يتم اكتشاف أي نفقات أو اشتراكات متكررة في هذه الفترة يا حمودة.</td></tr>`;
-        }
         subscriptionHtml += `</table></div>`;
-
-        let subBlock = document.createElement('div');
-        subBlock.innerHTML = subscriptionHtml;
-        resultsContainer.appendChild(subBlock);
+        let subBlock = document.createElement('div'); subBlock.innerHTML = subscriptionHtml; resultsContainer.appendChild(subBlock);
     };
     reader.readAsText(file, 'UTF-8');
 }
-// الجزء 4-د: دوال الطي والتوسيع الشامل والذكي ووسوم نهاية ملف الـ HTML
-function toggleMonthSection(monthBodyId, headerElement) {
-    const element = document.getElementById(monthBodyId);
-    const iconElement = headerElement.querySelector('.collapse-icon');
-    if (element) {
-        if (element.style.display === "none") {
-            element.style.display = "";
-            if (iconElement) iconElement.innerHTML = "▲";
-        } else {
-            element.style.display = "none";
-            if (iconElement) iconElement.innerHTML = "▼";
-        }
-    }
-}
 
-function toggleCategorySection(targetClass, headerElement) {
-    const rows = document.getElementsByName(targetClass);
-    const iconElement = headerElement.querySelector('.collapse-icon');
-    if (rows.length > 0) {
-        const isHidden = rows[0].style.display === "none";
-        for (let i = 0; i < rows.length; i++) {
-            rows[i].style.display = isHidden ? "" : "none";
-        }
-        if (iconElement) iconElement.innerHTML = isHidden ? "▲" : "▼";
-    }
+// مستمعات الأحداث التفاعلية المقاومة للتخريب للطي الذكي
+function toggleMonthSection(id, cell) {
+    let el = document.getElementById(id); let icon = cell.querySelector('.collapse-icon');
+    if (el.style.display === 'none') { el.style.display = ''; icon.innerHTML = '▲'; } else { el.style.display = 'none'; icon.innerHTML = '▼'; }
 }
-
-function toggleAllCategoriesInMonth(monthBodyId, event) {
-    event.stopPropagation(); 
-    const tbody = document.getElementById(monthBodyId);
-    if (!tbody) return;
-    
-    const catHeaders = tbody.querySelectorAll('.category-header-row');
-    if (catHeaders.length === 0) return;
-    
-    const firstTargetClass = catHeaders[0].getAttribute('data-target-class');
-    const firstRows = document.getElementsByName(firstTargetClass);
-    const shouldHide = firstRows.length > 0 && firstRows[0].style.display !== "none";
-    
-    catHeaders.forEach(header => {
-        const targetClass = header.getAttribute('data-target-class');
-        const rows = document.getElementsByName(targetClass);
-        const iconElement = header.querySelector('.collapse-icon');
-        
-        for (let i = 0; i < rows.length; i++) {
-            rows[i].style.display = shouldHide ? "none" : "";
-        }
-        if (iconElement) iconElement.innerHTML = shouldHide ? "▼" : "▲";
+function toggleCategorySection(cl, row) {
+    let rows = document.getElementsByName(cl); let icon = row.querySelector('.collapse-icon');
+    let isH = rows[0].style.display === "none"; rows.forEach(r => r.style.display = isH ? "" : "none");
+    icon.innerHTML = isH ? "▲" : "▼";
+}
+function toggleAllCategoriesInMonth(id, e) {
+    e.stopPropagation(); let tb = document.getElementById(id); let hdrs = tb.querySelectorAll('.category-header-row');
+    if (!hdrs.length) return;
+    let firstTargetClass = hdrs[0].getAttribute('data-target-class');
+    let firstRows = document.getElementsByName(firstTargetClass);
+    let shouldHide = firstRows.length > 0 && firstRows[0].style.display !== "none";
+    hdrs.forEach(h => {
+        let rows = document.getElementsByName(h.getAttribute('data-target-class'));
+        rows.forEach(r => r.style.display = shouldHide ? "none" : "");
+        h.querySelector('.collapse-icon').innerHTML = shouldHide ? "▼" : "▲";
     });
 }
 </script>
