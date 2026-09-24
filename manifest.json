@@ -23,9 +23,9 @@
       "label": "Application Desktop View"
     },
     {
-      "src": "1.jpg",
+      "src": "9.png",
       "sizes": "320x640",
-      "type": "image/jpg",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "Application Mobile View"
     }
