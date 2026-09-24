@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F7FAFC; color: #2D3748; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 1200px; width: 100%; box-sizing: border-box; margin-bottom: 30px; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; width: 100%; box-sizing: border-box; margin-bottom: 30px; }
         h2 { color: #1A365D; text-align: center; margin-bottom: 25px; font-weight: bold; }
         .form-group { margin-bottom: 20px; display: flex; flex-direction: column; }
         label { font-weight: bold; margin-bottom: 8px; color: #4A5568; }
@@ -18,7 +18,7 @@
         button { background-color: #1A365D; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: background 0.2s; }
         button:hover { background-color: #2B6CB0; }
         
-        #resultsContainer { max-width: 1200px; width: 100%; display: none; }
+        #resultsContainer { max-width: 800px; width: 100%; display: none; }
         .month-block-wrapper, .global-block-wrapper { background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 35px; padding: 20px; border: 1px solid #E2E8F0; }
         .global-block-wrapper { border: 2px solid #2B6CB0; background-color: #F8FAFC; }
         
@@ -146,8 +146,14 @@ function parseJavaDate(dateStr) {
 </script>
 <script>
 // محرك حساب الأظرف وضخ فائض الوفر المالي بداخل خانة تحويش المستقبل
-function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, currentMonthCarryover) {
+// محرك حساب الأظرف المطور المدمج به حقل الإضافات والمدور المالي التراكمي
+function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, currentMonthCarryover, mIdx) {
     const totalIncome = parseFloat(document.getElementById('monthly-income-input').value) || 0;
+    
+    // جلب قيمة الإضافات المخصصة لهذا الشهر من حقل الإدخال برمجياً (إذا كان موجوداً)
+    const additionsInput = document.getElementById(`additions-input-${mIdx}`);
+    const monthAdditions = additionsInput ? (parseFloat(additionsInput.value) || 0) : 0;
+
     let monthJarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
     
     Object.keys(monthCategoriesMap).forEach(cat => {
@@ -160,8 +166,8 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
         }
     });
 
-    // معادلة الموازنة الكلية = الراتب + المدوّر من الشهر الماضي
-    const totalAvailableBudget = totalIncome + currentMonthCarryover;
+    // الحسبة الهندسية الكبرى: الموازنة المتاحة = الراتب + المدوّر + الإضافات المخصصة لهذا الشهر
+    const totalAvailableBudget = totalIncome + currentMonthCarryover + monthAdditions;
     const unspentSurplus = totalAvailableBudget - totalMonthExpense;
     
     // حقن وتوجيه كل ما لم ينصرف بداخل ظرف تحويش المستقبل تلقائياً
@@ -171,7 +177,13 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
 
     let html = `<div class='jars-section-box'>
         <h3 style='color:#1A365D; text-align:center; margin-top:0; margin-bottom:10px; font-size:14pt;'>🎯 ميزانية الأظرف الخمسة لهذا الشهر</h3>
-        <p style='text-align:center; font-size:13px; color:#4A5568; margin:0 0 15px 0;'>📈 المدوّر السابق: <strong>$${currentMonthCarryover.toFixed(2)}</strong> | 💸 الصرف الكلي للشهر: <strong style='color:#E53E3E;'>$${totalMonthExpense.toFixed(2)}</strong> | ✨ وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${Math.max(0, unspentSurplus).toFixed(2)}</strong></p>`;
+        <p style='text-align:center; font-size:13px; color:#4A5568; margin:0 0 12px 0;'>📈 المدوّر السابق: <strong>$${currentMonthCarryover.toFixed(2)}</strong> | 💸 الصرف الكلي للشهر: <strong style='color:#E53E3E;'>$${totalMonthExpense.toFixed(2)}</strong> | ✨ وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${Math.max(0, unspentSurplus).toFixed(2)}</strong></p>
+        
+        <!-- حقل الإضافات الجديد الخاص بهذا الشهر مستقل ومتجاوب 100% -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; background: #FFF5F5; padding: 6px; border-radius: 6px; border: 1px dashed #FEB2B2; max-width: 320px; margin-left: auto; margin-right: auto;">
+            <label for="additions-input-${mIdx}" style="font-size: 11px; margin: 0; color: #C53030;">➕ إضافات ومكافآت هذا الشهر ($):</label>
+            <input type="number" id="additions-input-${mIdx}" value="${monthAdditions}" min="0" oninput="processAndDisplay(false)" style="padding: 4px 8px; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; color: #C53030;">
+        </div>`;
 
     for (const key in JARS_MAPPING) {
         const jar = JARS_MAPPING[key];
@@ -189,16 +201,16 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
                     <div class='jars-bar-fill' style='width: ${Math.min(percentOfTarget, 100)}%; background-color: ${barColor};'></div>
                 </div>
                 <div style='display: flex; flex-direction: column; align-items: flex-end; justify-content: center; font-size: 11px; min-width: 140px; text-align: left; line-height: 1.4;'>
-    <div>الفعلي: <span style='color:${barColor}; font-weight:bold;'>$${actualAmount.toFixed(2)}</span></div>
-    <div style='color: #718096;'>المستهدف: $${targetAmount.toFixed(2)} (${percentOfTarget.toFixed(1)}%)</div>
-</div>
-
+                    <div>الفعلي: <span style='color:${barColor}; font-weight:bold;'>$${actualAmount.toFixed(2)}</span></div>
+                    <div style='color: #718096;'>المستهدف: $${targetAmount.toFixed(2)} (${percentOfTarget.toFixed(1)}%)</div>
+                </div>
             </div>
         `;
     }
     html += `</div>`;
     return { html: html, monthSurplus: unspentSurplus };
 }
+
 </script>
 <script>
 function processAndDisplay(isExplicitClick) {
@@ -330,7 +342,7 @@ let chartHtml = `<div class='native-chart-wrapper'>
             let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td></tr></table>`;
 
             // تشغيل محرك الأظرف بالتزامن مع تمرير المدوّر وحساب الوفر الفعلي
-            let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover);
+			let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, mIdx);
             
             let monthDataDiv = document.createElement('div');
             monthDataDiv.innerHTML = jarsResult.html + htmlTable + totalTableHtml + chartHtml;
