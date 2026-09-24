@@ -255,9 +255,12 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
                         <span style='color: #718096; font-size: 11px;'>/ المستهدف: $${targetAmount.toFixed(2)} (${percentOfTarget.toFixed(1)}%)</span>
                     </span>
                 </div>
-                <div class='jars-bar-container' style='margin: 0; width: 100%; box-sizing: border-box;'>
-                    <div class='jars-bar-fill' style='width: ${Math.min(percentOfTarget, 100)}%; background-color: ${barColor};'></div>
-                </div>
+                <!-- حاوية الشريط الخارجي الخلفية رمادية مستقرة -->
+<div style='background-color: #EDF2F7; height: 16px; border-radius: 8px; overflow: hidden; margin: 5px 0; position: relative; border: 1px solid #CBD5E0; width: 100%; box-sizing: border-box;'>
+    <!-- شريط التعبئة الداخلي الملون التفاعلي الديناميكي -->
+    <div style='width: ${Math.min(percentOfTarget, 100)}%; background-color: ${barColor}; height: 100%; border-radius: 8px; transition: width 0.3s ease;'></div>
+</div>
+
             </div>
         `;
     }
