@@ -231,7 +231,7 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
         <!-- حقل الإضافات الجديد الخاص بهذا الشهر مستقل ومتجاوب 100% -->
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; background: #FFF5F5; padding: 6px; border-radius: 6px; border: 1px dashed #FEB2B2; max-width: 320px; margin-left: auto; margin-right: auto;">
             <label for="additions-input-${mIdx}" style="font-size: 11px; margin: 0; color: #C53030;">➕ إضافات ومكافآت هذا الشهر ($):</label>
-            <input type="number" id="additions-input-${mIdx}" value="${globalMonthAdditions[mIdx] || 0}" min="0" onchange="updateAdditionsMemory('${mIdx}', this)" style="padding: 4px 8px; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; color: #C53030;">
+            <input type="number" id="additions-input-${mIdx}" value="${globalMonthAdditions[mIdx] || 0}" min="0" oninput="updateAdditionsMemory('${mIdx}', this)" style="padding: 4px 8px; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; color: #C53030;">
 
         </div>`;
 
@@ -454,10 +454,23 @@ htmlTable += `</tbody></table></div>`;
     let subBlock = document.createElement('div'); subBlock.innerHTML = subscriptionHtml; resultsContainer.appendChild(subBlock);
 }
 
-// دالة تفاعلية وسيطة لتحديث مصفوفة الذاكرة عند الكتابة وإعادة تدوير الفائض فوراً
+// دالة الذاكرة المحدثة لالتقاط الأرقام فورياً وحقنها بالسلسلة دون تصفير
 function updateAdditionsMemory(monthKey, inputElement) {
+    // تحديث المصفوفة العالمية فوراً مع كل حرف يتم كتابته
     globalMonthAdditions[monthKey] = parseFloat(inputElement.value) || 0;
+    
+    // استدعاء محرك إعادة الحساب وتحديث أشرطة الأظرف ديناميكياً
     recalculateAndRenderUI();
+    
+    // إعادة التركيز (Focus) تلقائياً للمؤشر بداخل الحقل لمنع التجمد ونقل المؤشر لآخر الرقم
+    const activeInput = document.getElementById(`additions-input-${monthKey}`);
+    if (activeInput) {
+        activeInput.focus();
+        // خدعة برمجية لنقل مؤشر الكتابة إلى نهاية الرقم المكتوب
+        const val = activeInput.value;
+        activeInput.value = '';
+        activeInput.value = val;
+    }
 }
 
 
