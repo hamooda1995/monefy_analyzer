@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📊 لوحة تحليلات مصاريف Monefy الشاملة - حمودة</title>
+	<link rel="icon" type="image/png" href="money-bags.png">
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F7FAFC; color: #2D3748; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; width: 100%; box-sizing: border-box; margin-bottom: 30px; }
@@ -56,6 +57,13 @@
 <body>
 
 <div class="container">
+<!-- زر التثبيت الذكي المتوافق مع الموبايل والكمبيوتر -->
+<div style="text-align: center; margin-bottom: 15px;">
+    <button id="pwaInstallBtn" style="display: none; background-color: #319795; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        📲 تثبيت لوحة التحكم كتطبيق على الهاتف
+    </button>
+</div>
+
     <h2>📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة</h2>
     
     <div class="form-group">
@@ -420,6 +428,36 @@ function toggleAllCategoriesInMonth(monthBodyId, event) {
         if (iconElement) iconElement.innerHTML = shouldHide ? "▼" : "▲";
     });
 }
+// 📱 كود تشغيل وتثبيت التطبيق التقدمي PWA الخاص بحمودة
+let deferredPrompt;
+const installBtn = document.getElementById('pwaInstallBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // منع المتصفح من إظهار التنبيه التلقائي المزعج
+    e.preventDefault();
+    deferredPrompt = e;
+    // إظهار الزر الأنيق الخاص بنا فقط إذا كان الجهاز يدعم التثبيت
+    if (installBtn) installBtn.style.display = 'inline-block';
+});
+
+if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        // إظهار نافذة التثبيت الرسمية للموبايل
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            installBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
+    });
+}
+
+window.addEventListener('appinstalled', () => {
+    if (installBtn) installBtn.style.display = 'none';
+    deferredPrompt = null;
+});
+
 </script>
 <div class="footer">تم تحديث وقفل كامل ميزات لوحة التحكم المالية الشخصية بنجاح يا حمودة 🚀</div>
 </body>
