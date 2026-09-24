@@ -7,7 +7,17 @@
     <link rel="manifest" href="manifest.json">
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F7FAFC; color: #2D3748; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; width: 100%; box-sizing: border-box; margin-bottom: 30px; }
+        .container { 
+    background: white; 
+    padding: 20px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+    max-width: 800px; 
+    width: 95%; /* تضمن ألا يلتصق الحواف في الشاشات الصغيرة */
+    box-sizing: border-box; 
+    margin-bottom: 30px; 
+}
+
         h2 { color: #1A365D; text-align: center; margin-bottom: 25px; font-weight: bold; }
         .form-group { margin-bottom: 20px; display: flex; flex-direction: column; }
         label { font-weight: bold; margin-bottom: 8px; color: #4A5568; }
@@ -22,7 +32,15 @@
         .month-block-wrapper, .global-block-wrapper { background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 35px; padding: 20px; border: 1px solid #E2E8F0; }
         .global-block-wrapper { border: 2px solid #2B6CB0; background-color: #F8FAFC; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-weight: bold; margin-bottom: 0px; }
+        table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+    font-weight: bold; 
+    display: block; 
+    overflow-x: auto; /* تمرير أفقي مخصص للجدول فقط إذا كان عريضاً */
+    white-space: nowrap; 
+}
         th { background-color: #1A365D; color: white; padding: 12px 10px; border: 1px solid #A0AEC0; font-size: 14pt; text-align: center; }
         td { padding: 11px 10px; border: 1px solid #CBD5E0; text-align: right; font-size: 14pt; color: #2D3748; }
         tr:nth-child(even) { background-color: #F7FAFC; }
@@ -41,8 +59,23 @@
         .month-total-table td { background-color: #CBD5E0; color: #1A202C; border: 2px solid #4A5568; font-size: 14pt; padding: 11px 10px; text-align: right; }
         
         .native-chart-wrapper { background: #FFF; border-radius: 8px; padding: 15px; margin-top: 20px; border: 1px solid #E2E8F0; }
-        .chart-bar-row { display: flex; align-items: center; margin-bottom: 12px; font-size: 13px; font-weight: bold; }
-        .chart-label { width: 150px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; color: #4A5568; }
+        .chart-bar-row { 
+    display: flex; 
+    flex-wrap: wrap; /* ينزل لسطر جديد إذا كانت الشاشة صغيرة جداً */
+    align-items: center; 
+    margin-bottom: 12px; 
+    font-size: 13px; 
+    font-weight: bold; 
+    gap: 10px;
+}
+        .chart-label { 
+    width: 100%; /* تأخذ سطر كامل على الموبايل ليعطي مساحة للشريط */
+    max-width: 150px;
+    text-overflow: ellipsis; 
+    overflow: hidden; 
+    white-space: nowrap; 
+    color: #4A5568; 
+}
         .chart-bar-container { flex: 1; background-color: #EDF2F7; height: 24px; border-radius: 4px; overflow: hidden; margin: 0 15px; position: relative; }
         .chart-bar-fill { background: linear-gradient(90deg, #3182CE, #4299E1); height: 100%; border-radius: 4px; transition: width 0.5s ease-in-out; }
         .chart-value { width: 110px; text-align: left; color: #2D3748; }
@@ -56,6 +89,11 @@
         .jars-bar-container { flex: 1; background-color: #E2E8F0; height: 16px; border-radius: 8px; overflow: hidden; margin: 0 15px; position: relative; border: 1px solid #CBD5E0; }
         .jars-bar-fill { height: 100%; border-radius: 8px; transition: width 0.4s ease; }
         .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #A0AEC0; }
+		@media (max-width: 600px) {
+    .date-row { flex-direction: column; gap: 10px; }
+    td, th { font-size: 11pt !important; padding: 8px 5px !important; }
+    h2 { font-size: 16px !important; }
+}
     </style>
 </head>
 <body>
@@ -128,6 +166,9 @@ const JARS_MAPPING = {
 };
 
 let isDataAnalyzed = false; // راية حماية لمنع العمل التلقائي قبل الضغط على الزر
+// مصفوفة عالمية مقدسة لحفظ بيانات الـ CSV في الذاكرة ومنع التصفير عند التحديث اللحظي
+let globalParsedRowsData = [];
+let isFileAlreadyLoaded = false;
 
 function triggerConditionalCalculation() {
     if (isDataAnalyzed) { processAndDisplay(false); }
@@ -213,10 +254,17 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
 
 </script>
 <script>
+// دالة التحليل الكبرى (تقرأ الملف لمرة واحدة وتخزنه في الذاكرة العالمية لمنع تصفير القيم)
 function processAndDisplay(isExplicitClick) {
     const fileInput = document.getElementById('csvFile');
     const startDateInput = document.getElementById('startDate').value;
     const endDateInput = document.getElementById('endDate').value;
+
+    // إذا كان تحديثاً لحظياً والبيانات موجودة في الذاكرة، نعيد الحساب والرسم فوراً
+    if (!isExplicitClick && isFileAlreadyLoaded) {
+        recalculateAndRenderUI();
+        return;
+    }
 
     if (!fileInput.files || !fileInput.files.length) {
         if (isExplicitClick) alert('الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً يا حمودة!');
@@ -236,12 +284,8 @@ function processAndDisplay(isExplicitClick) {
         const lines = text.split(/\r?\n/);
         if (lines.length < 2) return;
 
-        const headerLine = lines[0];
-        const separator = headerLine.includes('\t') ? '\t' : ',';
-        let monthlyAnalysis = {};
-        let globalCategorySums = {}; 
-        let descriptionMonths = {}; 
-        let descriptionAmounts = {}; 
+        const separator = lines[0].includes('\t') ? '\t' : ',';
+        globalParsedRowsData = []; // تصفية الذاكرة السابقة
 
         for (let i = 1; i < lines.length; i++) {
             let line = lines[i]; if (!line.trim()) continue;
@@ -263,119 +307,140 @@ function processAndDisplay(isExplicitClick) {
                     let convertedAmount = parseFloat(amountStr);
                     if (convertedAmount >= 0) continue;
                     let actualExpense = Math.abs(convertedAmount);
-                    let monthKey = rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, '0');
 
-                    if (!monthlyAnalysis[monthKey]) monthlyAnalysis[monthKey] = {};
-                    if (!monthlyAnalysis[monthKey][category]) monthlyAnalysis[monthKey][category] = {};
-                    monthlyAnalysis[monthKey][category][description] = (monthlyAnalysis[monthKey][category][description] || 0) + actualExpense;
-
-                    globalCategorySums[category] = (globalCategorySums[category] || 0) + actualExpense;
-                    
-                    if (description !== "بدون وصف") {
-                        if (!descriptionMonths[description]) descriptionMonths[description] = new Set();
-                        descriptionMonths[description].add(monthKey);
-                        if (!descriptionAmounts[description]) descriptionAmounts[description] = [];
-                        descriptionAmounts[description].push(actualExpense);
-                    }
+                    // تخزين السطر في الذاكرة العالمية المستقرة
+                    globalParsedRowsData.push({
+                        date: rowDate,
+                        monthKey: rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, '0'),
+                        category: category,
+                        description: description,
+                        amount: actualExpense
+                    });
                 }
             } catch (err) {}
         }
-        const resultsContainer = document.getElementById('resultsContainer');
-        resultsContainer.innerHTML = ""; resultsContainer.style.display = "block";
 
-        let sortedMonths = Object.keys(monthlyAnalysis).sort();
-        if (sortedMonths.length === 0) {
-            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ!</div>";
-            return;
-        }
-
-        // التقاط القيمة البدائية المدوّرة وتمريرها تصاعدياً بين الشهور تلقائياً
-        let runningCarryover = parseFloat(document.getElementById('initial-carryover-input').value) || 0;
-        let previousMonthTotal = 0;
-
-        sortedMonths.forEach((monthName, mIdx) => {
-            let monthTotal = 0;
-            let categoriesMap = monthlyAnalysis[monthName];
-            let categorySums = {};
-
-            Object.keys(categoriesMap).forEach(cat => {
-                let sum = Object.values(categoriesMap[cat]).reduce((a, b) => a + b, 0);
-                categorySums[cat] = sum; monthTotal += sum;
-            });
-
-            let monthBlock = document.createElement('div');
-            monthBlock.className = 'month-block-wrapper';
-            let monthBodyId = `month_body_${mIdx}`;
-
-            let htmlTable = `<table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}'>`;
-
-            let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
-            let chartBodyId = `chart_body_${mIdx}`;
-let chartHtml = `<div class='native-chart-wrapper'>
-    <h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='color:#1A365D; text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'>
-        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▲</span> 📊 التوزيع المرئي لنفقات شهر ${monthName} (اضغط للطي/التوسيع)
-    </h3>
-    <div id='${chartBodyId}'>`;
-
-
-            sortedCats.forEach((categoryName, cIdx) => {
-                let categoryTotal = categorySums[categoryName];
-                let categoryPercentage = monthTotal > 0 ? (categoryTotal / monthTotal) * 100 : 0;
-                chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
-
-                let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
-                htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▲</span> 📁 [${categoryName}]</span><span style='color: #2B6CB0; font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
-
-                let descMap = categoriesMap[categoryName];
-                Object.keys(descMap).sort((a, b) => descMap[b] - descMap[a]).forEach(descriptionName => {
-                    let amount = descMap[descriptionName];
-                    let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
-                    htmlTable += `<tr${rowClass} name='${catRowsClass}'><td style='text-align:center;'>${monthName}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${amount.toFixed(2)}</td></tr>`;
-                });
-                htmlTable += `<tr class='category-total-row' name='${catRowsClass}'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td></tr>`;
-            });
-
-            chartHtml += `</div></div>`;
-            let momTrendText = previousMonthTotal > 0 ? ((monthTotal - previousMonthTotal) > 0 ? ` 📈 (زيادة عن الشهر السابق)` : ` 📉 (وفر عن الشهر السابق)`) : " 🏁 [شهر الأساس الأول]";
-            htmlTable += `</tbody></table>`;
-
-            let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td></tr></table>`;
-
-            // تشغيل محرك الأظرف بالتزامن مع تمرير المدوّر وحساب الوفر الفعلي
-			let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, mIdx);
-            
-            let monthDataDiv = document.createElement('div');
-            monthDataDiv.innerHTML = jarsResult.html + htmlTable + totalTableHtml + chartHtml;
-            monthBlock.appendChild(monthDataDiv);
-            resultsContainer.appendChild(monthBlock);
-            
-            // تدوير الفائض والمتبقي تلقائياً للشهر الذي يليه
-            runningCarryover = jarsResult.monthSurplus > 0 ? jarsResult.monthSurplus : 0;
-            previousMonthTotal = monthTotal;
-        });
-        // المخطط التراكمي الشامل لكافة الشهور المحددة
-        let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل لكافة الأشهر</h2>`;
-        let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
-        Object.keys(globalCategorySums).sort((a,b) => globalCategorySums[b] - globalCategorySums[a]).forEach(cat => {
-            let amount = globalCategorySums[cat];
-            globalChartHtml += `<div class='chart-bar-row'><div class='chart-label' style='color:#2B6CB0;'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${amount.toFixed(2)}</div></div>`;
-        });
-        let globalBlock = document.createElement('div'); globalBlock.className = 'global-block-wrapper';
-        globalBlock.innerHTML = globalChartHtml; resultsContainer.appendChild(globalBlock);
-
-        // جدول مجمع كاشف الاشتراكات المطور بمتوسط النفقات الدورية
-        let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
-        Object.keys(descriptionMonths).forEach(desc => {
-            if (descriptionMonths[desc].size >= 2) {
-                let avg = descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
-                subscriptionHtml += `<tr><td style='color:#234E52;'>🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td></tr>`;
-            }
-        });
-        subscriptionHtml += `</table></div>`;
-        let subBlock = document.createElement('div'); subBlock.innerHTML = subscriptionHtml; resultsContainer.appendChild(subBlock);
+        isFileAlreadyLoaded = true;
+        recalculateAndRenderUI(); // استدعاء محرك الرسم والتحديث
     };
     reader.readAsText(file, 'UTF-8');
 }
+// محرك الرسم والتدوير الذكي: يعيد الحساب اللحظي الفوري من الذاكرة دون لمس الملف أو تصفير القيم
+function recalculateAndRenderUI() {
+    let monthlyAnalysis = {};
+    let globalCategorySums = {}; 
+    let descriptionMonths = {}; 
+    let descriptionAmounts = {}; 
+
+    // إعادة تجميع البيانات من الذاكرة العالمية المستقرة
+    globalParsedRowsData.forEach(row => {
+        if (!monthlyAnalysis[row.monthKey]) monthlyAnalysis[row.monthKey] = {};
+        if (!monthlyAnalysis[row.monthKey][row.category]) monthlyAnalysis[row.monthKey][row.category] = {};
+        monthlyAnalysis[row.monthKey][row.category][row.description] = (monthlyAnalysis[row.monthKey][row.category][row.description] || 0) + row.amount;
+
+        globalCategorySums[row.category] = (globalCategorySums[row.category] || 0) + row.amount;
+        
+        if (row.description !== "بدون وصف") {
+            if (!descriptionMonths[row.description]) descriptionMonths[row.description] = new Set();
+            descriptionMonths[row.description].add(row.monthKey);
+            if (!descriptionAmounts[row.description]) descriptionAmounts[row.description] = [];
+            descriptionAmounts[row.description].push(row.amount);
+        }
+    });
+
+    const resultsContainer = document.getElementById('resultsContainer');
+    resultsContainer.innerHTML = ""; resultsContainer.style.display = "block";
+
+    let sortedMonths = Object.keys(monthlyAnalysis).sort();
+    if (sortedMonths.length === 0) {
+        resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة!</div>";
+        return;
+    }
+
+    let runningCarryover = parseFloat(document.getElementById('initial-carryover-input').value) || 0;
+    let previousMonthTotal = 0;
+
+    sortedMonths.forEach((monthName, mIdx) => {
+        let monthTotal = 0;
+        let categoriesMap = monthlyAnalysis[monthName];
+        let categorySums = {};
+
+        Object.keys(categoriesMap).forEach(cat => {
+            let sum = Object.values(categoriesMap[cat]).reduce((a, b) => a + b, 0);
+            categorySums[cat] = sum; monthTotal += sum;
+        });
+
+        let monthBlock = document.createElement('div');
+        monthBlock.className = 'month-block-wrapper';
+        let monthBodyId = `month_body_${mIdx}`;
+
+        let htmlTable = `<table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}'>`;
+
+        let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
+        
+        let chartBodyId = `chart_body_${mIdx}`;
+        let chartHtml = `<div class='native-chart-wrapper'>
+            <h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='color:#1A365D; text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'>
+                <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▲</span> 📊 التوزيع المرئي لنفقات شهر ${monthName} (اضغط للطي/التوسيع)
+            </h3>
+            <div id='${chartBodyId}'>`;
+
+        sortedCats.forEach((categoryName, cIdx) => {
+            let categoryTotal = categorySums[categoryName];
+            let categoryPercentage = monthTotal > 0 ? (categoryTotal / monthTotal) * 100 : 0;
+            chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
+
+            let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
+            htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▲</span> 📁 [${categoryName}]</span><span style='color: #2B6CB0; font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
+
+            let descMap = categoriesMap[categoryName];
+            Object.keys(descMap).sort((a, b) => descMap[b] - descMap[a]).forEach(descriptionName => {
+                let amount = descMap[descriptionName];
+                let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
+                htmlTable += `<tr${rowClass} name='${catRowsClass}'><td style='text-align:center;'>${monthName}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${amount.toFixed(2)}</td></tr>`;
+            });
+            htmlTable += `<tr class='category-total-row' name='${catRowsClass}'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td></tr>`;
+        });
+
+        chartHtml += `</div></div>`;
+        let momTrendText = previousMonthTotal > 0 ? ((monthTotal - previousMonthTotal) > 0 ? ` 📈 (زيادة عن الشهر السابق)` : ` 📉 (وفر عن الشهر السابق)`) : " 🏁 [شهر الأساس الأول]";
+        htmlTable += `</tbody></table>`;
+
+        let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td></tr></table>`;
+
+        let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, mIdx);
+        
+        let monthDataDiv = document.createElement('div');
+        monthDataDiv.innerHTML = jarsResult.html + htmlTable + totalTableHtml + chartHtml;
+        monthBlock.appendChild(monthDataDiv);
+        resultsContainer.appendChild(monthBlock);
+        
+        runningCarryover = jarsResult.monthSurplus > 0 ? jarsResult.monthSurplus : 0;
+        previousMonthTotal = monthTotal;
+    });
+
+    // بناء المخطط التراكمي الشامل لكافة الأشهر
+    let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل لكافة الأشهر</h2>`;
+    let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
+    Object.keys(globalCategorySums).sort((a,b) => globalCategorySums[b] - globalCategorySums[a]).forEach(cat => {
+        let amount = globalCategorySums[cat];
+        globalChartHtml += `<div class='chart-bar-row'><div class='chart-label' style='color:#2B6CB0;'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${amount.toFixed(2)}</div></div>`;
+    });
+    let globalBlock = document.createElement('div'); globalBlock.className = 'global-block-wrapper';
+    globalBlock.innerHTML = globalChartHtml; resultsContainer.appendChild(globalBlock);
+
+    // جدول كاشف الاشتراكات المطور
+    let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
+    Object.keys(descriptionMonths).forEach(desc => {
+        if (descriptionMonths[desc].size >= 2) {
+            let avg = descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
+            subscriptionHtml += `<tr><td style='color:#234E52;'>🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td></tr>`;
+        }
+    });
+    subscriptionHtml += `</table></div>`;
+    let subBlock = document.createElement('div'); subBlock.innerHTML = subscriptionHtml; resultsContainer.appendChild(subBlock);
+}
+
 
 // مستمعات الأحداث التفاعلية المقاومة للتخريب للطي الذكي
 function toggleMonthSection(id, cell) {
