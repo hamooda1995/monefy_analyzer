@@ -8,30 +8,24 @@
   "description": "A completely simple static page that can be installed.",
   "icons": [
     {
-      "src": "https://flaticon.com",
+      "src": "sack-dollar-solid.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://flaticon.com",
-      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
   ],
   "screenshots": [
     {
-      "src": "https://placeholder.com",
+      "src": "9.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Application Desktop View"
     },
     {
-      "src": "https://placeholder.com",
+      "src": "1.jpg",
       "sizes": "320x640",
-      "type": "image/png",
+      "type": "image/jpg",
       "form_factor": "narrow",
       "label": "Application Mobile View"
     }
