@@ -8,9 +8,9 @@
   "orientation": "landscape",
   "icons": [
     {
-      "src": "money-bags.png",
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💰</text></svg>",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
