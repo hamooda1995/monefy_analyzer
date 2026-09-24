@@ -8,10 +8,9 @@
   "orientation": "landscape",
   "icons": [
     {
-      "src": "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>💰</text></svg>",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABZ0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ8vuP0wAAAJ6SURBVHic7Zs9SERSFIafmXFlMCOZf8pMoSgUCoWKhUKhUChULBQKBYVCoVDYmChULBQKZf4pM4UMw8y4W9gbe9S9d869986ZeZ7db9X9uN855+vcc++57wUcx3Ecx3Ecx3Ecw3A6gAnwAnwCH8Ar8AnEnYvUBlwDo0CHuX6AnS9S6wGjwK65f8O8E9idSIsBh8C8G6ZAtwFfREoFVs24D9iWSNHAphm/AeyKpELgwhgPAbtFSiZwbYwXgL0iJRPYMsYLwH6RkgocGOMlYL9ISQXujPESsF+kpAJrxtgH7BcpmcA9M7Y6gN1iZTMXwAsz9gK7hcomLgBvY6wHWA9WJnEFeB9jXWA9WInEBbALWAtWKnEFrBfWBNbDSoK4At4K6wHrQUmAuAJuCtsErIeVCHEF3BS2DVgPIwHiCrgpbBuwHkZcXAAfhewC1oOSF3EFfBSyFawHJW8SFwBvE6wXWA9KniTuAbxNsF5gPcgdXvK/AHibYL3AepDbf89XAt4mWC+wHuSuZ3gl4G2C9QLrQe5yhVcCPidYV1gPchcrvBPwOcG6wnqQu7zinYAnE+wS1oPc5ZgXAl5NsFtYD3IXA7wS8GqC3cJ6kDsreMGLb8DThewB1oNisvK8p8C8pYDXvLAsA/PAnKWALC/8MAbmPQUYIuVpDcwVfAm/Hq0NWI9KmsT/80X8b1wD1sNKlLg/X8Qf5hqwHlYixS9ZpMAfN0yBbiUiBU6BeTdMgW4lKAUWzbgP2FaiUuDSGA8BuyUqBRbGeAnYL1EpsGOMfYvE+0VKJnDPjK0OYLdY2XwA94uUTOA9wHqAsv0DwM4WKRVwHMdxHMdxHMdxHMeJuA8fNIs9XFfX8QAAAABJRU5ErkJggg==",
+      "sizes": "64x64",
+      "type": "image/png"
     }
   ]
 }
