@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📊 لوحة تحليلات مصاريف Monefy الشاملة - حمودة</title>
-<link rel="manifest" href="manifest.json">
-
-	<style>
+    <link rel="manifest" href="manifest.json">
+    <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F7FAFC; color: #2D3748; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 800px; width: 100%; box-sizing: border-box; margin-bottom: 30px; }
         h2 { color: #1A365D; text-align: center; margin-bottom: 25px; font-weight: bold; }
         .form-group { margin-bottom: 20px; display: flex; flex-direction: column; }
         label { font-weight: bold; margin-bottom: 8px; color: #4A5568; }
-        input[type="file"], input[type="date"] { padding: 10px; border: 2px solid #E2E8F0; border-radius: 6px; font-size: 15px; font-family: inherit; }
+        input[type="file"], input[type="date"], input[type="number"] { padding: 10px; border: 2px solid #E2E8F0; border-radius: 6px; font-size: 15px; font-family: inherit; }
         input[type="date"] { width: 100%; box-sizing: border-box; }
         .date-row { display: flex; gap: 15px; }
         .date-row .form-group { flex: 1; }
@@ -52,66 +53,47 @@
         .toggle-all-btn { background-color: #2B6CB0; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11pt; font-weight: bold; cursor: pointer; float: left; margin-top: -2px; transition: background 0.2s; }
         .toggle-all-btn:hover { background-color: #1A365D; }
         
+        /* الأنماط المستقرة التابعة للـ Native CSS الخمسة للأظرف الرقمية */
+        .jars-section-box { background: #F8FAFC; border: 2px dashed #CBD5E0; padding: 18px; border-radius: 8px; margin-top: 15px; margin-bottom: 15px; }
+        .jars-bar-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: bold; }
+        .jars-bar-container { flex: 1; background-color: #E2E8F0; height: 16px; border-radius: 8px; overflow: hidden; margin: 0 15px; position: relative; border: 1px solid #CBD5E0; }
+        .jars-bar-fill { height: 100%; border-radius: 8px; transition: width 0.4s ease; }
         .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #A0AEC0; }
     </style>
 </head>
 <body>
-
 <div class="container">
-<!-- زر التثبيت الذكي المتوافق مع الموبايل والكمبيوتر -->
-    <button id="installBtn" style="display: none;" >Install App</button>
+    <button id="installBtn" style="display: none;">Install App</button>
 
-<script>
-    // 1. Register the Service Worker
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .then(() => console.log("Service Worker Registered"))
-            .catch(err => console.log("Service Worker Failed", err));
-    }
-
-    // 2. Global state for the installation prompt
-    let deferredPrompt = null;
-    const installBtn = document.getElementById('installBtn');
-
-    // 3. Listen for the browser's install offer
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent Chrome from showing its default banner automatically
-        e.preventDefault();
-        // Save the event so we can trigger it when the user clicks our button
-        deferredPrompt = e;
-        // Show our custom install button
-        //installBtn.style.display = 'inline-block';
-        console.log("'beforeinstallprompt' event fired and stashed.");
-    });
-
-    // 4. Handle the button click completely independently
-    installBtn.addEventListener('click', async () => {
-        if (!deferredPrompt) {
-            console.log("Installation prompt is not available yet.");
-            return;
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log("Service Worker Registered"))
+                .catch(err => console.log("Service Worker Failed", err));
         }
-        
-        // Hide our button so the user doesn't double-click
-        installBtn.style.display = 'none';
-        
-        // Show the browser's native install dialog
-        deferredPrompt.prompt();
-        
-        // Wait for the user to make a choice
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to the install prompt: ${outcome}`);
-        
-        // Clear the stashed prompt; it can only be used once
-        deferredPrompt = null;
-    });
 
-    // 5. Hide button if the app is already successfully installed
-    window.addEventListener('appinstalled', () => {
-        installBtn.style.display = 'none';
-        deferredPrompt = null;
-        console.log('PWA was installed successfully!');
-    });
-</script>
+        let deferredPrompt = null;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log("'beforeinstallprompt' event fired and stashed.");
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            installBtn.style.display = 'none';
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBtn.style.display = 'none';
+            deferredPrompt = null;
+        });
+    </script>
 
     <h2>📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة</h2>
     
@@ -130,77 +112,37 @@
             <input type="date" id="endDate" value="2026-09-23">
         </div>
     </div>
-	<!-- القسم 1: الهيكل العام والـ State وخريطة ربط الخطة الخماسية -->
-<div id="financial-app" style="font-family: system-ui, -apple-system, sans-serif; direction: rtl; max-width: 1200px; margin: 0 auto; padding: 20px; color: #333;">
-    
-    <!-- حقل إدخال الدخل اليدوي المحدث -->
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
-        <div>
-            <h2 style="margin: 0 0 5px 0; font-size: 1.2rem; color: #2c3e50;">💰 خطة الأظرف الخمسة الرقمية</h2>
-            <p style="margin: 0; font-size: 0.85rem; color: #7f8c8d;">أدخل دخلك الشهري لمقارنة مصاريف الـ CSV الفورية مع النسب المستهدفة</p>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <label for="monthly-income-input" style="font-weight: bold; font-size: 0.95rem;">الدخل الشهري المستهدف ($):</label>
-            <input type="number" id="monthly-income-input" value="1000" min="0" oninput="updateFiveJarsPlan()" style="padding: 8px 12px; border: 2px solid #bdc3c7; border-radius: 6px; font-size: 1rem; width: 130px; text-align: center; font-weight: bold; color: #2c3e50;">
-        </div>
+
+    <!-- حقل الدخل اليدوي الذكي التزامني لشهور الخطة الخماسية -->
+    <div class="form-group" style="background: #EDF2F7; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #CBD5E0;">
+        <label for="monthly-income-input" style="color: #1A365D; display: flex; align-items: center; gap: 5px;">💰 الدخل الشهري المستهدف ($):</label>
+        <input type="number" id="monthly-income-input" value="1000" min="0" oninput="processAndDisplay()" style="width: 100%; box-sizing: border-box; font-weight: bold; color: #1A365D; font-size: 16px;">
+        <small style="color: #718096; margin-top: 5px; display: block;">تغيير هذا الرقم يعيد حساب الأظرف الخمسة لكافة الشهور بشكل فوري متزامن!</small>
     </div>
-
-    <!-- حاوية أشرطة التقدم الخمسة الرئيسية (تُحقن برمجياً) -->
-    <div id="five-jars-container" style="background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 25px;"></div>
-
-    <script>
-    // الحفاظ الصارم على فهارس النواة المقدسة
-    const CSV_INDICES = {
-        DATE: 0,        // dd/MM/yyyy
-        CATEGORY: 2,    // التصنيف الحقيقي المالي
-        AMOUNT: 5,      // المبالغ بالدولار
-        DESC: 7         // الوصف الفعلي
-    };
-
-    // خريطة توزيع التصنيفات المحدثة بناءً على رغبتك (شاملة نقل العقارات والتاكسي للمصاريف الأساسية)
-    const JARS_MAPPING = {
-        fixed: {
-            name: "مصاريف ثابتة وأساسية",
-            targetPercent: 0.55,
-            color: "#3498db",
-            categories: ["Rent", "Bills", "Food", "Transport", "House", "Home", "Babies", "Communications", "Mobile", "Android", "Car", "Health", "Moony", "Real estate", "Taxi"]
-        },
-        guiltFree: {
-            name: "متعة دون تأنيب ضمير (Guilt-Free)",
-            targetPercent: 0.10,
-            color: "#e67e22",
-            categories: ["Eating out", "Entertainment", "Sports", "Shaving", "Clothes", "Electronics", "Gifts", "Shop", "YYY"]
-        },
-        debt: {
-            name: "سداد ديون",
-            targetPercent: 0.10,
-            color: "#e74c3c",
-            categories: ["Debt"]
-        },
-        savings: {
-            name: "تحويش للمستقبل",
-            targetPercent: 0.10,
-            color: "#2ecc71",
-            categories: ["Savings", "Study"]
-        },
-        investing: {
-            name: "استثمار وتنمية الثروة",
-            targetPercent: 0.15,
-            color: "#9b59b6",
-            categories: ["Investment", "Gold"]
-        }
-    };
-
-    // متغير عالمي لتخزين البيانات المجهزة من الـ CSV
-    let globalParsedData = [];
-    </script>
-
 
     <button onclick="processAndDisplay()">تحليل وعرض الحسابات والمخططات البيانية فورا 🚀</button>
 </div>
 
 <div id="resultsContainer"></div>
+
 <script>
+// النواة المقدسة والمستقرة لفهارس الـ CSV
+const CSV_INDICES = {
+    DATE: 0,        // dd/MM/yyyy
+    CATEGORY: 2,    // التصنيف الحقيقي المالي
+    AMOUNT: 5,      // المبالغ بالدولار
+    DESC: 7         // الوصف الفعلي
+};
+
+// مصفوفة الربط المحدثة شاملة إدراج الـ Taxi والـ Real estate ضمن المصاريف الثابتة
+const JARS_MAPPING = {
+    fixed: { name: "مصاريف ثابتة وأساسية (55%)", targetPercent: 0.55, color: "#3182CE", categories: ["Rent", "Bills", "Food", "Transport", "House", "Home", "Babies", "Communications", "Mobile", "Android", "Car", "Health", "Moony", "Real estate", "Taxi"] },
+    guiltFree: { name: "متعة دون تأنيب ضمير - Guilt-Free (10%)", targetPercent: 0.10, color: "#DD6B20", categories: ["Eating out", "Entertainment", "Sports", "Shaving", "Clothes", "Electronics", "Gifts", "Shop", "YYY"] },
+    debt: { name: "سداد ديون (10%)", targetPercent: 0.10, color: "#E53E3E", categories: ["Debt"] },
+    savings: { name: "تحويش للمستقبل (10%)", targetPercent: 0.10, color: "#38A169", categories: ["Savings", "Study"] },
+    investing: { name: "استثمار وتنمية الثروة (15%)", targetPercent: 0.15, color: "#805AD5", categories: ["Investment", "Gold"] }
+};
+
 function clean(text) {
     if (!text) return "";
     return text.replace(/"/g, "").trim();
@@ -215,6 +157,50 @@ function parseJavaDate(dateStr) {
     return new Date(year, month, day);
 }
 
+// محرك توليد أشرطة التقدم الخمسة (Native CSS) للشهر المحدد بدون قيم صفرية معلقة
+function generateJarsHtmlForMonth(monthCategoriesMap) {
+    const totalIncome = parseFloat(document.getElementById('monthly-income-input').value) || 0;
+    let monthJarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
+    
+    Object.keys(monthCategoriesMap).forEach(cat => {
+        let catSum = Object.values(monthCategoriesMap[cat]).reduce((a, b) => a + b, 0);
+        for (const jarKey in JARS_MAPPING) {
+            if (JARS_MAPPING[jarKey].categories.map(c => c.toLowerCase()).includes(cat.toLowerCase())) {
+                monthJarsTotals[jarKey] += catSum;
+                break;
+            }
+        }
+    });
+
+    let html = `<div class='jars-section-box'>
+        <h3 style='color:#1A365D; text-align:center; margin-top:0; margin-bottom:15px; font-size:14pt;'>🎯 خطة الأظرف الخمسة الرقمية لهذا الشهر (الفعلي vs المستهدف)</h3>`;
+
+    for (const key in JARS_MAPPING) {
+        const jar = JARS_MAPPING[key];
+        const targetAmount = totalIncome * jar.targetPercent;
+        const actualAmount = monthJarsTotals[key] || 0;
+        const percentOfTarget = targetAmount > 0 ? (actualAmount / targetAmount) * 100 : 0;
+        
+        const isOverBudget = actualAmount > targetAmount && (key === 'fixed' || key === 'guiltFree');
+        const barColor = isOverBudget ? "#E53E3E" : jar.color;
+
+        html += `
+            <div class='jars-bar-row'>
+                <div style='width: 240px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;'>📍 ${jar.name}</div>
+                <div class='jars-bar-container'>
+                    <div class='jars-bar-fill' style='width: ${Math.min(percentOfTarget, 100)}%; background-color: ${barColor};'></div>
+                </div>
+                <div style='width: 250px; text-align: left; font-size:12px;'>
+                    الفعلي: <span style='color:${barColor}; font-weight:bold;'>$${actualAmount.toFixed(2)}</span> / المستهدف: $${targetAmount.toFixed(2)} (${percentOfTarget.toFixed(1)}%)
+                </div>
+            </div>
+        `;
+    }
+    html += `</div>`;
+    return html;
+}
+
+// الجزء 4-أ: قراءة ملف الـ CSV وتفكيك النواة المقدسة للفهارس
 function processAndDisplay() {
     const fileInput = document.getElementById('csvFile');
     const startDateInput = document.getElementById('startDate').value;
@@ -235,48 +221,34 @@ function processAndDisplay() {
     reader.onload = function(e) {
         const text = e.target.result;
         const lines = text.split(/\r?\n/);
-        if (lines.length < 2) {
-            alert('الملف فارغ أو غير صالح!');
-            return;
-        }
+        if (lines.length < 2) return;
 
         const headerLine = lines[0];
         const separator = headerLine.includes('\t') ? '\t' : ',';
         
         let monthlyAnalysis = {};
         let globalCategorySums = {}; 
+        let descriptionMonths = {}; 
+        let descriptionAmounts = {}; 
 
         for (let i = 1; i < lines.length; i++) {
             let line = lines[i];
             if (!line.trim()) continue;
 
-            let columns = [];
-            if (separator === ',') {
-                columns = line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/);
-            } else {
-                columns = line.split('\t');
-            }
-
+            let columns = (separator === ',') ? line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/) : line.split('\t');
             if (columns.length < 7) continue;
 
             try {
-                let dateStr = clean(columns.at(0));       
-                let category = clean(columns.at(2));      
-                let amountStr = clean(columns.at(5));     
-                
-                let description = "بدون وصف";
-                if (columns.length >= 8 && clean(columns.at(7)).length > 0) {
-                    description = clean(columns.at(7));   
-                }
+                let dateStr = clean(columns.at(CSV_INDICES.DATE));       
+                let category = clean(columns.at(CSV_INDICES.CATEGORY));      
+                let amountStr = clean(columns.at(CSV_INDICES.AMOUNT));     
+                let description = (columns.length >= 8 && clean(columns.at(CSV_INDICES.DESC)).length > 0) ? clean(columns.at(CSV_INDICES.DESC)) : "بدون وصف";
 
                 let rowDate = parseJavaDate(dateStr);
                 if (!rowDate || isNaN(rowDate.getTime())) continue;
 
                 if (rowDate >= startDate && rowDate <= endDate) {
-                    if (category.startsWith("To '") || category.startsWith("From '") || 
-                        category.toLowerCase().includes("to '") || category.toLowerCase().includes("from '")) {
-                        continue;
-                    }
+                    if (category.startsWith("To '") || category.startsWith("From '") || category.toLowerCase().includes("to '") || category.toLowerCase().includes("from '")) continue;
 
                     let convertedAmount = parseFloat(amountStr);
                     if (convertedAmount >= 0) continue;
@@ -288,17 +260,25 @@ function processAndDisplay() {
                     monthlyAnalysis[monthKey][category][description] = (monthlyAnalysis[monthKey][category][description] || 0) + actualExpense;
 
                     globalCategorySums[category] = (globalCategorySums[category] || 0) + actualExpense;
+                    
+                    if (description !== "بدون وصف") {
+                        if (!descriptionMonths[description]) descriptionMonths[description] = new Set();
+                        descriptionMonths[description].add(monthKey);
+                        if (!descriptionAmounts[description]) descriptionAmounts[description] = [];
+                        descriptionAmounts[description].push(actualExpense);
+                    }
                 }
             } catch (err) {}
         }
+
+// الجزء 4-ب: بناء الكتل الشهرية وحقن الأظرف الخمسة والمخططات المرئية بالتزامن
         const resultsContainer = document.getElementById('resultsContainer');
         resultsContainer.innerHTML = ""; 
         resultsContainer.style.display = "block";
 
         let sortedMonths = Object.keys(monthlyAnalysis).sort();
-
         if (sortedMonths.length === 0) {
-            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ يا حمودة! تأكد من الفترات الزمنية والملف المختار.</div>";
+            resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة للتواريخ يا حمودة!</div>";
             return;
         }
 
@@ -346,7 +326,6 @@ function processAndDisplay() {
                 `;
 
                 let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
-
                 htmlTable += `
                 <tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'>
                     <td colspan='4'>
@@ -385,13 +364,7 @@ function processAndDisplay() {
             if (previousMonthTotal > 0) {
                 let difference = monthTotal - previousMonthTotal;
                 let percentChange = (difference / previousMonthTotal) * 100;
-                if (difference > 0) {
-                    momTrendText = ` 📈 (زيادة بمقدار ${percentChange.toFixed(1)}% عن الشهر السابق)`;
-                } else if (difference < 0) {
-                    momTrendText = ` 📉 (وفر وانخفاض بمقدار ${Math.abs(percentChange).toFixed(1)}% عن الشهر السابق)`;
-                } else {
-                    momTrendText = " ⚖️ (مساوي تماماً للمصروف السابق)";
-                }
+                momTrendText = difference > 0 ? ` 📈 (زيادة بمقدار ${percentChange.toFixed(1)}% عن الشهر السابق)` : ` 📉 (وفر وانخفاض بمقدار ${Math.abs(percentChange).toFixed(1)}% عن الشهر السابق)`;
             } else {
                 momTrendText = " 🏁 [شهر الأساس الأول]";
             }
@@ -406,62 +379,15 @@ function processAndDisplay() {
                 </tr>
             </table>`;
 
+            let jarsHtml = generateJarsHtmlForMonth(categoriesMap);
             let monthDataDiv = document.createElement('div');
-            monthDataDiv.innerHTML = htmlTable + totalTableHtml + chartHtml;
+            monthDataDiv.innerHTML = jarsHtml + htmlTable + totalTableHtml + chartHtml;
             
             monthBlock.appendChild(monthDataDiv);
             resultsContainer.appendChild(monthBlock);
             previousMonthTotal = monthTotal;
         });
-        let globalBlock = document.createElement('div');
-        globalBlock.className = 'global-block-wrapper';
-        
-		        // 📦 كود مستقل تماماً: كاشف الاشتراكات والمصاريف المتكررة
-        let descriptionMonths = {}; 
-        let descriptionAmounts = {}; 
-
-        // المرور على شجرة البيانات المخزنة مسبقاً دون تعديلها
-        Object.keys(monthlyAnalysis).forEach(month => {
-            Object.keys(monthlyAnalysis[month]).forEach(cat => {
-                Object.keys(monthlyAnalysis[month][cat]).forEach(desc => {
-                    if (desc === "بدون وصف") return; 
-                    
-                    if (!descriptionMonths[desc]) descriptionMonths[desc] = new Set();
-                    descriptionMonths[desc].add(month);
-                    
-                    if (!descriptionAmounts[desc]) descriptionAmounts[desc] = [];
-                    descriptionAmounts[desc].push(monthlyAnalysis[month][cat][desc]);
-                });
-            });
-        });
-
-        let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'>
-            <h2 style='color:#234E52; text-align:center; margin-top:10px;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2>
-            <p style='text-align:center; color:#4A5568; font-size:14px; margin-bottom:20px;'>الأوصاف التي تكررت بنفس الاسم على مدار أشهر مختلفة</p>
-            <table>
-                <tr><th>الوصف (Subscription)</th><th>عدد أشهر التكرار</th><th>متوسط الصرف الشهري</th></tr>`;
-
-        let hasSubscriptions = false;
-        Object.keys(descriptionMonths).forEach(desc => {
-            // إذا تكرر الوصف في شهرين أو أكثر، يعتبر اشتراكاً دورياً
-            if (descriptionMonths[desc].size >= 2) {
-                hasSubscriptions = true;
-                let sum = descriptionAmounts[desc].reduce((a, b) => a + b, 0);
-                let avg = sum / descriptionMonths[desc].size;
-                
-                subscriptionHtml += `<tr>
-                    <td style='color:#234E52;'>🔄 ${desc}</td>
-                    <td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td>
-                    <td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td>
-                </tr>`;
-            }
-        });
-
-        if (!hasSubscriptions) {
-            subscriptionHtml += `<tr><td colspan='3' style='text-align:center; color:#718096;'>لم يتم اكتشاف أي نفقات أو اشتراكات متكررة في هذه الفترة يا حمودة.</td></tr>`;
-        }
-        subscriptionHtml += `</table></div>`;
-
+// الجزء 4-ج: بناء المخطط التحليلي الشامل التراكمي وجدول كاشف ومجمع الاشتراكات المطور
         let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل والنهائي لكافة الأشهر المحددة معاً</h2>
                                <p style='text-align:center; color:#718096; font-size:14px; margin-bottom:20px;'>يوضح الحجم الإجمالي التراكمي الاستهلاكي لكل تصنيف على مدار كامل فترة الفلترة المشمولة</p>`;
 
@@ -481,18 +407,44 @@ function processAndDisplay() {
             `;
         });
         
+        let globalBlock = document.createElement('div');
+        globalBlock.className = 'global-block-wrapper';
         globalBlock.innerHTML = globalChartHtml;
         resultsContainer.appendChild(globalBlock);
-		        // حقن جدول كاشف الاشتراكات المطور في نهاية لوحة العرض
+
+        let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'>
+            <h2 style='color:#234E52; text-align:center; margin-top:10px;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2>
+            <p style='text-align:center; color:#4A5568; font-size:14px; margin-bottom:20px;'>الأوصاف التي تكررت بنفس الاسم على مدار أشهر مختلفة</p>
+            <table>
+                <tr><th>الوصف (Subscription)</th><th>عدد أشهر التكرار</th><th>متوسط الصرف الشهري</th></tr>`;
+
+        let hasSubscriptions = false;
+        Object.keys(descriptionMonths).forEach(desc => {
+            if (descriptionMonths[desc].size >= 2) {
+                hasSubscriptions = true;
+                let sum = descriptionAmounts[desc].reduce((a, b) => a + b, 0);
+                let avg = sum / descriptionMonths[desc].size;
+                
+                subscriptionHtml += `<tr>
+                    <td style='color:#234E52;'>🔄 ${desc}</td>
+                    <td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td>
+                    <td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td>
+                </tr>`;
+            }
+        });
+
+        if (!hasSubscriptions) {
+            subscriptionHtml += `<tr><td colspan='3' style='text-align:center; color:#718096;'>لم يتم اكتشاف أي نفقات أو اشتراكات متكررة في هذه الفترة يا حمودة.</td></tr>`;
+        }
+        subscriptionHtml += `</table></div>`;
+
         let subBlock = document.createElement('div');
         subBlock.innerHTML = subscriptionHtml;
         resultsContainer.appendChild(subBlock);
-
     };
-
     reader.readAsText(file, 'UTF-8');
 }
-
+// الجزء 4-د: دوال الطي والتوسيع الشامل والذكي ووسوم نهاية ملف الـ HTML
 function toggleMonthSection(monthBodyId, headerElement) {
     const element = document.getElementById(monthBodyId);
     const iconElement = headerElement.querySelector('.collapse-icon');
@@ -542,185 +494,6 @@ function toggleAllCategoriesInMonth(monthBodyId, event) {
         if (iconElement) iconElement.innerHTML = shouldHide ? "▼" : "▲";
     });
 }
-
-// القسم 2: معالجة البيانات الفورية وربط الفهارس بخريطة الخطة الخماسية
-function processFinancialCSV(rawLines) {
-    globalParsedData = []; // إعادة تعيين البيانات
-    
-    // مصفوفة تجميع الأظرف الخمسة
-    const jarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
-
-    rawLines.forEach((line) => {
-        if (!line || line.trim() === "") return;
-        const columns = line.split(','); // تقسيم السطر بناءً على فاصلة الـ CSV
-        
-        // استخراج البيانات بالاعتماد الصارم على النواة المقدسة والمستقرة
-        const rawCategory = columns[CSV_INDICES.CATEGORY] ? columns[CSV_INDICES.CATEGORY].trim() : "";
-        const rawAmount = columns[CSV_INDICES.AMOUNT] ? parseFloat(columns[CSV_INDICES.AMOUNT].trim()) : 0;
-        const rawDate = columns[CSV_INDICES.DATE] ? columns[CSV_INDICES.DATE].trim() : "";
-        const rawDesc = columns[CSV_INDICES.DESC] ? columns[CSV_INDICES.DESC].trim() : "";
-
-        if (isNaN(rawAmount) || rawAmount <= 0) return;
-
-        // تخزين البيانات للواجهة التفصيلية المقاومة للتخريب
-        globalParsedData.push({ date: rawDate, category: rawCategory, amount: rawAmount, desc: rawDesc });
-
-        // مطابقة التصنيف الفعلي مع الوعاء المالي المناسب في الخطة الخماسية
-        let matched = false;
-        for (const jarKey in JARS_MAPPING) {
-            if (JARS_MAPPING[jarKey].categories.map(c => c.toLowerCase()).includes(rawCategory.toLowerCase())) {
-                jarsTotals[jarKey] += rawAmount;
-                matched = true;
-                break;
-            }
-        }
-    });
-
-    // تحديث الواجهة التفاعلية للأظرف بناءً على الحسبة الجديدة
-    renderFiveJarsBars(jarsTotals);
-    // استدعاء واجهة الشهور والتصنيفات الأصلية (القسم 4)
-    renderMonthlyCollapseInterface();
-}
-
-// القسم 3: بناء وتحديث الـ Native CSS Bars التفاعلية للخطة الخماسية
-function updateFiveJarsPlan() {
-    // إعادة الحساب الفوري للأظرف عند تغيير حقل الدخل يدوياً
-    const jarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
-    
-    globalParsedData.forEach(item => {
-        for (const jarKey in JARS_MAPPING) {
-            if (JARS_MAPPING[jarKey].categories.map(c => c.toLowerCase()).includes(item.category.toLowerCase())) {
-                jarsTotals[jarKey] += item.amount;
-                break;
-            }
-        }
-    });
-    renderFiveJarsBars(jarsTotals);
-}
-
-function renderFiveJarsBars(totals) {
-    const incomeInput = document.getElementById("monthly-income-input");
-    const totalIncome = parseFloat(incomeInput.value) || 0;
-    const container = document.getElementById("five-jars-container");
-    
-    let html = `<h3 style="margin: 0 0 20px 0; font-size: 1.1rem; color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;">📊 مؤشر الأداء المالي (الفعلي vs المستهدف بناءً على خطة الانستغرام)</h3>`;
-    html += `<div style="display: flex; flex-direction: column; gap: 18px;">`;
-
-    for (const key in JARS_MAPPING) {
-        const jar = JARS_MAPPING[key];
-        const targetAmount = totalIncome * jar.targetPercent;
-        const actualAmount = totals[key] || 0;
-        
-        // حساب النسبة المئوية لتقدم الشريط المالي الأساسي CSS
-        const percentOfTarget = targetAmount > 0 ? (actualAmount / targetAmount) * 100 : 0;
-        
-        // لمسة ذكية: إذا تجاوزت المصاريف الثابتة أو الـ Guilt-Free الميزانية يتحول المؤشر للون تحذيري مرن
-        const isOverBudget = actualAmount > targetAmount && (key === 'fixed' || key === 'guiltFree');
-        const barColor = isOverBudget ? "#e74c3c" : jar.color;
-
-        html += `
-            <div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 5px; font-weight: 500;">
-                    <span><strong>${jar.name}</strong> (${(jar.targetPercent * 100)}%)</span>
-                    <span>الفعلي: <strong style="color:${barColor};">$${actualAmount.toFixed(2)}</strong> / المستهدف: <strong>$${targetAmount.toFixed(2)}</strong></span>
-                </div>
-                <!-- Native CSS Bar Outer -->
-                <div style="background: #eef2f3; height: 14px; border-radius: 7px; width: 100%; overflow: hidden; position: relative; border: 1px solid #dcdde1;">
-                    <!-- Native CSS Bar Inner Dynamic -->
-                    <div style="background: ${barColor}; height: 100%; width: ${Math.min(percentOfTarget, 100)}%; transition: width 0.4s ease; border-radius: 7px;"></div>
-                </div>
-                <div style="display: flex; justify-content: flex-end; font-size: 0.75rem; color: #7f8c8d; margin-top: 3px;">
-                    <span>استهلاك الميزانية المحددة: ${percentOfTarget.toFixed(1)}%</span>
-                </div>
-            </div>
-        `;
-    }
-
-    html += `</div>`;
-    container.innerHTML = html;
-}
-
-// القسم 4: واجهة الطي الذكي (Collapse) للشهور والتصنيفات + جدول كاشف الاشتراكات الدوري المدمج
-function renderMonthlyCollapseInterface() {
-    const mainDashboardContainer = document.getElementById("dashboard-details-container");
-    if (!mainDashboardContainer) return; // الحماية من أخطاء عدم وجود العناصر
-
-    // تجميع البيانات ذكياً حسب الشهور بناءً على تنسيق التاريخ dd/MM/yyyy المعتمد صرامة في النواة
-    const monthlyGroups = {};
-
-    globalParsedData.forEach(item => {
-        const dateParts = item.date.split('/');
-        if (dateParts.length < 3) return;
-        const monthYear = `${dateParts[1]}/${dateParts[2]}`; // استخراج MM/yyyy
-
-        if (!monthlyGroups[monthYear]) {
-            monthlyGroups[monthYear] = { total: 0, categories: {} };
-        }
-        monthlyGroups[monthYear].total += item.amount;
-
-        if (!monthlyGroups[monthYear].categories[item.category]) {
-            monthlyGroups[monthYear].categories[item.category] = 0;
-        }
-        monthlyGroups[monthYear].categories[item.category] += item.amount;
-    });
-
-    let html = `<h3 style="margin: 25px 0 15px 0; font-size: 1.1rem; color: #2c3e50;">📅 سجل تفاصيل الشهور (الطي والتصنيفات الذكية)</h3>`;
-    
-    // بناء الهيكل التفاعلي المدعوم بميزة بقاء الإجمالي والمخطط ظاهران دائماً عند الإغلاق
-    for (const month in monthlyGroups) {
-        const mData = monthlyGroups[month];
-        html += `
-            <div style="border: 1px solid #dcdde1; border-radius: 8px; margin-bottom: 12px; background: #fff; overflow: hidden;">
-                <!-- رأس الشهر الظاهر دائماً -->
-                <div onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';" style="background: #f1f2f6; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
-                    <span style="font-weight: bold; color: #2c3e50;">🗓️ شهر: ${month}</span>
-                    <span style="background: #2ecc71; color: white; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">إجمالي الشهر الفعلي: $${mData.total.toFixed(2)}</span>
-                </div>
-                <!-- المحتوى القابل للطي الذكي والتفاعل الداخلي بالتصنيفات -->
-                <div style="display: none; padding: 15px; border-top: 1px solid #dcdde1;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.95rem; color: #7f8c8d;">توزيع مصاريف التصنيفات الحقيقية:</h4>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-        `;
-
-        for (const cat in mData.categories) {
-            const catAmount = mData.categories[cat];
-            const catPercent = (catAmount / mData.total) * 100;
-            html += `
-                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;">
-                    <span style="width: 120px; font-weight: 500;">🔹 ${cat}</span>
-                    <div style="background: #f5f6fa; flex-grow: 1; height: 10px; border-radius: 5px; margin: 0 10px; overflow: hidden;">
-                        <div style="background: #7f8c8d; height:100%; width: ${catPercent}%;"></div>
-                    </div>
-                    <span style="font-weight: bold; width: 80px; text-align: left;">$${catAmount.toFixed(2)} (${catPercent.toFixed(1)}%)</span>
-                </div>
-            `;
-        }
-
-        html += `</div></div></div>`;
-    }
-
-    // جدول كاشف الاشتراكات الدورية المدمج في أسفل لوحة التحكم الثابتة
-    html += `
-        <div style="margin-top: 30px; background: #fff; border: 1px solid #e74c3c; border-radius: 12px; padding: 20px;">
-            <h3 style="margin: 0 0 15px 0; font-size: 1.05rem; color: #c0392b; display: flex; align-items: center; gap: 8px;">🔄 جدول كاشف الاشتراكات الدورية والمدفوعات المتكررة</h3>
-            <table style="width: 100%; border-collapse: collapse; text-align: right; font-size: 0.85rem;">
-                <thead>
-                    <tr style="border-bottom: 2px solid #e74c3c; color: #c0392b;">
-                        <th style="padding: 8px;">التاريخ</th><th style="padding: 8px;">التصنيف المالي</th><th style="padding: 8px;">الوصف الفعلي</th><th style="padding: 8px; text-align: left;">المبلغ بالدولار</th>
-                    </tr>
-                </thead>
-                <tbody id="subscription-rows-injector">
-                    <!-- تُحقن المدفوعات الدورية التي تظهر بانتظام وتكرار تلقائياً هنا -->
-                    <tr style="color: #7f8c8d;"><td colspan="4" style="padding: 15px; text-align: center;">يتم الكشف التلقائي عند رفع ملف الـ CSV...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    `;
-
-    mainDashboardContainer.innerHTML = html;
-}
-
-
 </script>
 <div class="footer">تم تحديث وقفل كامل ميزات لوحة التحكم المالية الشخصية بنجاح يا حمودة 🚀</div>
 </body>
