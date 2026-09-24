@@ -32,15 +32,23 @@
         .month-block-wrapper, .global-block-wrapper { background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 35px; padding: 20px; border: 1px solid #E2E8F0; }
         .global-block-wrapper { border: 2px solid #2B6CB0; background-color: #F8FAFC; }
         
-        table { 
+  /* إعادة الجدول لطبيعته الكاملة والعريضة على اللابتوب */
+table { 
     width: 100%; 
     border-collapse: collapse; 
     margin-top: 15px; 
     font-weight: bold; 
-    display: block; 
-    overflow-x: auto; /* تمرير أفقي مخصص للجدول فقط إذا كان عريضاً */
-    white-space: nowrap; 
+    margin-bottom: 0px;
 }
+
+/* حاوية ذكية تلتف حول الجدول لحمايته على الموبايل ومنع التداخل */
+.table-responsive-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 15px;
+}
+
         th { background-color: #1A365D; color: white; padding: 12px 10px; border: 1px solid #A0AEC0; font-size: 14pt; text-align: center; }
         td { padding: 11px 10px; border: 1px solid #CBD5E0; text-align: right; font-size: 14pt; color: #2D3748; }
         tr:nth-child(even) { background-color: #F7FAFC; }
@@ -223,7 +231,8 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
         <!-- حقل الإضافات الجديد الخاص بهذا الشهر مستقل ومتجاوب 100% -->
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; background: #FFF5F5; padding: 6px; border-radius: 6px; border: 1px dashed #FEB2B2; max-width: 320px; margin-left: auto; margin-right: auto;">
             <label for="additions-input-${mIdx}" style="font-size: 11px; margin: 0; color: #C53030;">➕ إضافات ومكافآت هذا الشهر ($):</label>
-            <input type="number" id="additions-input-${mIdx}" value="${monthAdditions}" min="0" oninput="processAndDisplay(false)" style="padding: 4px 8px; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; color: #C53030;">
+            <input type="number" id="additions-input-${mIdx}" value="${globalMonthAdditions[mIdx] || 0}" min="0" onchange="updateAdditionsMemory('${mIdx}', this)" style="padding: 4px 8px; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; color: #C53030;">
+
         </div>`;
 
     for (const key in JARS_MAPPING) {
@@ -255,12 +264,14 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
 </script>
 <script>
 // دالة التحليل الكبرى (تقرأ الملف لمرة واحدة وتخزنه في الذاكرة العالمية لمنع تصفير القيم)
+// مصفوفة عالمية مستقلة لحفظ قيم الإضافات لكل شهر ومنع التصفير نهائياً
+let globalMonthAdditions = {};
+
 function processAndDisplay(isExplicitClick) {
     const fileInput = document.getElementById('csvFile');
     const startDateInput = document.getElementById('startDate').value;
     const endDateInput = document.getElementById('endDate').value;
 
-    // إذا كان تحديثاً لحظياً والبيانات موجودة في الذاكرة، نعيد الحساب والرسم فوراً
     if (!isExplicitClick && isFileAlreadyLoaded) {
         recalculateAndRenderUI();
         return;
@@ -285,7 +296,7 @@ function processAndDisplay(isExplicitClick) {
         if (lines.length < 2) return;
 
         const separator = lines[0].includes('\t') ? '\t' : ',';
-        globalParsedRowsData = []; // تصفية الذاكرة السابقة
+        globalParsedRowsData = []; 
 
         for (let i = 1; i < lines.length; i++) {
             let line = lines[i]; if (!line.trim()) continue;
@@ -308,7 +319,6 @@ function processAndDisplay(isExplicitClick) {
                     if (convertedAmount >= 0) continue;
                     let actualExpense = Math.abs(convertedAmount);
 
-                    // تخزين السطر في الذاكرة العالمية المستقرة
                     globalParsedRowsData.push({
                         date: rowDate,
                         monthKey: rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, '0'),
@@ -321,10 +331,11 @@ function processAndDisplay(isExplicitClick) {
         }
 
         isFileAlreadyLoaded = true;
-        recalculateAndRenderUI(); // استدعاء محرك الرسم والتحديث
+        recalculateAndRenderUI(); 
     };
     reader.readAsText(file, 'UTF-8');
 }
+
 // محرك الرسم والتدوير الذكي: يعيد الحساب اللحظي الفوري من الذاكرة دون لمس الملف أو تصفير القيم
 function recalculateAndRenderUI() {
     let monthlyAnalysis = {};
@@ -332,7 +343,6 @@ function recalculateAndRenderUI() {
     let descriptionMonths = {}; 
     let descriptionAmounts = {}; 
 
-    // إعادة تجميع البيانات من الذاكرة العالمية المستقرة
     globalParsedRowsData.forEach(row => {
         if (!monthlyAnalysis[row.monthKey]) monthlyAnalysis[row.monthKey] = {};
         if (!monthlyAnalysis[row.monthKey][row.category]) monthlyAnalysis[row.monthKey][row.category] = {};
@@ -374,7 +384,7 @@ function recalculateAndRenderUI() {
         monthBlock.className = 'month-block-wrapper';
         let monthBodyId = `month_body_${mIdx}`;
 
-        let htmlTable = `<table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}'>`;
+        let htmlTable = `<div class='table-responsive-wrapper'><table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}'>`;
 
         let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
         
@@ -404,11 +414,16 @@ function recalculateAndRenderUI() {
 
         chartHtml += `</div></div>`;
         let momTrendText = previousMonthTotal > 0 ? ((monthTotal - previousMonthTotal) > 0 ? ` 📈 (زيادة عن الشهر السابق)` : ` 📉 (وفر عن الشهر السابق)`) : " 🏁 [شهر الأساس الأول]";
-        htmlTable += `</tbody></table>`;
+htmlTable += `</tbody></table></div>`;
 
         let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td></tr></table>`;
 
-        let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, mIdx);
+        // استرجاع القيمة المخزنة للإضافات في الذاكرة لتجنب المسح والتصفير
+        if (globalMonthAdditions[monthName] === undefined) {
+            globalMonthAdditions[monthName] = 0;
+        }
+
+        let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, monthName);
         
         let monthDataDiv = document.createElement('div');
         monthDataDiv.innerHTML = jarsResult.html + htmlTable + totalTableHtml + chartHtml;
@@ -419,7 +434,6 @@ function recalculateAndRenderUI() {
         previousMonthTotal = monthTotal;
     });
 
-    // بناء المخطط التراكمي الشامل لكافة الأشهر
     let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل لكافة الأشهر</h2>`;
     let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
     Object.keys(globalCategorySums).sort((a,b) => globalCategorySums[b] - globalCategorySums[a]).forEach(cat => {
@@ -429,7 +443,6 @@ function recalculateAndRenderUI() {
     let globalBlock = document.createElement('div'); globalBlock.className = 'global-block-wrapper';
     globalBlock.innerHTML = globalChartHtml; resultsContainer.appendChild(globalBlock);
 
-    // جدول كاشف الاشتراكات المطور
     let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
     Object.keys(descriptionMonths).forEach(desc => {
         if (descriptionMonths[desc].size >= 2) {
@@ -440,6 +453,13 @@ function recalculateAndRenderUI() {
     subscriptionHtml += `</table></div>`;
     let subBlock = document.createElement('div'); subBlock.innerHTML = subscriptionHtml; resultsContainer.appendChild(subBlock);
 }
+
+// دالة تفاعلية وسيطة لتحديث مصفوفة الذاكرة عند الكتابة وإعادة تدوير الفائض فوراً
+function updateAdditionsMemory(monthKey, inputElement) {
+    globalMonthAdditions[monthKey] = parseFloat(inputElement.value) || 0;
+    recalculateAndRenderUI();
+}
+
 
 
 // مستمعات الأحداث التفاعلية المقاومة للتخريب للطي الذكي
