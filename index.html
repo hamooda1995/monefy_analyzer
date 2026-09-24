@@ -188,9 +188,11 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
                 <div class='jars-bar-container'>
                     <div class='jars-bar-fill' style='width: ${Math.min(percentOfTarget, 100)}%; background-color: ${barColor};'></div>
                 </div>
-                <div style='width: 250px; text-align: left; font-size:12px;'>
-                    الفعلي: <span style='color:${barColor}; font-weight:bold;'>$${actualAmount.toFixed(2)}</span> / المستهدف: $${targetAmount.toFixed(2)} (${percentOfTarget.toFixed(1)}%)
-                </div>
+                <div style='display: flex; flex-direction: column; align-items: flex-end; justify-content: center; font-size: 11px; min-width: 140px; text-align: left; line-height: 1.4;'>
+    <div>الفعلي: <span style='color:${barColor}; font-weight:bold;'>$${actualAmount.toFixed(2)}</span></div>
+    <div style='color: #718096;'>المستهدف: $${targetAmount.toFixed(2)} (${percentOfTarget.toFixed(1)}%)</div>
+</div>
+
             </div>
         `;
     }
