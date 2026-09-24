@@ -296,7 +296,13 @@ function processAndDisplay(isExplicitClick) {
             let htmlTable = `<table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}'>`;
 
             let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
-            let chartHtml = `<div class='native-chart-wrapper'><h3 style='color:#1A365D; text-align:center; margin-bottom:15px;'>📊 التوزيع المرئي لنفقات شهر ${monthName}</h3>`;
+            let chartBodyId = `chart_body_${mIdx}`;
+let chartHtml = `<div class='native-chart-wrapper'>
+    <h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='color:#1A365D; text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'>
+        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▲</span> 📊 التوزيع المرئي لنفقات شهر ${monthName} (اضغط للطي/التوسيع)
+    </h3>
+    <div id='${chartBodyId}'>`;
+
 
             sortedCats.forEach((categoryName, cIdx) => {
                 let categoryTotal = categorySums[categoryName];
@@ -315,7 +321,7 @@ function processAndDisplay(isExplicitClick) {
                 htmlTable += `<tr class='category-total-row' name='${catRowsClass}'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td></tr>`;
             });
 
-            chartHtml += `</div>`;
+            chartHtml += `</div></div>`;
             let momTrendText = previousMonthTotal > 0 ? ((monthTotal - previousMonthTotal) > 0 ? ` 📈 (زيادة عن الشهر السابق)` : ` 📉 (وفر عن الشهر السابق)`) : " 🏁 [شهر الأساس الأول]";
             htmlTable += `</tbody></table>`;
 
