@@ -6,17 +6,48 @@
         <title>📊 لوحة تحليلات مصاريف Monefy الشاملة - حمودة</title>
         <link rel="manifest" href="manifest.json" />
         <style>
+            /* مغيرات الألوان الديناميكية للتحكم بالوضع الفاتح والداكن الشامل للوحة حمودة */
+            :root {
+                --bg-body: #f7fafc;
+                --bg-container: #ffffff;
+                --text-main: #2d3748;
+                --text-muted: #4a5568;
+                --border-color: #e2e8f0;
+                --table-stripe: #f7fafc;
+                --bg-header: #ebf8ff;
+                --text-header: #2b6cb0;
+                --bg-input: #ffffff;
+                --bg-jars: #f8fafc;
+                --border-jars: #cbd5e0;
+            }
+
+            [data-theme="dark"] {
+                --bg-body: #1a202c;
+                --bg-container: #2d3748;
+                --text-main: #edf2f7;
+                --text-muted: #cbd5e0;
+                --border-color: #4a5568;
+                --table-stripe: #232d3f;
+                --bg-header: #2b6cb0;
+                --text-header: #ebf8ff;
+                --bg-input: #1a202c;
+                --bg-jars: #232d3f;
+                --border-jars: #4a5568;
+            }
             body {
                 font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-                background-color: #f7fafc;
-                color: #2d3748;
+                background-color: var(--bg-body);
+                color: var(--text-main);
                 padding: 20px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                transition:
+                    background 0.3s,
+                    color 0.3s;
             }
             .container {
-                background: white;
+                background: var(--bg-container);
                 padding: 20px;
                 border-radius: 12px;
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
@@ -24,6 +55,7 @@
                 width: 95%; /* تضمن ألا يلتصق الحواف في الشاشات الصغيرة */
                 box-sizing: border-box;
                 margin-bottom: 30px;
+                border: 1px solid var(--border-color);
             }
 
             h2 {
@@ -31,6 +63,9 @@
                 text-align: center;
                 margin-bottom: 25px;
                 font-weight: bold;
+            }
+            [data-theme="dark"] h2 {
+                color: #90cdf4;
             }
             .form-group {
                 margin-bottom: 20px;
@@ -40,16 +75,18 @@
             label {
                 font-weight: bold;
                 margin-bottom: 8px;
-                color: #4a5568;
+                color: var(--text-muted);
             }
             input[type="file"],
             input[type="date"],
             input[type="number"] {
                 padding: 10px;
-                border: 2px solid #e2e8f0;
+                border: 2px solid var(--border-color);
                 border-radius: 6px;
                 font-size: 15px;
                 font-family: inherit;
+                background-color: var(--bg-input);
+                color: var(--text-main);
             }
             input[type="date"] {
                 width: 100%;
@@ -78,6 +115,12 @@
             button:hover {
                 background-color: #2b6cb0;
             }
+            [data-theme="dark"] button {
+                background-color: #2b6cb0;
+            }
+            [data-theme="dark"] button:hover {
+                background-color: #3182ce;
+            }
 
             #resultsContainer {
                 max-width: 800px;
@@ -86,16 +129,15 @@
             }
             .month-block-wrapper,
             .global-block-wrapper {
-                background: white;
+                background: var(--bg-container);
                 border-radius: 10px;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
                 margin-bottom: 35px;
                 padding: 20px;
-                border: 1px solid #e2e8f0;
+                border: 1px solid var(--border-color);
             }
             .global-block-wrapper {
                 border: 2px solid #2b6cb0;
-                background-color: #f8fafc;
             }
 
             /* إعادة الجدول لطبيعته الكاملة والعريضة على اللابتوب */
@@ -119,27 +161,30 @@
                 background-color: #1a365d;
                 color: white;
                 padding: 12px 10px;
-                border: 1px solid #a0aec0;
+                border: 1px solid var(--border-color);
                 font-size: 14pt;
                 text-align: center;
             }
+            [data-theme="dark"] th {
+                background-color: #2b6cb0;
+            }
             td {
                 padding: 11px 10px;
-                border: 1px solid #cbd5e0;
+                border: 1px solid var(--border-color);
                 text-align: right;
                 font-size: 14pt;
-                color: #2d3748;
+                color: var(--text-main);
             }
             tr:nth-child(even) {
-                background-color: #f7fafc;
+                background-color: var(--table-stripe);
             }
 
             .month-header-row {
                 cursor: pointer;
             }
             .month-header-row td {
-                background-color: #ebf8ff;
-                color: #2b6cb0;
+                background-color: var(--bg-header);
+                color: var(--text-header);
                 text-align: center;
                 font-size: 15pt;
                 border: 2px solid #90cdf4;
@@ -150,11 +195,11 @@
                 cursor: pointer;
             }
             .category-header-row td {
-                background-color: #edf2f7;
-                color: #2d3748;
+                background-color: var(--table-stripe);
+                color: var(--text-main);
                 font-size: 14pt;
-                border-top: 1px solid #cbd5e0;
-                border-bottom: 1px solid #cbd5e0;
+                border-top: 1px solid var(--border-color);
+                border-bottom: 1px solid var(--border-color);
                 user-select: none;
             }
             .cat-header-flex {
@@ -170,11 +215,16 @@
                 color: #c53030;
                 border: 1px solid #feb2b2;
             }
+            [data-theme="dark"] .alert-row td {
+                background-color: #742a2a;
+                color: #fed7d7;
+                border-color: #9b2c2c;
+            }
             .category-total-row td {
-                background-color: #e6fffa;
-                color: #234e52;
-                border-top: 1px solid #319795;
-                border-bottom: 1px solid #319795;
+                background-color: var(--table-stripe);
+                color: var(--text-header);
+                border-top: 1px solid var(--border-color);
+                border-bottom: 1px solid var(--border-color);
                 font-style: italic;
                 font-size: 14pt;
             }
@@ -187,20 +237,20 @@
                 font-weight: bold;
             }
             .month-total-table td {
-                background-color: #cbd5e0;
-                color: #1a202c;
-                border: 2px solid #4a5568;
+                background-color: var(--border-color);
+                color: var(--text-main);
+                border: 2px solid var(--border-color);
                 font-size: 14pt;
                 padding: 11px 10px;
                 text-align: right;
             }
 
             .native-chart-wrapper {
-                background: #fff;
+                background: var(--bg-container);
                 border-radius: 8px;
                 padding: 15px;
                 margin-top: 20px;
-                border: 1px solid #e2e8f0;
+                border: 1px solid var(--border-color);
             }
             .chart-bar-row {
                 display: flex;
@@ -217,16 +267,17 @@
                 text-overflow: ellipsis;
                 overflow: hidden;
                 white-space: nowrap;
-                color: #4a5568;
+                color: var(--text-muted);
             }
             .chart-bar-container {
                 flex: 1;
-                background-color: #edf2f7;
+                background-color: var(--bg-body);
                 height: 24px;
                 border-radius: 4px;
                 overflow: hidden;
-                margin: 0 15px;
+                margin: 0;
                 position: relative;
+                border: 1px solid var(--border-color);
             }
             .chart-bar-fill {
                 background: linear-gradient(90deg, #3182ce, #4299e1);
@@ -237,7 +288,7 @@
             .chart-value {
                 width: 110px;
                 text-align: left;
-                color: #2d3748;
+                color: var(--text-main);
             }
 
             .collapse-icon {
@@ -263,8 +314,8 @@
             }
 
             .jars-section-box {
-                background: #f8fafc;
-                border: 2px dashed #cbd5e0;
+                background: var(--bg-jars);
+                border: 2px dashed var(--border-jars);
                 padding: 18px;
                 border-radius: 8px;
                 margin-top: 15px;
@@ -279,13 +330,13 @@
             }
             .jars-bar-container {
                 flex: 1;
-                background-color: #e2e8f0;
+                background-color: var(--bg-body);
                 height: 16px;
                 border-radius: 8px;
                 overflow: hidden;
                 margin: 0 15px;
                 position: relative;
-                border: 1px solid #cbd5e0;
+                border: 1px solid var(--border-color);
             }
             .jars-bar-fill {
                 height: 100%;
@@ -298,6 +349,28 @@
                 font-size: 12px;
                 color: #a0aec0;
             }
+
+            /* زر التبديل الملون العائم للوضع الداكن والفاتح */
+            .theme-toggle-btn {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                background: #1a365d;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 50px;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                font-size: 14px;
+                transition: background 0.2s;
+            }
+            .theme-toggle-btn:hover {
+                background: #2b6cb0;
+            }
+
             @media (max-width: 600px) {
                 .date-row {
                     flex-direction: column;
@@ -315,6 +388,16 @@
         </style>
     </head>
     <body>
+        <!-- زر التبديل الديناميكي العائم المدمج هندسياً بقفل صفحة حمودة -->
+        <button
+            onclick="toggleDarkModeFinancialApp()"
+            class="theme-toggle-btn"
+            id="themeToggleBtn"
+            style="width: 5%; text-align: center; display: none"
+        >
+            🌙
+        </button>
+
         <div class="container">
             <button id="installBtn" style="display: none">Install App</button>
 
@@ -369,20 +452,19 @@
                     <input type="date" id="endDate" value="2026-09-23" />
                 </div>
             </div>
-
             <!-- حقول الدخل والمدوّر البداعي المحدثة والمحمية من الحساب العشوائي المسبق -->
             <div
                 class="date-row"
                 style="
-                    background: #edf2f7;
+                    background: var(--table-stripe);
                     padding: 15px;
                     border-radius: 8px;
                     margin-top: 15px;
-                    border: 1px solid #cbd5e0;
+                    border: 1px solid var(--border-color);
                 "
             >
                 <div class="form-group">
-                    <label for="monthly-income-input" style="color: #1a365d">💰 الدخل الشهري المستهدف ($):</label>
+                    <label for="monthly-income-input">💰 الدخل الشهري المستهدف ($):</label>
                     <input
                         type="number"
                         id="monthly-income-input"
@@ -392,9 +474,7 @@
                     />
                 </div>
                 <div class="form-group">
-                    <label for="initial-carryover-input" style="color: #2c5282"
-                        >📥 مبلغ مدوّر من الشهر السابق ($):</label
-                    >
+                    <label for="initial-carryover-input">📥 مبلغ مدوّر من الشهر السابق ($):</label>
                     <input
                         type="number"
                         id="initial-carryover-input"
@@ -522,7 +602,6 @@
                         }
                     }
                 });
-
                 // الحسبة الهندسية الكبرى المحدثة: الموازنة المتاحة = الراتب + المدوّر + توتال الإضافات الشاملة
                 const totalAvailableBudget = totalIncome + currentMonthCarryover + totalMonthAdditions;
                 const unspentSurplus = totalAvailableBudget - totalMonthExpense;
@@ -532,14 +611,14 @@
                 }
 
                 let html = `<div class='jars-section-box'>
-        <h3 style='color:#1A365D; text-align:center; margin-top:0; margin-bottom:10px; font-size:14pt;'>🎯 ميزانية الأظرف الخمسة لهذا الشهر</h3>
-        <p style='text-align:center; font-size:13px; color:#4A5568; margin:0 0 12px 0;'>📈 المدوّر السابق: <strong>$${currentMonthCarryover.toFixed(2)}</strong> | 💸 الصرف الكلي للشهر: <strong style='color:#E53E3E;'>$${totalMonthExpense.toFixed(2)}</strong> | ✨ وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${Math.max(0, unspentSurplus).toFixed(2)}</strong></p>
+        <h3 style='text-align:center; margin-top:0; margin-bottom:10px; font-size:14pt;'>🎯 ميزانية الأظرف الخمسة لهذا الشهر</h3>
+        <p style='text-align:center; font-size:13px; color:var(--text-main); margin:0 0 12px 0;'>📈 المدوّر السابق: <strong>$${currentMonthCarryover.toFixed(2)}</strong> | 💸 الصرف الكلي للشهر: <strong style='color:#E53E3E;'>$${totalMonthExpense.toFixed(2)}</strong> | ✨ وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${Math.max(0, unspentSurplus).toFixed(2)}</strong></p>
         
         <!-- علبة الإضافات الذكية المدمجة: تعرض التوتال الآلي وتسمح بالإدخال اليدوي المكمل متوافقة 100% موبايل وكمبيوتر -->
         <div style="background: #FFF5F5; padding: 10px; border-radius: 8px; border: 1px dashed #FEB2B2; max-width: 420px; margin: 0 auto 15px auto; text-align: center; font-size: 12px; line-height: 1.5; color: #C53030;">
             <div style="margin-bottom: 5px;">📥 إضافات تلقائية من الـ CSV: <strong>$${csvAdditions.toFixed(2)}</strong></div>
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
-                <label for="additions-input-${monthName}" style="margin: 0; font-weight: bold;">➕ تكملة يدوية من عندك ($):</label>
+                <label for="additions-input-${monthName}" style="color: #C53030; margin: 0; font-weight: bold;">➕ تكملة يدوية من عندك ($):</label>
                 <input type="number" id="additions-input-${monthName}" value="${manualAdditions}" min="0" oninput="updateAdditionsMemory('${monthName}', this)" style="padding: 4px 8px; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; color: #C53030;">
             </div>
             <div style="margin-top: 6px; border-top: 1px solid #FEB2B2; padding-top: 4px; font-weight: bold;">
@@ -557,12 +636,12 @@
                     const barColor = isOverBudget ? "#E53E3E" : jar.color;
 
                     html += `
-            <div style='display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-bottom: 1px solid #EDF2F7;'>
+            <div style='display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--border-color);'>
                 <div style='display: flex; justify-content: space-between; align-items: center; font-size: 12px; flex-wrap: wrap; gap: 5px;'>
                     <span style='font-weight: bold;'>📍 ${jar.name}</span>
                     <span style='text-align: left;'>
                         الفعلي: <strong style='color:${barColor};'>$${actualAmount.toFixed(2)}</strong> 
-                        <span style='color: #718096; font-size: 11px;'>/ المستهدف: $${targetAmount.toFixed(2)} (${percentOfTarget.toFixed(1)}%)</span>
+                        <span style='color: var(--text-muted); font-size: 11px;'>/ المستهدف: $${targetAmount.toFixed(2)} (${percentOfTarget.toFixed(1)}%)</span>
                     </span>
                 </div>
                 <div style='background-color: #EDF2F7; height: 16px; border-radius: 8px; overflow: hidden; margin: 5px 0; position: relative; border: 1px solid #CBD5E0; width: 100%; box-sizing: border-box;'>
@@ -598,7 +677,6 @@
                         alert("الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً يا حمودة!");
                     return;
                 }
-
                 if (isExplicitClick) {
                     isDataAnalyzed = true;
                 }
@@ -678,7 +756,6 @@
                 };
                 reader.readAsText(file, "UTF-8");
             }
-
             // محرك الرسم والتدوير الذكي: يعيد الحساب اللحظي الفوري من الذاكرة دون لمس الملف أو تصفير القيم
             // القسم 4: محرك إعادة الرسم اللحظي الموحد على مفتاح اسم الشهر التزامني
             function recalculateAndRenderUI() {
@@ -739,7 +816,7 @@
 
                     let chartBodyId = `chart_body_${mIdx}`;
                     let chartHtml = `<div class='native-chart-wrapper'>
-            <h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='color:#1A365D; text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'>
+            <h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'>
                 <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▲</span> 📊 التوزيع المرئي لنفقات شهر ${monthName} (اضغط للطي/التوسيع)
             </h3>
             <div id='${chartBodyId}'>`;
@@ -750,7 +827,7 @@
                         chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
 
                         let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
-                        htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▲</span> 📁 [${categoryName}]</span><span style='color: #2B6CB0; font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
+                        htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▲</span> 📁 [${categoryName}]</span><span style='font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
 
                         let descMap = categoriesMap[categoryName];
                         Object.keys(descMap)
@@ -774,7 +851,6 @@
 
                     let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td></tr></table>`;
 
-                    // تمرير الحسبة الموحدة باسم الشهر الحقيقي لمنع تضارب الفهارس الصفرية
                     let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, monthName);
 
                     let monthDataDiv = document.createElement("div");
@@ -786,24 +862,24 @@
                     previousMonthTotal = monthTotal;
                 });
 
-                let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل لكافة الأشهر</h2>`;
+                let globalChartHtml = `<h2 style='text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل لكافة الأشهر</h2>`;
                 let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
                 Object.keys(globalCategorySums)
                     .sort((a, b) => globalCategorySums[b] - globalCategorySums[a])
                     .forEach((cat) => {
                         let amount = globalCategorySums[cat];
-                        globalChartHtml += `<div class='chart-bar-row'><div class='chart-label' style='color:#2B6CB0;'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${amount.toFixed(2)}</div></div>`;
+                        globalChartHtml += `<div class='chart-bar-row'><div class='chart-label'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${amount.toFixed(2)}</div></div>`;
                     });
                 let globalBlock = document.createElement("div");
                 globalBlock.className = "global-block-wrapper";
                 globalBlock.innerHTML = globalChartHtml;
                 resultsContainer.appendChild(globalBlock);
 
-                let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
+                let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'><h2 style='text-align:center;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
                 Object.keys(descriptionMonths).forEach((desc) => {
                     if (descriptionMonths[desc].size >= 2) {
                         let avg = descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
-                        subscriptionHtml += `<tr><td style='color:#234E52;'>🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td></tr>`;
+                        subscriptionHtml += `<tr><td>🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold;'>$${avg.toFixed(2)} / شهر</td></tr>`;
                     }
                 });
                 subscriptionHtml += `</table></div>`;
@@ -811,7 +887,6 @@
                 subBlock.innerHTML = subscriptionHtml;
                 resultsContainer.appendChild(subBlock);
             }
-
             // دالة الذاكرة المحدثة الفورية والمحافظة على مكان مؤشر الماوس
             function updateAdditionsMemory(monthKey, inputElement) {
                 globalMonthAdditions[monthKey] = parseFloat(inputElement.value) || 0;
@@ -861,6 +936,28 @@
                     h.querySelector(".collapse-icon").innerHTML = shouldHide ? "▼" : "▲";
                 });
             }
+
+            /* سكربت التحكم بتبديل المظهر وحفظ خيارات حمودة في الذاكرة التزامنية للمتصفح للأبد */
+            function toggleDarkModeFinancialApp() {
+                const currentTheme = document.documentElement.getAttribute("data-theme");
+                const targetTheme = currentTheme === "dark" ? "light" : "dark";
+                document.documentElement.setAttribute("data-theme", targetTheme);
+                localStorage.setItem("financial-app-theme", targetTheme);
+                const btn = document.getElementById("themeToggleBtn");
+                if (btn) {
+                    btn.innerHTML = targetTheme === "dark" ? "☀️" : "🌙";
+                }
+            }
+            (function () {
+                const savedTheme = localStorage.getItem("financial-app-theme") || "light";
+                document.documentElement.setAttribute("data-theme", savedTheme);
+                window.addEventListener("DOMContentLoaded", () => {
+                    const btn = document.getElementById("themeToggleBtn");
+                    if (btn) {
+                        btn.innerHTML = savedTheme === "dark" ? "☀️" : "🌙";
+                    }
+                });
+            })();
         </script>
         <div class="footer">تم تحديث وقفل كامل ميزات لوحة التحكم المالية الشخصية بنجاح يا حمودة 🚀</div>
     </body>
