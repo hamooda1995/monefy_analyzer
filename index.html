@@ -1,238 +1,537 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📊 لوحة تحليلات مصاريف Monefy الشاملة - حمودة</title>
-    <link rel="manifest" href="manifest.json">
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F7FAFC; color: #2D3748; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { 
-    background: white; 
-    padding: 20px; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-    max-width: 800px; 
-    width: 95%; /* تضمن ألا يلتصق الحواف في الشاشات الصغيرة */
-    box-sizing: border-box; 
-    margin-bottom: 30px; 
-}
-
-        h2 { color: #1A365D; text-align: center; margin-bottom: 25px; font-weight: bold; }
-        .form-group { margin-bottom: 20px; display: flex; flex-direction: column; }
-        label { font-weight: bold; margin-bottom: 8px; color: #4A5568; }
-        input[type="file"], input[type="date"], input[type="number"] { padding: 10px; border: 2px solid #E2E8F0; border-radius: 6px; font-size: 15px; font-family: inherit; }
-        input[type="date"] { width: 100%; box-sizing: border-box; }
-        .date-row { display: flex; gap: 15px; }
-        .date-row .form-group { flex: 1; }
-        button { background-color: #1A365D; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; transition: background 0.2s; }
-        button:hover { background-color: #2B6CB0; }
-        
-        #resultsContainer { max-width: 800px; width: 100%; display: none; }
-        .month-block-wrapper, .global-block-wrapper { background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 35px; padding: 20px; border: 1px solid #E2E8F0; }
-        .global-block-wrapper { border: 2px solid #2B6CB0; background-color: #F8FAFC; }
-        
-  /* إعادة الجدول لطبيعته الكاملة والعريضة على اللابتوب */
-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    margin-top: 15px; 
-    font-weight: bold; 
-    margin-bottom: 0px;
-}
-
-/* حاوية ذكية تلتف حول الجدول لحمايته على الموبايل ومنع التداخل */
-.table-responsive-wrapper {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin-top: 15px;
-}
-
-        th { background-color: #1A365D; color: white; padding: 12px 10px; border: 1px solid #A0AEC0; font-size: 14pt; text-align: center; }
-        td { padding: 11px 10px; border: 1px solid #CBD5E0; text-align: right; font-size: 14pt; color: #2D3748; }
-        tr:nth-child(even) { background-color: #F7FAFC; }
-        
-        .month-header-row { cursor: pointer; }
-        .month-header-row td { background-color: #EBF8FF; color: #2B6CB0; text-align: center; font-size: 15pt; border: 2px solid #90CDF4; user-select: none; }
-        
-        .category-header-row { cursor: pointer; }
-        .category-header-row td { background-color: #EDF2F7; color: #2D3748; font-size: 14pt; border-top: 1px solid #CBD5E0; border-bottom: 1px solid #CBD5E0; user-select: none; }
-        .cat-header-flex { display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
-        
-        .alert-row td { background-color: #FFF5F5; color: #C53030; border: 1px solid #FEB2B2; } 
-        .category-total-row td { background-color: #E6FFFA; color: #234E52; border-top: 1px solid #319795; border-bottom: 1px solid #319795; font-style: italic; font-size: 14pt; }
-        
-        .month-total-table { width: 100%; border-collapse: collapse; margin-top: 0px; margin-bottom: 20px; font-weight: bold; }
-        .month-total-table td { background-color: #CBD5E0; color: #1A202C; border: 2px solid #4A5568; font-size: 14pt; padding: 11px 10px; text-align: right; }
-        
-        .native-chart-wrapper { background: #FFF; border-radius: 8px; padding: 15px; margin-top: 20px; border: 1px solid #E2E8F0; }
-        .chart-bar-row { 
-    display: flex; 
-    flex-wrap: wrap; /* ينزل لسطر جديد إذا كانت الشاشة صغيرة جداً */
-    align-items: center; 
-    margin-bottom: 12px; 
-    font-size: 13px; 
-    font-weight: bold; 
-    gap: 10px;
-}
-        .chart-label { 
-    width: 100%; /* تأخذ سطر كامل على الموبايل ليعطي مساحة للشريط */
-    max-width: 150px;
-    text-overflow: ellipsis; 
-    overflow: hidden; 
-    white-space: nowrap; 
-    color: #4A5568; 
-}
-        .chart-bar-container { flex: 1; background-color: #EDF2F7; height: 24px; border-radius: 4px; overflow: hidden; margin: 0 15px; position: relative; }
-        .chart-bar-fill { background: linear-gradient(90deg, #3182CE, #4299E1); height: 100%; border-radius: 4px; transition: width 0.5s ease-in-out; }
-        .chart-value { width: 110px; text-align: left; color: #2D3748; }
-        
-        .collapse-icon { font-size: 11pt; margin-left: 8px; font-family: monospace; }
-        .toggle-all-btn { background-color: #2B6CB0; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11pt; font-weight: bold; cursor: pointer; float: left; margin-top: -2px; transition: background 0.2s; }
-        .toggle-all-btn:hover { background-color: #1A365D; }
-        
-        .jars-section-box { background: #F8FAFC; border: 2px dashed #CBD5E0; padding: 18px; border-radius: 8px; margin-top: 15px; margin-bottom: 15px; }
-        .jars-bar-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; font-weight: bold; }
-        .jars-bar-container { flex: 1; background-color: #E2E8F0; height: 16px; border-radius: 8px; overflow: hidden; margin: 0 15px; position: relative; border: 1px solid #CBD5E0; }
-        .jars-bar-fill { height: 100%; border-radius: 8px; transition: width 0.4s ease; }
-        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #A0AEC0; }
-		@media (max-width: 600px) {
-    .date-row { flex-direction: column; gap: 10px; }
-    td, th { font-size: 11pt !important; padding: 8px 5px !important; }
-    h2 { font-size: 16px !important; }
-}
-    </style>
-</head>
-<body>
-<div class="container">
-    <button id="installBtn" style="display: none;">Install App</button>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log("Service Worker Registered"))
-                .catch(err => console.log("Service Worker Failed", err));
-        }
-        let deferredPrompt = null;
-        const installBtn = document.getElementById('installBtn');
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); deferredPrompt = e;
-        });
-        installBtn.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            installBtn.style.display = 'none'; deferredPrompt.prompt();
-            deferredPrompt = null;
-        });
-    </script>
-
-    <h2>📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة</h2>
-    
-    <div class="form-group">
-        <label for="csvFile">1. اختر ملف البيانات الصادر (CSV):</label>
-        <input type="file" id="csvFile" accept=".csv">
-    </div>
-
-    <div class="date-row">
-        <div class="form-group">
-            <label for="startDate">تاريخ البدء:</label>
-            <input type="date" id="startDate" value="2026-05-01">
-        </div>
-        <div class="form-group">
-            <label for="endDate">تاريخ النهاية (مشمول):</label>
-            <input type="date" id="endDate" value="2026-09-23">
-        </div>
-    </div>
-
-    <!-- حقول الدخل والمدوّر البداعي المحدثة والمحمية من الحساب العشوائي المسبق -->
-    <div class="date-row" style="background: #EDF2F7; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #CBD5E0;">
-        <div class="form-group">
-            <label for="monthly-income-input" style="color: #1A365D;">💰 الدخل الشهري المستهدف ($):</label>
-            <input type="number" id="monthly-income-input" value="1000" min="0" oninput="triggerConditionalCalculation()">
-        </div>
-        <div class="form-group">
-            <label for="initial-carryover-input" style="color: #2C5282;">📥 مبلغ مدوّر من الشهر السابق ($):</label>
-            <input type="number" id="initial-carryover-input" value="100" min="0" oninput="triggerConditionalCalculation()">
-        </div>
-    </div>
-
-    <button onclick="processAndDisplay(true)">تحليل وعرض الحسابات والمخططات البيانية فورا 🚀</button>
-</div>
-
-<div id="resultsContainer"></div>
-<script>
-// الحفاظ الصارم على فهارس النواة المقدسة والمستقرة
-const CSV_INDICES = { DATE: 0, CATEGORY: 2, AMOUNT: 5, DESC: 7 };
-
-// خريطة التوزيع المعتمدة والمحذوف منها Debt بناء على توجيهك
-const JARS_MAPPING = {
-    fixed: { name: "مصاريف ثابتة وأساسية (55%)", targetPercent: 0.55, color: "#3182CE", categories: ["Rent", "Bills", "Food", "Transport", "House", "Home", "Babies", "Communications", "Mobile", "Android", "Car", "Health", "Moony", "Real estate", "Taxi"] },
-    guiltFree: { name: "متعة دون تأنيب ضمير (10%)", targetPercent: 0.10, color: "#DD6B20", categories: ["Eating out", "Entertainment", "Sports", "Shaving", "Clothes", "Electronics", "Gifts", "Shop", "YYY"] },
-    debt: { name: "سداد ديون (10%)", targetPercent: 0.10, color: "#E53E3E", categories: [] }, 
-    savings: { name: "تحويش للمستقبل (10%)", targetPercent: 0.10, color: "#38A169", categories: ["Savings", "Study"] },
-    investing: { name: "استثمار وتنمية الثروة (15%)", targetPercent: 0.15, color: "#805AD5", categories: ["Investment", "Gold"] }
-};
-
-let isDataAnalyzed = false; // راية حماية لمنع العمل التلقائي قبل الضغط على الزر
-// مصفوفة عالمية مقدسة لحفظ بيانات الـ CSV في الذاكرة ومنع التصفير عند التحديث اللحظي
-let globalParsedRowsData = [];
-let isFileAlreadyLoaded = false;
-
-function triggerConditionalCalculation() {
-    if (isDataAnalyzed) { processAndDisplay(false); }
-}
-
-function clean(text) { return text ? text.replace(/"/g, "").trim() : ""; }
-
-function parseJavaDate(dateStr) {
-    const parts = dateStr.split('/');
-    if (parts.length !== 3) return null;
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; 
-    const year = parseInt(parts[2], 10);
-    return new Date(year, month, day);
-}
-</script>
-<script>
-// محرك حساب الأظرف وضخ فائض الوفر المالي بداخل خانة تحويش المستقبل
-// محرك حساب الأظرف المطور المدمج به حقل الإضافات والمدور المالي التراكمي
-// القسم 3: محرك الأظرف الخمسة الموحد والمطور هندسياً على مفتاح الشهر لمنع التضارب
-function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, currentMonthCarryover, monthName) {
-    const totalIncome = parseFloat(document.getElementById('monthly-income-input').value) || 0;
-    
-    // جلب الإضافات التلقائية المجمعة من الـ CSV لهذا الشهر المحدد
-    const csvAdditions = globalCsvPositiveAdditions[monthName] || 0;
-
-    // جلب الإضافات اليدوية المخزنة في الذاكرة
-    if (globalMonthAdditions[monthName] === undefined) {
-        globalMonthAdditions[monthName] = 0;
-    }
-    const manualAdditions = globalMonthAdditions[monthName];
-
-    // الحسبة الشاملة: إجمالي إضافات الشهر = إيداعات الـ CSV الموجبة + الإدخال اليدوي المكمل
-    const totalMonthAdditions = csvAdditions + manualAdditions;
-
-    let monthJarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
-    
-    Object.keys(monthCategoriesMap).forEach(cat => {
-        let catSum = Object.values(monthCategoriesMap[cat]).reduce((a, b) => a + b, 0);
-        for (const jarKey in JARS_MAPPING) {
-            if (JARS_MAPPING[jarKey].categories.map(c => c.toLowerCase()).includes(cat.toLowerCase())) {
-                monthJarsTotals[jarKey] += catSum;
-                break;
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>📊 لوحة تحليلات مصاريف Monefy الشاملة - حمودة</title>
+        <link rel="manifest" href="manifest.json" />
+        <style>
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f7fafc;
+                color: #2d3748;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
-        }
-    });
+            .container {
+                background: white;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+                max-width: 800px;
+                width: 95%; /* تضمن ألا يلتصق الحواف في الشاشات الصغيرة */
+                box-sizing: border-box;
+                margin-bottom: 30px;
+            }
 
-    // الحسبة الهندسية الكبرى المحدثة: الموازنة المتاحة = الراتب + المدوّر + توتال الإضافات الشاملة
-    const totalAvailableBudget = totalIncome + currentMonthCarryover + totalMonthAdditions;
-    const unspentSurplus = totalAvailableBudget - totalMonthExpense;
-    
-    if (unspentSurplus > 0) {
-        monthJarsTotals.savings += unspentSurplus;
-    }
+            h2 {
+                color: #1a365d;
+                text-align: center;
+                margin-bottom: 25px;
+                font-weight: bold;
+            }
+            .form-group {
+                margin-bottom: 20px;
+                display: flex;
+                flex-direction: column;
+            }
+            label {
+                font-weight: bold;
+                margin-bottom: 8px;
+                color: #4a5568;
+            }
+            input[type="file"],
+            input[type="date"],
+            input[type="number"] {
+                padding: 10px;
+                border: 2px solid #e2e8f0;
+                border-radius: 6px;
+                font-size: 15px;
+                font-family: inherit;
+            }
+            input[type="date"] {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .date-row {
+                display: flex;
+                gap: 15px;
+            }
+            .date-row .form-group {
+                flex: 1;
+            }
+            button {
+                background-color: #1a365d;
+                color: white;
+                border: none;
+                padding: 14px;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                width: 100%;
+                margin-top: 10px;
+                transition: background 0.2s;
+            }
+            button:hover {
+                background-color: #2b6cb0;
+            }
 
-    let html = `<div class='jars-section-box'>
+            #resultsContainer {
+                max-width: 800px;
+                width: 100%;
+                display: none;
+            }
+            .month-block-wrapper,
+            .global-block-wrapper {
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+                margin-bottom: 35px;
+                padding: 20px;
+                border: 1px solid #e2e8f0;
+            }
+            .global-block-wrapper {
+                border: 2px solid #2b6cb0;
+                background-color: #f8fafc;
+            }
+
+            /* إعادة الجدول لطبيعته الكاملة والعريضة على اللابتوب */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                font-weight: bold;
+                margin-bottom: 0px;
+            }
+
+            /* حاوية ذكية تلتف حول الجدول لحمايته على الموبايل ومنع التداخل */
+            .table-responsive-wrapper {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin-top: 15px;
+            }
+
+            th {
+                background-color: #1a365d;
+                color: white;
+                padding: 12px 10px;
+                border: 1px solid #a0aec0;
+                font-size: 14pt;
+                text-align: center;
+            }
+            td {
+                padding: 11px 10px;
+                border: 1px solid #cbd5e0;
+                text-align: right;
+                font-size: 14pt;
+                color: #2d3748;
+            }
+            tr:nth-child(even) {
+                background-color: #f7fafc;
+            }
+
+            .month-header-row {
+                cursor: pointer;
+            }
+            .month-header-row td {
+                background-color: #ebf8ff;
+                color: #2b6cb0;
+                text-align: center;
+                font-size: 15pt;
+                border: 2px solid #90cdf4;
+                user-select: none;
+            }
+
+            .category-header-row {
+                cursor: pointer;
+            }
+            .category-header-row td {
+                background-color: #edf2f7;
+                color: #2d3748;
+                font-size: 14pt;
+                border-top: 1px solid #cbd5e0;
+                border-bottom: 1px solid #cbd5e0;
+                user-select: none;
+            }
+            .cat-header-flex {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .alert-row td {
+                background-color: #fff5f5;
+                color: #c53030;
+                border: 1px solid #feb2b2;
+            }
+            .category-total-row td {
+                background-color: #e6fffa;
+                color: #234e52;
+                border-top: 1px solid #319795;
+                border-bottom: 1px solid #319795;
+                font-style: italic;
+                font-size: 14pt;
+            }
+
+            .month-total-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 0px;
+                margin-bottom: 20px;
+                font-weight: bold;
+            }
+            .month-total-table td {
+                background-color: #cbd5e0;
+                color: #1a202c;
+                border: 2px solid #4a5568;
+                font-size: 14pt;
+                padding: 11px 10px;
+                text-align: right;
+            }
+
+            .native-chart-wrapper {
+                background: #fff;
+                border-radius: 8px;
+                padding: 15px;
+                margin-top: 20px;
+                border: 1px solid #e2e8f0;
+            }
+            .chart-bar-row {
+                display: flex;
+                flex-wrap: wrap; /* ينزل لسطر جديد إذا كانت الشاشة صغيرة جداً */
+                align-items: center;
+                margin-bottom: 12px;
+                font-size: 13px;
+                font-weight: bold;
+                gap: 10px;
+            }
+            .chart-label {
+                width: 100%; /* تأخذ سطر كامل على الموبايل ليعطي مساحة للشريط */
+                max-width: 150px;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                color: #4a5568;
+            }
+            .chart-bar-container {
+                flex: 1;
+                background-color: #edf2f7;
+                height: 24px;
+                border-radius: 4px;
+                overflow: hidden;
+                margin: 0 15px;
+                position: relative;
+            }
+            .chart-bar-fill {
+                background: linear-gradient(90deg, #3182ce, #4299e1);
+                height: 100%;
+                border-radius: 4px;
+                transition: width 0.5s ease-in-out;
+            }
+            .chart-value {
+                width: 110px;
+                text-align: left;
+                color: #2d3748;
+            }
+
+            .collapse-icon {
+                font-size: 11pt;
+                margin-left: 8px;
+                font-family: monospace;
+            }
+            .toggle-all-btn {
+                background-color: #2b6cb0;
+                color: white;
+                border: none;
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 11pt;
+                font-weight: bold;
+                cursor: pointer;
+                float: left;
+                margin-top: -2px;
+                transition: background 0.2s;
+            }
+            .toggle-all-btn:hover {
+                background-color: #1a365d;
+            }
+
+            .jars-section-box {
+                background: #f8fafc;
+                border: 2px dashed #cbd5e0;
+                padding: 18px;
+                border-radius: 8px;
+                margin-top: 15px;
+                margin-bottom: 15px;
+            }
+            .jars-bar-row {
+                display: flex;
+                align-items: center;
+                margin-bottom: 10px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            .jars-bar-container {
+                flex: 1;
+                background-color: #e2e8f0;
+                height: 16px;
+                border-radius: 8px;
+                overflow: hidden;
+                margin: 0 15px;
+                position: relative;
+                border: 1px solid #cbd5e0;
+            }
+            .jars-bar-fill {
+                height: 100%;
+                border-radius: 8px;
+                transition: width 0.4s ease;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 20px;
+                font-size: 12px;
+                color: #a0aec0;
+            }
+            @media (max-width: 600px) {
+                .date-row {
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                td,
+                th {
+                    font-size: 11pt !important;
+                    padding: 8px 5px !important;
+                }
+                h2 {
+                    font-size: 16px !important;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <button id="installBtn" style="display: none">Install App</button>
+
+            <script>
+                // كود التدمير الذاتي للـ Service Worker ومسح كاش المتصفح لضمان ظهور التعديلات فوراً
+                if ("serviceWorker" in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                        for (let registration of registrations) {
+                            // إلغاء تسجيل الـ Service Worker القديم الذي يتسبب في حجز وتجميد الكاش
+                            registration.unregister().then(function () {
+                                console.log("تم تدمير الـ Service Worker بنجاح لضمان تحديث الكاش التلقائي!");
+                            });
+                        }
+                    });
+
+                    // مسح كاش الـ Cache Storage الخاص بالتطبيق نهائياً
+                    if (window.caches) {
+                        caches.keys().then(function (names) {
+                            for (let name of names) caches.delete(name);
+                        });
+                    }
+                }
+
+                let deferredPrompt = null;
+                const installBtn = document.getElementById("installBtn");
+                window.addEventListener("beforeinstallprompt", (e) => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                });
+                installBtn.addEventListener("click", async () => {
+                    if (!deferredPrompt) return;
+                    installBtn.style.display = "none";
+                    deferredPrompt.prompt();
+                    deferredPrompt = null;
+                });
+            </script>
+
+            <h2>📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة</h2>
+
+            <div class="form-group">
+                <label for="csvFile">1. اختر ملف البيانات الصادر (CSV):</label>
+                <input type="file" id="csvFile" accept=".csv" />
+            </div>
+
+            <div class="date-row">
+                <div class="form-group">
+                    <label for="startDate">تاريخ البدء:</label>
+                    <input type="date" id="startDate" value="2026-05-01" />
+                </div>
+                <div class="form-group">
+                    <label for="endDate">تاريخ النهاية (مشمول):</label>
+                    <input type="date" id="endDate" value="2026-09-23" />
+                </div>
+            </div>
+
+            <!-- حقول الدخل والمدوّر البداعي المحدثة والمحمية من الحساب العشوائي المسبق -->
+            <div
+                class="date-row"
+                style="
+                    background: #edf2f7;
+                    padding: 15px;
+                    border-radius: 8px;
+                    margin-top: 15px;
+                    border: 1px solid #cbd5e0;
+                "
+            >
+                <div class="form-group">
+                    <label for="monthly-income-input" style="color: #1a365d">💰 الدخل الشهري المستهدف ($):</label>
+                    <input
+                        type="number"
+                        id="monthly-income-input"
+                        value="1000"
+                        min="0"
+                        oninput="triggerConditionalCalculation()"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="initial-carryover-input" style="color: #2c5282"
+                        >📥 مبلغ مدوّر من الشهر السابق ($):</label
+                    >
+                    <input
+                        type="number"
+                        id="initial-carryover-input"
+                        value="100"
+                        min="0"
+                        oninput="triggerConditionalCalculation()"
+                    />
+                </div>
+            </div>
+
+            <button onclick="processAndDisplay(true)">تحليل وعرض الحسابات والمخططات البيانية فورا 🚀</button>
+        </div>
+
+        <div id="resultsContainer"></div>
+        <script>
+            // الحفاظ الصارم على فهارس النواة المقدسة والمستقرة
+            const CSV_INDICES = { DATE: 0, CATEGORY: 2, AMOUNT: 5, DESC: 7 };
+
+            // خريطة التوزيع المعتمدة والمحذوف منها Debt بناء على توجيهك
+            const JARS_MAPPING = {
+                fixed: {
+                    name: "مصاريف ثابتة وأساسية (55%)",
+                    targetPercent: 0.55,
+                    color: "#3182CE",
+                    categories: [
+                        "Rent",
+                        "Bills",
+                        "Food",
+                        "Transport",
+                        "House",
+                        "Home",
+                        "Babies",
+                        "Communications",
+                        "Mobile",
+                        "Android",
+                        "Car",
+                        "Health",
+                        "Moony",
+                        "Real estate",
+                        "Taxi",
+                    ],
+                },
+                guiltFree: {
+                    name: "متعة دون تأنيب ضمير (10%)",
+                    targetPercent: 0.1,
+                    color: "#DD6B20",
+                    categories: [
+                        "Eating out",
+                        "Entertainment",
+                        "Sports",
+                        "Shaving",
+                        "Clothes",
+                        "Electronics",
+                        "Gifts",
+                        "Shop",
+                        "YYY",
+                    ],
+                },
+                debt: { name: "سداد ديون (10%)", targetPercent: 0.1, color: "#E53E3E", categories: [] },
+                savings: {
+                    name: "تحويش للمستقبل (10%)",
+                    targetPercent: 0.1,
+                    color: "#38A169",
+                    categories: ["Savings", "Study"],
+                },
+                investing: {
+                    name: "استثمار وتنمية الثروة (15%)",
+                    targetPercent: 0.15,
+                    color: "#805AD5",
+                    categories: ["Investment", "Gold"],
+                },
+            };
+
+            let isDataAnalyzed = false; // راية حماية لمنع العمل التلقائي قبل الضغط على الزر
+            // مصفوفة عالمية مقدسة لحفظ بيانات الـ CSV في الذاكرة ومنع التصفير عند التحديث اللحظي
+            let globalParsedRowsData = [];
+            let isFileAlreadyLoaded = false;
+
+            function triggerConditionalCalculation() {
+                if (isDataAnalyzed) {
+                    processAndDisplay(false);
+                }
+            }
+
+            function clean(text) {
+                return text ? text.replace(/"/g, "").trim() : "";
+            }
+
+            function parseJavaDate(dateStr) {
+                const parts = dateStr.split("/");
+                if (parts.length !== 3) return null;
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const year = parseInt(parts[2], 10);
+                return new Date(year, month, day);
+            }
+        </script>
+        <script>
+            // محرك حساب الأظرف وضخ فائض الوفر المالي بداخل خانة تحويش المستقبل
+            // محرك حساب الأظرف المطور المدمج به حقل الإضافات والمدور المالي التراكمي
+            // القسم 3: محرك الأظرف الخمسة الموحد والمطور هندسياً على مفتاح الشهر لمنع التضارب
+            function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, currentMonthCarryover, monthName) {
+                const totalIncome = parseFloat(document.getElementById("monthly-income-input").value) || 0;
+
+                // جلب الإضافات التلقائية المجمعة من الـ CSV لهذا الشهر المحدد
+                const csvAdditions = globalCsvPositiveAdditions[monthName] || 0;
+
+                // جلب الإضافات اليدوية المخزنة في الذاكرة
+                if (globalMonthAdditions[monthName] === undefined) {
+                    globalMonthAdditions[monthName] = 0;
+                }
+                const manualAdditions = globalMonthAdditions[monthName];
+
+                // الحسبة الشاملة: إجمالي إضافات الشهر = إيداعات الـ CSV الموجبة + الإدخال اليدوي المكمل
+                const totalMonthAdditions = csvAdditions + manualAdditions;
+
+                let monthJarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
+
+                Object.keys(monthCategoriesMap).forEach((cat) => {
+                    let catSum = Object.values(monthCategoriesMap[cat]).reduce((a, b) => a + b, 0);
+                    for (const jarKey in JARS_MAPPING) {
+                        if (JARS_MAPPING[jarKey].categories.map((c) => c.toLowerCase()).includes(cat.toLowerCase())) {
+                            monthJarsTotals[jarKey] += catSum;
+                            break;
+                        }
+                    }
+                });
+
+                // الحسبة الهندسية الكبرى المحدثة: الموازنة المتاحة = الراتب + المدوّر + توتال الإضافات الشاملة
+                const totalAvailableBudget = totalIncome + currentMonthCarryover + totalMonthAdditions;
+                const unspentSurplus = totalAvailableBudget - totalMonthExpense;
+
+                if (unspentSurplus > 0) {
+                    monthJarsTotals.savings += unspentSurplus;
+                }
+
+                let html = `<div class='jars-section-box'>
         <h3 style='color:#1A365D; text-align:center; margin-top:0; margin-bottom:10px; font-size:14pt;'>🎯 ميزانية الأظرف الخمسة لهذا الشهر</h3>
         <p style='text-align:center; font-size:13px; color:#4A5568; margin:0 0 12px 0;'>📈 المدوّر السابق: <strong>$${currentMonthCarryover.toFixed(2)}</strong> | 💸 الصرف الكلي للشهر: <strong style='color:#E53E3E;'>$${totalMonthExpense.toFixed(2)}</strong> | ✨ وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${Math.max(0, unspentSurplus).toFixed(2)}</strong></p>
         
@@ -248,16 +547,16 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
             </div>
         </div>`;
 
-    for (const key in JARS_MAPPING) {
-        const jar = JARS_MAPPING[key];
-        const targetAmount = totalIncome * jar.targetPercent;
-        const actualAmount = monthJarsTotals[key] || 0;
-        const percentOfTarget = targetAmount > 0 ? (actualAmount / targetAmount) * 100 : 0;
-        
-        const isOverBudget = actualAmount > targetAmount && (key === 'fixed' || key === 'guiltFree');
-        const barColor = isOverBudget ? "#E53E3E" : jar.color;
+                for (const key in JARS_MAPPING) {
+                    const jar = JARS_MAPPING[key];
+                    const targetAmount = totalIncome * jar.targetPercent;
+                    const actualAmount = monthJarsTotals[key] || 0;
+                    const percentOfTarget = targetAmount > 0 ? (actualAmount / targetAmount) * 100 : 0;
 
-        html += `
+                    const isOverBudget = actualAmount > targetAmount && (key === "fixed" || key === "guiltFree");
+                    const barColor = isOverBudget ? "#E53E3E" : jar.color;
+
+                    html += `
             <div style='display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-bottom: 1px solid #EDF2F7;'>
                 <div style='display: flex; justify-content: space-between; align-items: center; font-size: 12px; flex-wrap: wrap; gap: 5px;'>
                     <span style='font-weight: bold;'>📍 ${jar.name}</span>
@@ -271,259 +570,298 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
                 </div>
             </div>
         `;
-    }
-    html += `</div>`;
-    return { html: html, monthSurplus: unspentSurplus };
-}
+                }
+                html += `</div>`;
+                return { html: html, monthSurplus: unspentSurplus };
+            }
+        </script>
+        <script>
+            // دالة التحليل الكبرى (تقرأ الملف لمرة واحدة وتخزنه في الذاكرة العالمية لمنع تصفير القيم)
+            // مصفوفة عالمية مستقلة لحفظ قيم الإضافات لكل شهر ومنع التصفير نهائياً
+            let globalMonthAdditions = {};
 
-</script>
-<script>
-// دالة التحليل الكبرى (تقرأ الملف لمرة واحدة وتخزنه في الذاكرة العالمية لمنع تصفير القيم)
-// مصفوفة عالمية مستقلة لحفظ قيم الإضافات لكل شهر ومنع التصفير نهائياً
-let globalMonthAdditions = {};
+            // مصفوفة عالمية جديدة لحفظ وتجميع الإيداعات الموجبة القادمة من الـ CSV لكل شهر تلقائياً
+            let globalCsvPositiveAdditions = {};
 
-// مصفوفة عالمية جديدة لحفظ وتجميع الإيداعات الموجبة القادمة من الـ CSV لكل شهر تلقائياً
-let globalCsvPositiveAdditions = {};
+            function processAndDisplay(isExplicitClick) {
+                const fileInput = document.getElementById("csvFile");
+                const startDateInput = document.getElementById("startDate").value;
+                const endDateInput = document.getElementById("endDate").value;
 
-function processAndDisplay(isExplicitClick) {
-    const fileInput = document.getElementById('csvFile');
-    const startDateInput = document.getElementById('startDate').value;
-    const endDateInput = document.getElementById('endDate').value;
+                if (!isExplicitClick && isFileAlreadyLoaded) {
+                    recalculateAndRenderUI();
+                    return;
+                }
 
-    if (!isExplicitClick && isFileAlreadyLoaded) {
-        recalculateAndRenderUI();
-        return;
-    }
+                if (!fileInput.files || !fileInput.files.length) {
+                    if (isExplicitClick)
+                        alert("الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً يا حمودة!");
+                    return;
+                }
 
-    if (!fileInput.files || !fileInput.files.length) {
-        if (isExplicitClick) alert('الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً يا حمودة!');
-        return;
-    }
+                if (isExplicitClick) {
+                    isDataAnalyzed = true;
+                }
 
-    if (isExplicitClick) { isDataAnalyzed = true; }
+                const file = fileInput.files[0];
+                const startDate = new Date(startDateInput);
+                startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(endDateInput);
+                endDate.setHours(23, 59, 59, 999);
 
-    const file = fileInput.files[0];
-    const startDate = new Date(startDateInput);
-    startDate.setHours(0, 0, 0, 0);
-	const endDate = new Date(endDateInput);
-    endDate.setHours(23, 59, 59, 999); 
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const text = e.target.result;
+                    const lines = text.split(/\r?\n/);
+                    if (lines.length < 2) return;
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result;
-        const lines = text.split(/\r?\n/);
-        if (lines.length < 2) return;
+                    const separator = text.includes("\t") ? "\t" : ",";
+                    globalParsedRowsData = [];
+                    globalCsvPositiveAdditions = {}; // تصفية حسابات الإضافات التلقائية القديمة
 
-        const separator = text.includes('\t') ? '\t' : ',';
-        globalParsedRowsData = []; 
-        globalCsvPositiveAdditions = {}; // تصفية حسابات الإضافات التلقائية القديمة
+                    for (let i = 1; i < lines.length; i++) {
+                        let line = lines[i];
+                        if (!line.trim()) continue;
+                        let columns =
+                            separator === "," ? line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/) : line.split("\t");
+                        if (columns.length < 7) continue;
 
-        for (let i = 1; i < lines.length; i++) {
-            let line = lines[i]; if (!line.trim()) continue;
-            let columns = (separator === ',') ? line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/) : line.split('\t');
-            if (columns.length < 7) continue;
+                        try {
+                            let dateStr = clean(columns.at(CSV_INDICES.DATE));
+                            let category = clean(columns.at(CSV_INDICES.CATEGORY));
+                            let amountStr = clean(columns.at(CSV_INDICES.AMOUNT));
+                            let description =
+                                columns.length >= 8 && clean(columns.at(CSV_INDICES.DESC)).length > 0
+                                    ? clean(columns.at(CSV_INDICES.DESC))
+                                    : "بدون وصف";
 
-            try {
-                let dateStr = clean(columns.at(CSV_INDICES.DATE));       
-                let category = clean(columns.at(CSV_INDICES.CATEGORY));      
-                let amountStr = clean(columns.at(CSV_INDICES.AMOUNT));     
-                let description = (columns.length >= 8 && clean(columns.at(CSV_INDICES.DESC)).length > 0) ? clean(columns.at(CSV_INDICES.DESC)) : "بدون وصف";
+                            let rowDate = parseJavaDate(dateStr);
+                            if (!rowDate || isNaN(rowDate.getTime())) continue;
 
-                let rowDate = parseJavaDate(dateStr);
-                if (!rowDate || isNaN(rowDate.getTime())) continue;
+                            if (rowDate >= startDate && rowDate <= endDate) {
+                                if (
+                                    category.startsWith("To '") ||
+                                    category.startsWith("From '") ||
+                                    category.toLowerCase().includes("to '") ||
+                                    category.toLowerCase().includes("from '")
+                                )
+                                    continue;
 
-                if (rowDate >= startDate && rowDate <= endDate) {
-                    if (category.startsWith("To '") || category.startsWith("From '") || category.toLowerCase().includes("to '") || category.toLowerCase().includes("from '")) continue;
+                                let convertedAmount = parseFloat(amountStr);
+                                let monthKey =
+                                    rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
 
-                    let convertedAmount = parseFloat(amountStr);
-                    let monthKey = rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, '0');
+                                // 🎯 لقطة برمجية ذكية: إذا كانت القيمة موجبة وليست Salary، احسبها كإضافة تلقائية للشهر
+                                if (convertedAmount >= 0) {
+                                    if (category.toLowerCase() !== "salary") {
+                                        globalCsvPositiveAdditions[monthKey] =
+                                            (globalCsvPositiveAdditions[monthKey] || 0) + convertedAmount;
+                                    }
+                                    continue; // تخطي حقنها بجدول المصاريف السالبة الأساسي
+                                }
 
-                    // 🎯 لقطة برمجية ذكية: إذا كانت القيمة موجبة وليست Salary، احسبها كإضافة تلقائية للشهر
-                    if (convertedAmount >= 0) {
-                        if (category.toLowerCase() !== 'salary') {
-                            globalCsvPositiveAdditions[monthKey] = (globalCsvPositiveAdditions[monthKey] || 0) + convertedAmount;
-                        }
-                        continue; // تخطي حقنها بجدول المصاريف السالبة الأساسي
+                                // المعاملات السالبة (المصاريف الفعلية) تذهب للجدول كالمعتاد
+                                let actualExpense = Math.abs(convertedAmount);
+                                globalParsedRowsData.push({
+                                    date: rowDate,
+                                    monthKey: monthKey,
+                                    category: category,
+                                    description: description,
+                                    amount: actualExpense,
+                                });
+                            }
+                        } catch (err) {}
                     }
 
-                    // المعاملات السالبة (المصاريف الفعلية) تذهب للجدول كالمعتاد
-                    let actualExpense = Math.abs(convertedAmount);
-                    globalParsedRowsData.push({
-                        date: rowDate,
-                        monthKey: monthKey,
-                        category: category,
-                        description: description,
-                        amount: actualExpense
-                    });
+                    isFileAlreadyLoaded = true;
+                    recalculateAndRenderUI();
+                };
+                reader.readAsText(file, "UTF-8");
+            }
+
+            // محرك الرسم والتدوير الذكي: يعيد الحساب اللحظي الفوري من الذاكرة دون لمس الملف أو تصفير القيم
+            // القسم 4: محرك إعادة الرسم اللحظي الموحد على مفتاح اسم الشهر التزامني
+            function recalculateAndRenderUI() {
+                let monthlyAnalysis = {};
+                let globalCategorySums = {};
+                let descriptionMonths = {};
+                let descriptionAmounts = {};
+
+                globalParsedRowsData.forEach((row) => {
+                    if (!monthlyAnalysis[row.monthKey]) monthlyAnalysis[row.monthKey] = {};
+                    if (!monthlyAnalysis[row.monthKey][row.category]) monthlyAnalysis[row.monthKey][row.category] = {};
+                    monthlyAnalysis[row.monthKey][row.category][row.description] =
+                        (monthlyAnalysis[row.monthKey][row.category][row.description] || 0) + row.amount;
+
+                    globalCategorySums[row.category] = (globalCategorySums[row.category] || 0) + row.amount;
+
+                    if (row.description !== "بدون وصف") {
+                        if (!descriptionMonths[row.description]) descriptionMonths[row.description] = new Set();
+                        descriptionMonths[row.description].add(row.monthKey);
+                        if (!descriptionAmounts[row.description]) descriptionAmounts[row.description] = [];
+                        descriptionAmounts[row.description].push(row.amount);
+                    }
+                });
+
+                const resultsContainer = document.getElementById("resultsContainer");
+                resultsContainer.innerHTML = "";
+                resultsContainer.style.display = "block";
+
+                let sortedMonths = Object.keys(monthlyAnalysis).sort();
+                if (sortedMonths.length === 0) {
+                    resultsContainer.innerHTML =
+                        "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة!</div>";
+                    return;
                 }
-            } catch (err) {}
-        }
 
-        isFileAlreadyLoaded = true;
-        recalculateAndRenderUI(); 
-    };
-    reader.readAsText(file, 'UTF-8');
-}
+                let runningCarryover = parseFloat(document.getElementById("initial-carryover-input").value) || 0;
+                let previousMonthTotal = 0;
 
+                sortedMonths.forEach((monthName, mIdx) => {
+                    let monthTotal = 0;
+                    let categoriesMap = monthlyAnalysis[monthName];
+                    let categorySums = {};
 
-// محرك الرسم والتدوير الذكي: يعيد الحساب اللحظي الفوري من الذاكرة دون لمس الملف أو تصفير القيم
-// القسم 4: محرك إعادة الرسم اللحظي الموحد على مفتاح اسم الشهر التزامني
-function recalculateAndRenderUI() {
-    let monthlyAnalysis = {};
-    let globalCategorySums = {}; 
-    let descriptionMonths = {}; 
-    let descriptionAmounts = {}; 
+                    Object.keys(categoriesMap).forEach((cat) => {
+                        let sum = Object.values(categoriesMap[cat]).reduce((a, b) => a + b, 0);
+                        categorySums[cat] = sum;
+                        monthTotal += sum;
+                    });
 
-    globalParsedRowsData.forEach(row => {
-        if (!monthlyAnalysis[row.monthKey]) monthlyAnalysis[row.monthKey] = {};
-        if (!monthlyAnalysis[row.monthKey][row.category]) monthlyAnalysis[row.monthKey][row.category] = {};
-        monthlyAnalysis[row.monthKey][row.category][row.description] = (monthlyAnalysis[row.monthKey][row.category][row.description] || 0) + row.amount;
+                    let monthBlock = document.createElement("div");
+                    monthBlock.className = "month-block-wrapper";
+                    let monthBodyId = `month_body_${mIdx}`;
 
-        globalCategorySums[row.category] = (globalCategorySums[row.category] || 0) + row.amount;
-        
-        if (row.description !== "بدون وصف") {
-            if (!descriptionMonths[row.description]) descriptionMonths[row.description] = new Set();
-            descriptionMonths[row.description].add(row.monthKey);
-            if (!descriptionAmounts[row.description]) descriptionAmounts[row.description] = [];
-            descriptionAmounts[row.description].push(row.amount);
-        }
-    });
+                    // إصلاح تداخل العرض بإضافة الـ Wrapper المرن الخاص بالابتوب والموبايل
+                    let htmlTable = `<div class='table-responsive-wrapper'><table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}'>`;
 
-    const resultsContainer = document.getElementById('resultsContainer');
-    resultsContainer.innerHTML = ""; resultsContainer.style.display = "block";
+                    let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
 
-    let sortedMonths = Object.keys(monthlyAnalysis).sort();
-    if (sortedMonths.length === 0) {
-        resultsContainer.innerHTML = "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة!</div>";
-        return;
-    }
-
-    let runningCarryover = parseFloat(document.getElementById('initial-carryover-input').value) || 0;
-    let previousMonthTotal = 0;
-
-    sortedMonths.forEach((monthName, mIdx) => {
-        let monthTotal = 0;
-        let categoriesMap = monthlyAnalysis[monthName];
-        let categorySums = {};
-
-        Object.keys(categoriesMap).forEach(cat => {
-            let sum = Object.values(categoriesMap[cat]).reduce((a, b) => a + b, 0);
-            categorySums[cat] = sum; monthTotal += sum;
-        });
-
-        let monthBlock = document.createElement('div');
-        monthBlock.className = 'month-block-wrapper';
-        let monthBodyId = `month_body_${mIdx}`;
-
-        // إصلاح تداخل العرض بإضافة الـ Wrapper المرن الخاص بالابتوب والموبايل
-        let htmlTable = `<div class='table-responsive-wrapper'><table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}'>`;
-
-        let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
-        
-        let chartBodyId = `chart_body_${mIdx}`;
-        let chartHtml = `<div class='native-chart-wrapper'>
+                    let chartBodyId = `chart_body_${mIdx}`;
+                    let chartHtml = `<div class='native-chart-wrapper'>
             <h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='color:#1A365D; text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'>
                 <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▲</span> 📊 التوزيع المرئي لنفقات شهر ${monthName} (اضغط للطي/التوسيع)
             </h3>
             <div id='${chartBodyId}'>`;
 
-        sortedCats.forEach((categoryName, cIdx) => {
-            let categoryTotal = categorySums[categoryName];
-            let categoryPercentage = monthTotal > 0 ? (categoryTotal / monthTotal) * 100 : 0;
-            chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
+                    sortedCats.forEach((categoryName, cIdx) => {
+                        let categoryTotal = categorySums[categoryName];
+                        let categoryPercentage = monthTotal > 0 ? (categoryTotal / monthTotal) * 100 : 0;
+                        chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
 
-            let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
-            htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▲</span> 📁 [${categoryName}]</span><span style='color: #2B6CB0; font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
+                        let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
+                        htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▲</span> 📁 [${categoryName}]</span><span style='color: #2B6CB0; font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
 
-            let descMap = categoriesMap[categoryName];
-            Object.keys(descMap).sort((a, b) => descMap[b] - descMap[a]).forEach(descriptionName => {
-                let amount = descMap[descriptionName];
-                let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
-                htmlTable += `<tr${rowClass} name='${catRowsClass}'><td style='text-align:center;'>${monthName}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${amount.toFixed(2)}</td></tr>`;
-            });
-            htmlTable += `<tr class='category-total-row' name='${catRowsClass}'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td></tr>`;
-        });
+                        let descMap = categoriesMap[categoryName];
+                        Object.keys(descMap)
+                            .sort((a, b) => descMap[b] - descMap[a])
+                            .forEach((descriptionName) => {
+                                let amount = descMap[descriptionName];
+                                let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
+                                htmlTable += `<tr${rowClass} name='${catRowsClass}'><td style='text-align:center;'>${monthName}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${amount.toFixed(2)}</td></tr>`;
+                            });
+                        htmlTable += `<tr class='category-total-row' name='${catRowsClass}'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td></tr>`;
+                    });
 
-        chartHtml += `</div></div>`;
-        let momTrendText = previousMonthTotal > 0 ? ((monthTotal - previousMonthTotal) > 0 ? ` 📈 (زيادة عن الشهر السابق)` : ` 📉 (وفر عن الشهر السابق)`) : " 🏁 [شهر الأساس الأول]";
-        htmlTable += `</tbody></table></div>`; // إغلاق الـ Responsive Wrapper بأمان
+                    chartHtml += `</div></div>`;
+                    let momTrendText =
+                        previousMonthTotal > 0
+                            ? monthTotal - previousMonthTotal > 0
+                                ? ` 📈 (زيادة عن الشهر السابق)`
+                                : ` 📉 (وفر عن الشهر السابق)`
+                            : " 🏁 [شهر الأساس الأول]";
+                    htmlTable += `</tbody></table></div>`; // إغلاق الـ Responsive Wrapper بأمان
 
-        let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td></tr></table>`;
+                    let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td></tr></table>`;
 
-        // تمرير الحسبة الموحدة باسم الشهر الحقيقي لمنع تضارب الفهارس الصفرية
-        let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, monthName);
-        
-        let monthDataDiv = document.createElement('div');
-        monthDataDiv.innerHTML = jarsResult.html + htmlTable + totalTableHtml + chartHtml;
-        monthBlock.appendChild(monthDataDiv);
-        resultsContainer.appendChild(monthBlock);
-        
-        runningCarryover = jarsResult.monthSurplus > 0 ? jarsResult.monthSurplus : 0;
-        previousMonthTotal = monthTotal;
-    });
+                    // تمرير الحسبة الموحدة باسم الشهر الحقيقي لمنع تضارب الفهارس الصفرية
+                    let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, monthName);
 
-    let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل لكافة الأشهر</h2>`;
-    let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
-    Object.keys(globalCategorySums).sort((a,b) => globalCategorySums[b] - globalCategorySums[a]).forEach(cat => {
-        let amount = globalCategorySums[cat];
-        globalChartHtml += `<div class='chart-bar-row'><div class='chart-label' style='color:#2B6CB0;'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${amount.toFixed(2)}</div></div>`;
-    });
-    let globalBlock = document.createElement('div'); globalBlock.className = 'global-block-wrapper';
-    globalBlock.innerHTML = globalChartHtml; resultsContainer.appendChild(globalBlock);
+                    let monthDataDiv = document.createElement("div");
+                    monthDataDiv.innerHTML = jarsResult.html + htmlTable + totalTableHtml + chartHtml;
+                    monthBlock.appendChild(monthDataDiv);
+                    resultsContainer.appendChild(monthBlock);
 
-    let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
-    Object.keys(descriptionMonths).forEach(desc => {
-        if (descriptionMonths[desc].size >= 2) {
-            let avg = descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
-            subscriptionHtml += `<tr><td style='color:#234E52;'>🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td></tr>`;
-        }
-    });
-    subscriptionHtml += `</table></div>`;
-    let subBlock = document.createElement('div'); subBlock.innerHTML = subscriptionHtml; resultsContainer.appendChild(subBlock);
-}
+                    runningCarryover = jarsResult.monthSurplus > 0 ? jarsResult.monthSurplus : 0;
+                    previousMonthTotal = monthTotal;
+                });
 
-// دالة الذاكرة المحدثة الفورية والمحافظة على مكان مؤشر الماوس
-function updateAdditionsMemory(monthKey, inputElement) {
-    globalMonthAdditions[monthKey] = parseFloat(inputElement.value) || 0;
-    
-    recalculateAndRenderUI();
-    
-    // استعادة تثبيت مؤشر الفأرة (Focus) في نفس الحقل ونفس الشهر فوراً منعاً للتجميد
-    const activeInput = document.getElementById(`additions-input-${monthKey}`);
-    if (activeInput) {
-        activeInput.focus();
-        const val = activeInput.value;
-        activeInput.value = '';
-        activeInput.value = val; // نقل مؤشر الكتابة لآخر الرقم
-    }
-}
+                let globalChartHtml = `<h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل لكافة الأشهر</h2>`;
+                let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
+                Object.keys(globalCategorySums)
+                    .sort((a, b) => globalCategorySums[b] - globalCategorySums[a])
+                    .forEach((cat) => {
+                        let amount = globalCategorySums[cat];
+                        globalChartHtml += `<div class='chart-bar-row'><div class='chart-label' style='color:#2B6CB0;'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${amount.toFixed(2)}</div></div>`;
+                    });
+                let globalBlock = document.createElement("div");
+                globalBlock.className = "global-block-wrapper";
+                globalBlock.innerHTML = globalChartHtml;
+                resultsContainer.appendChild(globalBlock);
 
+                let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; background-color: #F0FDF4; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
+                Object.keys(descriptionMonths).forEach((desc) => {
+                    if (descriptionMonths[desc].size >= 2) {
+                        let avg = descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
+                        subscriptionHtml += `<tr><td style='color:#234E52;'>🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold; color:#2F855A;'>$${avg.toFixed(2)} / شهر</td></tr>`;
+                    }
+                });
+                subscriptionHtml += `</table></div>`;
+                let subBlock = document.createElement("div");
+                subBlock.innerHTML = subscriptionHtml;
+                resultsContainer.appendChild(subBlock);
+            }
 
+            // دالة الذاكرة المحدثة الفورية والمحافظة على مكان مؤشر الماوس
+            function updateAdditionsMemory(monthKey, inputElement) {
+                globalMonthAdditions[monthKey] = parseFloat(inputElement.value) || 0;
 
+                recalculateAndRenderUI();
 
-// مستمعات الأحداث التفاعلية المقاومة للتخريب للطي الذكي
-function toggleMonthSection(id, cell) {
-    let el = document.getElementById(id); let icon = cell.querySelector('.collapse-icon');
-    if (el.style.display === 'none') { el.style.display = ''; icon.innerHTML = '▲'; } else { el.style.display = 'none'; icon.innerHTML = '▼'; }
-}
-function toggleCategorySection(cl, row) {
-    let rows = document.getElementsByName(cl); let icon = row.querySelector('.collapse-icon');
-    let isH = rows[0].style.display === "none"; rows.forEach(r => r.style.display = isH ? "" : "none");
-    icon.innerHTML = isH ? "▲" : "▼";
-}
-function toggleAllCategoriesInMonth(id, e) {
-    e.stopPropagation(); let tb = document.getElementById(id); let hdrs = tb.querySelectorAll('.category-header-row');
-    if (!hdrs.length) return;
-    let firstTargetClass = hdrs[0].getAttribute('data-target-class');
-    let firstRows = document.getElementsByName(firstTargetClass);
-    let shouldHide = firstRows.length > 0 && firstRows[0].style.display !== "none";
-    hdrs.forEach(h => {
-        let rows = document.getElementsByName(h.getAttribute('data-target-class'));
-        rows.forEach(r => r.style.display = shouldHide ? "none" : "");
-        h.querySelector('.collapse-icon').innerHTML = shouldHide ? "▼" : "▲";
-    });
-}
-</script>
-<div class="footer">تم تحديث وقفل كامل ميزات لوحة التحكم المالية الشخصية بنجاح يا حمودة 🚀</div>
-</body>
+                // استعادة تثبيت مؤشر الفأرة (Focus) في نفس الحقل ونفس الشهر فوراً منعاً للتجميد
+                const activeInput = document.getElementById(`additions-input-${monthKey}`);
+                if (activeInput) {
+                    activeInput.focus();
+                    const val = activeInput.value;
+                    activeInput.value = "";
+                    activeInput.value = val; // نقل مؤشر الكتابة لآخر الرقم
+                }
+            }
+
+            // مستمعات الأحداث التفاعلية المقاومة للتخريب للطي الذكي
+            function toggleMonthSection(id, cell) {
+                let el = document.getElementById(id);
+                let icon = cell.querySelector(".collapse-icon");
+                if (el.style.display === "none") {
+                    el.style.display = "";
+                    icon.innerHTML = "▲";
+                } else {
+                    el.style.display = "none";
+                    icon.innerHTML = "▼";
+                }
+            }
+            function toggleCategorySection(cl, row) {
+                let rows = document.getElementsByName(cl);
+                let icon = row.querySelector(".collapse-icon");
+                let isH = rows[0].style.display === "none";
+                rows.forEach((r) => (r.style.display = isH ? "" : "none"));
+                icon.innerHTML = isH ? "▲" : "▼";
+            }
+            function toggleAllCategoriesInMonth(id, e) {
+                e.stopPropagation();
+                let tb = document.getElementById(id);
+                let hdrs = tb.querySelectorAll(".category-header-row");
+                if (!hdrs.length) return;
+                let firstTargetClass = hdrs[0].getAttribute("data-target-class");
+                let firstRows = document.getElementsByName(firstTargetClass);
+                let shouldHide = firstRows.length > 0 && firstRows[0].style.display !== "none";
+                hdrs.forEach((h) => {
+                    let rows = document.getElementsByName(h.getAttribute("data-target-class"));
+                    rows.forEach((r) => (r.style.display = shouldHide ? "none" : ""));
+                    h.querySelector(".collapse-icon").innerHTML = shouldHide ? "▼" : "▲";
+                });
+            }
+        </script>
+        <div class="footer">تم تحديث وقفل كامل ميزات لوحة التحكم المالية الشخصية بنجاح يا حمودة 🚀</div>
+    </body>
 </html>
