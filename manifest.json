@@ -1,6 +1,6 @@
 {
   "name": "لوحة تحليلات مصاريف حمودة",
-  "short_name": "مصاريف حمودة",
+  "short_name": "تحليل مصاريف",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F7FAFC",
