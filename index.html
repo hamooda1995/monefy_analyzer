@@ -885,16 +885,16 @@
                     let monthBodyId = `month_body_${mIdx}`;
 
                     // إصلاح تداخل العرض بإضافة الـ Wrapper المرن الخاص بالابتوب والموبايل
-                    let htmlTable = `<div class='table-responsive-wrapper'><table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▲</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}'>`;
+                    let htmlTable = `<div class='table-responsive-wrapper'><table><tr class='month-header-row'><td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)"><button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button><span class='collapse-icon'>▼</span> 📅 فترة شهر: ${monthName}</td></tr><tbody id='${monthBodyId}' style='display: none;'>`;
 
                     let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
 
                     let chartBodyId = `chart_body_${mIdx}`;
                     let chartHtml = `<div class='native-chart-wrapper'>
-            <h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'>
-                <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▲</span> 📊 التوزيع المرئي لنفقات شهر ${monthName} (اضغط للطي/التوسيع)
-            </h3>
-            <div id='${chartBodyId}'>`;
+    <h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'>
+        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📊 التوزيع المرئي لنفقات شهر ${monthName} (اضغط للتوسيع)
+    </h3>
+    <div id='${chartBodyId}' style='display: none;'>`;
 
                     sortedCats.forEach((categoryName, cIdx) => {
                         let categoryTotal = categorySums[categoryName];
@@ -902,7 +902,7 @@
                         chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
 
                         let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
-                        htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▲</span> 📁 [${categoryName}]</span><span style='font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
+                        htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▼</span> 📁 [${categoryName}]</span><span style='font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
 
                         let descMap = categoriesMap[categoryName];
                         Object.keys(descMap)
@@ -937,7 +937,15 @@
                     previousMonthTotal = monthTotal;
                 });
 
-                let globalChartHtml = `<h2 style='text-align:center; margin-top:10px;'>👑 المخطط التحليلي الشامل لكافة الأشهر</h2>`;
+                // 🎯 1. المخطط التحليلي الشامل لكافة الأشهر (مدمج بميزة الطي الذكي)
+                let globalChartId = `global_chart_body`;
+                let globalChartHtml = `<div class='global-block-wrapper'>
+        <h2 onclick="let el=document.getElementById('${globalChartId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👑 المخطط التحليلي الشامل لكافة الأشهر (اضغط للتوسيع)
+        </h2>
+        <p style='text-align:center; font-size:14px; margin-bottom:20px;'>يوضح الحجم الإجمالي التراكمي الاستهلاكي لكل تصنيف على مدار كامل فترة الفلترة المشمولة</p>
+        <div id='${globalChartId}' style='display: none;'>`; // 🎯 حقن الإخفاء الافتراضي عند بداية الرفع
+
                 let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
                 Object.keys(globalCategorySums)
                     .sort((a, b) => globalCategorySums[b] - globalCategorySums[a])
@@ -945,54 +953,68 @@
                         let amount = globalCategorySums[cat];
                         globalChartHtml += `<div class='chart-bar-row'><div class='chart-label'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${amount.toFixed(2)}</div></div>`;
                     });
+                globalChartHtml += `</div></div>`;
+
                 let globalBlock = document.createElement("div");
-                globalBlock.className = "global-block-wrapper";
                 globalBlock.innerHTML = globalChartHtml;
                 resultsContainer.appendChild(globalBlock);
 
-                let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'><h2 style='text-align:center;'>📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة</h2><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
+                // 🎯 2. جدول قائمة الاشتراكات الثابتة (مغلق تلقائياً بشكل افتراضي)
+                let subscriptionBoxId = `subscription_body_box`;
+                let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'>
+        <h2 onclick="let el=document.getElementById('${subscriptionBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة (اضغط للتوسيع)
+        </h2>
+        <div id='${subscriptionBoxId}' style='display: none;'> <!-- 🎯 حقن الإخفاء الافتراضي عند بداية الرفع -->
+        <div class='table-responsive-wrapper'><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
+
+                let hasSubs = false;
                 Object.keys(descriptionMonths).forEach((desc) => {
                     if (descriptionMonths[desc].size >= 2) {
+                        hasSubs = true;
                         let avg = descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
-                        subscriptionHtml += `<tr><td>🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold;'>$${avg.toFixed(2)} / شهر</td></tr>`;
+                        subscriptionHtml += `<tr><td >🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold;'>$${avg.toFixed(2)} / شهر</td></tr>`;
                     }
                 });
-                subscriptionHtml += `</table></div>`;
+                subscriptionHtml += `</table></div></div></div>`;
+                if (!hasSubs) {
+                    subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة</h2><p style='text-align:center;'>لم يتم اكتشاف أي نفقات أو اشتراكات متكررة في هذه الفترة يا حمودة.</p></div>`;
+                }
+
                 let subBlock = document.createElement("div");
                 subBlock.innerHTML = subscriptionHtml;
                 resultsContainer.appendChild(subBlock);
 
-                // بناء جدول إدارة ديون الأصدقاء المطور بنظام توحيد العملات والترتيب التنازلي الذكي
+                // 🎯 3. جدول سجل حسابات ديون الأصدقاء (مغلق تلقائياً بشكل افتراضي)
+                let friendsDebtsBoxId = `friends_debts_body_box`;
                 let debtsHtml = `<div class='global-block-wrapper' style='border: 2px solid #805AD5; margin-top: 35px;'>
-    <h2 style='color:#2B6CB0; text-align:center; margin-top:10px;'>👥 سجل حسابات ديون الأصدقاء والمعاملات البينية</h2>
-    <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز الصافي المالي (مرتبة بحسب العملة ثم القيمة الحقيقية تنازلياً)</p>
-    <div class='table-responsive-wrapper'><table>
-        <tr><th>اسم الحساب (صديق)</th><th>الصافي بالعملة الموحدة</th><th>الصافي التقريبي بالدولار</th><th>الحالة الماليّة لحمودة</th></tr>`;
+        <h2 onclick="let el=document.getElementById('${friendsDebtsBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👥 سجل حسابات ديون الأصدقاء والمعاملات البينية (اضغط للتوسيع)
+        </h2>
+        <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز الصافي المالي (مرتبة بحسب العملة ثم القيمة الحقيقية تنازلياً)</p>
+        <div id='${friendsDebtsBoxId}' style='display: none;'> <!-- 🎯 حقن الإخفاء الافتراضي عند بداية الرفع -->
+        <div class='table-responsive-wrapper'><table>
+            <tr><th>اسم الحساب (صديق)</th><th>الصافي بالعملة الموحدة</th><th>الصافي التقريبي بالدولار</th><th>الحالة الماليّة لحمودة</th></tr>`;
 
                 let hasDebtsData = false;
 
                 if (window.globalFriendsDebts) {
-                    // 🎯 1. فرز وترتيب حسابات الديون بناءً على نوع العملة أولاً، ثم القيمة الحقيقية تنازلياً
                     let sortedFriends = Object.keys(window.globalFriendsDebts).sort((a, b) => {
                         let friendA = window.globalFriendsDebts[a];
                         let friendB = window.globalFriendsDebts[b];
-
-                        // الترتيب بحسب العملة (أبجدياً: \$ تظهر أولاً ثم ZWL)
                         if (friendA.currency !== friendB.currency) {
                             return friendA.currency.localeCompare(friendB.currency);
                         }
-                        // الترتيب بحسب القيمة الحقيقية التراكمية الصافية (تنازلياً من الأكبر للأصغر)
                         return Math.abs(friendB.realBalance) - Math.abs(friendA.realBalance);
                     });
 
-                    // 🎯 2. تشغيل الحلقة التكرارية المقفلة والمضمونة بناءً على الترتيب الجديد
                     sortedFriends.forEach((friend) => {
                         let debtObj = window.globalFriendsDebts[friend];
                         let balance = debtObj.balance;
                         let realBalance = debtObj.realBalance;
                         let currency = debtObj.currency || "\$";
 
-                        if (Math.abs(balance) < 0.01) return; // تخطي الحسابات المصفرة المغلقة
+                        if (Math.abs(balance) < 0.01) return;
 
                         hasDebtsData = true;
                         let statusText = balance > 0 ? `🟢 دائن (إلك معه مَصاري)` : `🔴 مَدين (عليك إلو مَصاري)`;
@@ -1000,27 +1022,28 @@
 
                         let displayRealBalance =
                             currency === "\$"
-                                ? `$${Math.abs(realBalance).toFixed(0)}`
-                                : `£${Math.abs(realBalance).toFixed(0)}`;
+                                ? `$${Math.abs(realBalance).toFixed(2)}`
+                                : `${Math.abs(realBalance).toFixed(2)} ZWL`;
 
                         debtsHtml += `<tr>
-            <td style='font-weight: bold;'>👤 ${friend}</td>
-            <td style='font-weight: bold; color: var(--text-main);'>${displayRealBalance}</td>
-            <td style='font-weight: bold; color: #718096;'>$${Math.abs(balance).toFixed(2)}</td>
-            <td style='font-weight: bold; ${colorStyle}'>${statusText}</td>
-        </tr>`;
-                    }); // إغلاق حلقة الـ forEach الشاملة بأمان مئة بالمئة
+                <td style='font-weight: bold;'>👤 ${friend}</td>
+                <td style='font-weight: bold; color: var(--text-main);'>${displayRealBalance}</td>
+                <td style='font-weight: bold; color: #718096;'>$${Math.abs(balance).toFixed(2)}</td>
+                <td style='font-weight: bold; ${colorStyle}'>${statusText}</td>
+            </tr>`;
+                    });
                 }
 
+                debtsHtml += `</table></div></div></div>`;
                 if (!hasDebtsData) {
-                    debtsHtml += `<tr><td colspan='4' style='text-align:center; color:var(--text-muted);'>لم يتم العثور على أي معاملات ديون نشطة مع الأصدقاء يا حمودة.</td></tr>`;
+                    debtsHtml = `<div class='global-block-wrapper' style='border: 2px solid #805AD5; margin-top: 35px;'><h2 style='color:#2B6CB0; text-align:center;'>👥 سجل حسابات ديون الأصدقاء</h2><p style='text-align:center; color:var(--text-muted);'>لم يتم العثور على أي معاملات ديون نشطة مع الأصدقاء يا حمودة.</p></div>`;
                 }
-                debtsHtml += `</table></div></div>`;
 
                 let debtsBlock = document.createElement("div");
                 debtsBlock.innerHTML = debtsHtml;
                 resultsContainer.appendChild(debtsBlock);
             }
+
             // دالة الذاكرة المحدثة الفورية والمحافظة على مكان مؤشر الماوس
             function updateAdditionsMemory(monthKey, inputElement) {
                 globalMonthAdditions[monthKey] = parseFloat(inputElement.value) || 0;
