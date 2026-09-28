@@ -393,7 +393,7 @@
             onclick="toggleDarkModeFinancialApp()"
             class="theme-toggle-btn"
             id="themeToggleBtn"
-            style="width: 5%; text-align: center; display: none"
+            style="width: 5%; text-align: center;"
         >
             🌙
         </button>
@@ -949,7 +949,7 @@
                 }
             }
             (function () {
-                const savedTheme = localStorage.getItem("financial-app-theme") || "light";
+                const savedTheme = localStorage.getItem("financial-app-theme") || "dark";
                 document.documentElement.setAttribute("data-theme", savedTheme);
                 window.addEventListener("DOMContentLoaded", () => {
                     const btn = document.getElementById("themeToggleBtn");
