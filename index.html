@@ -762,6 +762,8 @@
 
                                 // 🌟 القاعدة 1: توجيه عمليات "إلى ثروة" فوراً لوعاء الاستثمار
                                 if (
+                                    rowDate >= startDate &&
+                                    rowDate <= endDate &&
                                     category.toLowerCase().startsWith("to '") &&
                                     (accountName === "ثروة" || accountName === "ثروه")
                                 ) {
@@ -853,7 +855,9 @@
                 let globalCategorySums = {};
                 let descriptionMonths = {};
                 let descriptionAmounts = {};
-
+                // تصفير كاش التصنيفات تماماً عند كل عملية تحديث أو تغيير فلاتر
+                window.categoryMonthsTracker = {};
+                window.categoryAmountsTracker = {};
                 globalParsedRowsData.forEach((row) => {
                     if (!monthlyAnalysis[row.monthKey]) monthlyAnalysis[row.monthKey] = {};
                     if (!monthlyAnalysis[row.monthKey][row.category]) monthlyAnalysis[row.monthKey][row.category] = {};
@@ -868,6 +872,17 @@
                         if (!descriptionAmounts[row.description]) descriptionAmounts[row.description] = [];
                         descriptionAmounts[row.description].push(row.amount);
                     }
+
+                    // تجميع بيانات التصنيفات التكرارية عبر الأشهر
+                    if (!window.categoryMonthsTracker) window.categoryMonthsTracker = {};
+                    if (!window.categoryAmountsTracker) window.categoryAmountsTracker = {};
+
+                    if (!window.categoryMonthsTracker[row.category])
+                        window.categoryMonthsTracker[row.category] = new Set();
+                    window.categoryMonthsTracker[row.category].add(row.monthKey);
+
+                    if (!window.categoryAmountsTracker[row.category]) window.categoryAmountsTracker[row.category] = [];
+                    window.categoryAmountsTracker[row.category].push(row.amount);
                 });
 
                 const resultsContainer = document.getElementById("resultsContainer");
@@ -1007,13 +1022,31 @@
         <div class='table-responsive-wrapper'><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
 
                 let hasSubs = false;
-                Object.keys(descriptionMonths).forEach((desc) => {
-                    if (descriptionMonths[desc].size >= 2) {
-                        hasSubs = true;
-                        let avg = descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
-                        subscriptionHtml += `<tr><td >🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold;'>$${avg.toFixed(2)} / شهر</td></tr>`;
-                    }
-                });
+                // الفرز المركب التنازلي: بحسب تكرار الأشهر أولاً، ثم بحسب القيمة المالية الشهرية ثانياً
+                Object.keys(descriptionMonths)
+                    .sort((a, b) => {
+                        let sizeA = descriptionMonths[a].size;
+                        let sizeB = descriptionMonths[b].size;
+
+                        // إذا اختلفت الأشهر، رتب تنازلياً بحسب تكرار الأشهر
+                        if (sizeA !== sizeB) {
+                            return sizeB - sizeA;
+                        }
+
+                        // إذا تساوت الأشهر، احسب المتوسط المالي لكل منهما ورتب تنازلياً
+                        let avgA = descriptionAmounts[a].reduce((x, y) => x + y, 0) / sizeA;
+                        let avgB = descriptionAmounts[b].reduce((x, y) => x + y, 0) / sizeB;
+                        return avgB - avgA;
+                    })
+                    .forEach((desc) => {
+                        if (descriptionMonths[desc].size >= 2) {
+                            hasSubs = true;
+                            let avg =
+                                descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
+                            subscriptionHtml += `<tr><td >🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold;'>$${formatMoney(avg)} / شهر</td></tr>`;
+                        }
+                    });
+
                 subscriptionHtml += `</table></div></div></div>`;
                 if (!hasSubs) {
                     subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة</h2><p style='text-align:center;'>لم يتم اكتشاف أي نفقات أو اشتراكات متكررة في هذه الفترة يا حمودة.</p></div>`;
@@ -1023,6 +1056,55 @@
                 subBlock.innerHTML = subscriptionHtml;
                 resultsContainer.appendChild(subBlock);
 
+                // بناء جدول تحليلات التصنيفات التكرارية الجديد
+                let categoryAnalyticBoxId = `category_trent_body_box`;
+                let categoryHtml = `<div class='global-block-wrapper' style='border: 2px solid #38A169; margin-top: 25px;'>
+    <h2 onclick="let el=document.getElementById('${categoryAnalyticBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🗂️ تحليلات التصنيفات التكرارية عبر الأشهر (اضغط للتوسيع)
+    </h2>
+    <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز استهلاك الأقسام الرئيسية (مرتبة تنازلياً بحسب التكرار ثم القيمة الماليّة)</p>
+    <div id='${categoryAnalyticBoxId}' style='display: none;'>
+    <div class='table-responsive-wrapper'><table>
+        <tr><th>اسم التصنيف الرئيسي</th><th>معدل التكرار الزمني</th><th>المتوسط المالي الشهري</th></tr>`;
+
+                let hasCategoryTrends = false;
+
+                if (window.categoryMonthsTracker) {
+                    Object.keys(window.categoryMonthsTracker)
+                        .sort((a, b) => {
+                            let sizeA = window.categoryMonthsTracker[a].size;
+                            let sizeB = window.categoryMonthsTracker[b].size;
+                            if (sizeA !== sizeB) {
+                                return sizeB - sizeA;
+                            }
+                            let avgA = window.categoryAmountsTracker[a].reduce((x, y) => x + y, 0) / sizeA;
+                            let avgB = window.categoryAmountsTracker[b].reduce((x, y) => x + y, 0) / sizeB;
+                            return avgB - avgA;
+                        })
+                        .forEach((cat) => {
+                            if (window.categoryMonthsTracker[cat].size >= 2) {
+                                hasCategoryTrends = true;
+                                let avg =
+                                    window.categoryAmountsTracker[cat].reduce((a, b) => a + b, 0) /
+                                    window.categoryMonthsTracker[cat].size;
+                                categoryHtml += `<tr>
+                    <td style='font-weight: bold;'>📁 ${cat}</td>
+                    <td style='text-align:center;'>${window.categoryMonthsTracker[cat].size} أشهر</td>
+                    <td style='font-weight: bold;'>$${formatMoney(avg)} / شهر</td>
+                </tr>`;
+                            }
+                        });
+                }
+
+                categoryHtml += `</table></div></div></div>`;
+
+                if (!hasCategoryTrends) {
+                    categoryHtml = `<div class='global-block-wrapper' style='border: 2px solid #38A169; margin-top: 25px;'><h2 style='color:#38A169; text-align:center;'>🗂️ تحليلات التصنيفات التكرارية</h2><p style='text-align:center; color:var(--text-muted);'>لا توجد تصنيفات متكررة لأكثر من شهرين حالياً.</p></div>`;
+                }
+
+                let catTrendBlock = document.createElement("div");
+                catTrendBlock.innerHTML = categoryHtml;
+                resultsContainer.appendChild(catTrendBlock);
                 // 🎯 3. جدول سجل حسابات ديون الأصدقاء (مغلق تلقائياً بشكل افتراضي)
                 let friendsDebtsBoxId = `friends_debts_body_box`;
                 let debtsHtml = `<div class='global-block-wrapper' style='border: 2px solid #805AD5; margin-top: 35px;'>
