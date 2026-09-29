@@ -571,6 +571,21 @@
                 const year = parseInt(parts[2], 10);
                 return new Date(year, month, day);
             }
+            function formatMoney(amount) {
+                // تحويل القيمة إلى رقم نقي وفحصها
+                let num = parseFloat(amount);
+
+                // إذا كانت القيمة غير صالحة أو NaN، نعيد 0.00 فوراً لحماية الواجهة
+                if (isNaN(num) || !isFinite(num)) {
+                    return "0.00";
+                }
+
+                // تنسيق الرقم مع فاصلة الآلاف وخانتين عشريتين
+                return num.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                });
+            }
         </script>
         <script>
             // محرك حساب الأظرف وضخ فائض الوفر المالي بداخل خانة تحويش المستقبل
@@ -612,17 +627,16 @@
 
                 let html = `<div class='jars-section-box'>
         <h3 style='text-align:center; margin-top:0; margin-bottom:10px; font-size:14pt;'>🎯 ميزانية الأظرف الخمسة لهذا الشهر</h3>
-        <p style='text-align:center; font-size:13px; color:var(--text-main); margin:0 0 12px 0;'>📈 المدوّر السابق: <strong>$${currentMonthCarryover.toFixed(2)}</strong> | 💸 الصرف الكلي للشهر: <strong style='color:#E53E3E;'>$${totalMonthExpense.toFixed(2)}</strong> | ✨ وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${Math.max(0, unspentSurplus).toFixed(2)}</strong></p>
+        <p style='text-align:center; font-size:13px; color:var(--text-main); margin:0 0 12px 0;'>📈 المدوّر السابق: <strong>$${formatMoney(currentMonthCarryover)}</strong> | 💸 الصرف الكلي للشهر: <strong style='color:#E53E3E;'>$${formatMoney(totalMonthExpense)}</strong> | ✨ وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${formatMoney(Math.max(0, unspentSurplus))}</strong></p>
         
-        <!-- علبة الإضافات الذكية المدمجة: تعرض التوتال الآلي وتسمح بالإدخال اليدوي المكمل متوافقة 100% موبايل وكمبيوتر -->
-        <div style="background: #FFF5F5; padding: 10px; border-radius: 8px; border: 1px dashed #FEB2B2; max-width: 420px; margin: 0 auto 15px auto; text-align: center; font-size: 12px; line-height: 1.5; color: #C53030;">
-            <div style="margin-bottom: 5px;">📥 إضافات تلقائية من الـ CSV: <strong>$${csvAdditions.toFixed(2)}</strong></div>
+        <div style="background: var(--table-stripe); padding: 10px; border-radius: 8px; border: 1px dashed var(--border-jars); max-width: 420px; margin: 0 auto 15px auto; text-align: center; font-size: 12px; line-height: 1.5; color: var(--text-main);">
+            <div style="margin-bottom: 5px;">📥 إضافات تلقائية من الـ CSV: <strong>$${formatMoney(csvAdditions)}</strong></div>
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
-                <label for="additions-input-${monthName}" style="color: #C53030; margin: 0; font-weight: bold;">➕ تكملة يدوية من عندك ($):</label>
-                <input type="number" id="additions-input-${monthName}" value="${manualAdditions}" min="0" oninput="updateAdditionsMemory('${monthName}', this)" style="padding: 4px 8px; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; color: #C53030;">
+                <label for="additions-input-${monthName}" style="margin: 0; font-weight: bold;">➕ تكملة يدوية من عندك ($):</label>
+                <input type="number" id="additions-input-${monthName}" value="${manualAdditions}" min="0" oninput="updateAdditionsMemory('${monthName}', this)" style="padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; background: var(--bg-input); color: var(--text-main);">
             </div>
-            <div style="margin-top: 6px; border-top: 1px solid #FEB2B2; padding-top: 4px; font-weight: bold;">
-                🔥 إجمالي إضافات الشهر الكلية: $${totalMonthAdditions.toFixed(2)}
+            <div style="margin-top: 6px; border-top: 1px solid var(--border-color); padding-top: 4px; font-weight: bold;">
+                🔥 إجمالي إضافات الشهر الكلية: $${formatMoney(totalMonthAdditions)}
             </div>
         </div>`;
 
@@ -640,15 +654,14 @@
                 <div style='display: flex; justify-content: space-between; align-items: center; font-size: 12px; flex-wrap: wrap; gap: 5px;'>
                     <span style='font-weight: bold;'>📍 ${jar.name}</span>
                     <span style='text-align: left;'>
-                        الفعلي: <strong style='color:${barColor};'>$${actualAmount.toFixed(2)}</strong> 
-                        <span style='color: var(--text-muted); font-size: 11px;'>/ المستهدف: $${targetAmount.toFixed(2)} (${percentOfTarget.toFixed(1)}%)</span>
+                        الفعلي: <strong style='color:${barColor};'>$${formatMoney(actualAmount)}</strong> 
+                        <span style='color: var(--text-muted); font-size: 11px;'>/ المستهدف: $${formatMoney(targetAmount)} (${percentOfTarget.toFixed(1)}%)</span>
                     </span>
                 </div>
-                <div style='background-color: #EDF2F7; height: 16px; border-radius: 8px; overflow: hidden; margin: 5px 0; position: relative; border: 1px solid #CBD5E0; width: 100%; box-sizing: border-box;'>
+                <div style='background-color: var(--table-stripe); height: 16px; border-radius: 8px; overflow: hidden; margin: 5px 0; position: relative; border: 1px solid var(--border-color); width: 100%; box-sizing: border-box;'>
                     <div style='width: ${Math.min(percentOfTarget, 100)}%; background-color: ${barColor}; height: 100%; border-radius: 8px; transition: width 0.3s ease;'></div>
                 </div>
-            </div>
-        `;
+            </div>`;
                 }
                 html += `</div>`;
                 return { html: html, monthSurplus: unspentSurplus };
@@ -893,7 +906,7 @@
             <div style="padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border: 2px solid #90cdf4;" 
                  onclick="let el=document.getElementById('${totalMonthContainerId}'); let ic=this.querySelector('.main-month-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}">
                 <span style="font-weight: bold; font-size: 15pt;"><span class="main-month-icon" style="font-family:monospace; margin-left:5px;">▼</span> 🗓️ فترة شهر: ${monthName}</span>
-                <table class="month-total-table" style="width: auto; margin: 0; display: inline-table;"><tr class="month-total-row"><td style="background: #2ecc71; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11pt; border: none;">إجمالي حجم الصرف: $${monthTotal.toFixed(2)}</td></tr></table>
+                <table class="month-total-table" style="width: auto; margin: 0; display: inline-table;"><tr class="month-total-row"><td style="background: #2ecc71; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11pt; border: none;">إجمالي حجم الصرف: $${formatMoney(monthTotal)}</td></tr></table>
             </div>
 
             <!-- حاوية المحتويات الكبرى للشهر (مغلقة تلقائياً بشكل افتراضي) -->
@@ -922,11 +935,11 @@
                         let categoryTotal = categorySums[categoryName];
                         let categoryPercentage = monthTotal > 0 ? (categoryTotal / monthTotal) * 100 : 0;
 
-                        chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
+                        chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${formatMoney(categoryTotal)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
 
                         let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
                         // 🎯 تعديل الأيقونة الافتراضية للتصنيفات إلى ▼ لتطابق وضع الإغلاق التلقائي
-                        htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▼</span> 📁 [${categoryName}]</span><span style='font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
+                        htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▼</span> 📁 [${categoryName}]</span><span style='font-size: 13pt;'>إجمالي القسم: $${formatMoney(categoryTotal)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
 
                         let descMap = categoriesMap[categoryName];
                         Object.keys(descMap)
@@ -935,9 +948,9 @@
                                 let amount = descMap[descriptionName];
                                 let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
                                 // حقن أسطر المعاملات الفردية (تكون مخفية تلقائياً وتتبع الـ category-header-row عند الضغط)
-                                htmlTable += `<tr${rowClass} name='${catRowsClass}' style='display: none;'><td style='text-align:center;'>${monthName}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${amount.toFixed(2)}</td></tr>`;
+                                htmlTable += `<tr${rowClass} name='${catRowsClass}' style='display: none;'><td style='text-align:center;'>${monthName}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${formatMoney(amount)}</td></tr>`;
                             });
-                        htmlTable += `<tr class='category-total-row' name='${catRowsClass}' style='display: none;'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${categoryTotal.toFixed(2)}</td></tr>`;
+                        htmlTable += `<tr class='category-total-row' name='${catRowsClass}' style='display: none;'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${formatMoney(categoryTotal)}</td></tr>`;
                     });
 
                     chartHtml += `</div></div>`;
@@ -949,7 +962,7 @@
                             : " 🏁 [شهر الأساس الأول]";
                     htmlTable += `</tbody></table></div>`;
 
-                    let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${monthTotal.toFixed(2)}</td></tr></table>`;
+                    let totalTableHtml = `<table class='month-total-table'><tr class='month-total-row'><td style='padding-right:20px;'>💰 إجمالي حجم الصرف لشهر (${monthName})${momTrendText}</td><td style='font-weight: bold; width: 150px; text-align: left;'>$${formatMoney(monthTotal)}</td></tr></table>`;
 
                     // 3️⃣ ثالثاً: دمج المكونات بالترتيب الأصلي وإغلاق حاوية الـ div الكبرى
                     let monthDataDiv = document.createElement("div");
@@ -976,7 +989,7 @@
                     .sort((a, b) => globalCategorySums[b] - globalCategorySums[a])
                     .forEach((cat) => {
                         let amount = globalCategorySums[cat];
-                        globalChartHtml += `<div class='chart-bar-row'><div class='chart-label'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${amount.toFixed(2)}</div></div>`;
+                        globalChartHtml += `<div class='chart-bar-row'><div class='chart-label'>👑 ${cat}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${(globalTotalAmount > 0 ? (amount / globalTotalAmount) * 100 : 0).toFixed(1)}%;'></div></div><div class='chart-value'>$${formatMoney(amount)}</div></div>`;
                     });
                 globalChartHtml += `</div></div>`;
 
@@ -1044,16 +1057,16 @@
                         hasDebtsData = true;
                         let statusText = balance > 0 ? `🟢 دائن (إلك معه مَصاري)` : `🔴 مَدين (عليك إلو مَصاري)`;
                         let colorStyle = balance > 0 ? `color:#38A169;` : `color:#E53E3E;`;
-
+                        console.log(realBalance);
                         let displayRealBalance =
                             currency === "\$"
-                                ? `$${Math.abs(realBalance).toFixed(0)}`
-                                : `£${Math.abs(realBalance).toFixed(0)}`;
+                                ? `$${formatMoney(Math.abs(realBalance))}`
+                                : `£${formatMoney(Math.abs(realBalance))}`;
 
                         debtsHtml += `<tr>
                 <td style='font-weight: bold;'>👤 ${friend}</td>
                 <td style='font-weight: bold; color: var(--text-main);'>${displayRealBalance}</td>
-                <td style='font-weight: bold; color: #718096;'>$${Math.abs(balance).toFixed(2)}</td>
+                <td style='font-weight: bold; color: #718096;'>$${Math.abs(formatMoney(balance))}</td>
                 <td style='font-weight: bold; ${colorStyle}'>${statusText}</td>
             </tr>`;
                     });
