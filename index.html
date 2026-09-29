@@ -749,18 +749,21 @@
 
                                 // 🌟 القاعدة 1: توجيه عمليات "إلى ثروة" فوراً لوعاء الاستثمار
                                 if (category.toLowerCase().startsWith("to '") && accountName.toLowerCase() === "ثروة") {
-                                    let monthKey =
-                                        rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
-                                    if (!monthlyAnalysis[monthKey]) monthlyAnalysis[monthKey] = {};
-                                    if (!monthlyAnalysis[monthKey]["Investment"])
-                                        monthlyAnalysis[monthKey]["Investment"] = {};
-                                    monthlyAnalysis[monthKey]["Investment"][`تحويل استثماري لحساب ثروة`] =
-                                        (monthlyAnalysis[monthKey]["Investment"][`تحويل استثماري لحساب ثروة`] || 0) +
-                                        actualValue;
-                                    globalCategorySums["Investment"] =
-                                        (globalCategorySums["Investment"] || 0) + actualValue;
-                                    continue;
-                                }
+if (rowDate >= startDate && rowDate <= endDate) {
+const monthKey =
+rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
+
+globalParsedRowsData.push({
+date: rowDate,
+monthKey: monthKey,
+category: "Investment",
+description: "تحويل استثماري لحساب ثروة",
+amount: actualValue,
+});
+}
+continue;
+}
+
 
                                 // 🌟 القاعدة 2: إذا كان الحساب مستبعداً، يتم تجاهله
                                 if (
