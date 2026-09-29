@@ -748,22 +748,21 @@
                                 }
 
                                 // 🌟 القاعدة 1: توجيه عمليات "إلى ثروة" فوراً لوعاء الاستثمار
-                                if (category.toLowerCase().startsWith("to '") && accountName.toLowerCase() === "ثروة") {
-if (rowDate >= startDate && rowDate <= endDate) {
-const monthKey =
-rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
-
-globalParsedRowsData.push({
-date: rowDate,
-monthKey: monthKey,
-category: "Investment",
-description: "تحويل استثماري لحساب ثروة",
-amount: actualValue,
-});
-}
-continue;
-}
-
+                                if (
+                                    category.toLowerCase().startsWith("to '") &&
+                                    (accountName === "ثروة" || accountName === "ثروه")
+                                ) {
+                                    let monthKey =
+                                        rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
+                                    globalParsedRowsData.push({
+                                        date: rowDate,
+                                        monthKey: monthKey,
+                                        category: "Investment",
+                                        description: "تحويل استثماري لحساب ثروة 💰",
+                                        amount: actualValue,
+                                    });
+                                    continue;
+                                }
 
                                 // 🌟 القاعدة 2: إذا كان الحساب مستبعداً، يتم تجاهله
                                 if (
@@ -891,9 +890,9 @@ continue;
 
                     // 👑 رأس كتلة الشهر المطور: يفتح ويغلق محتوى الشهر، ويترك تفاصيل الدفعات بالداخل منظمة ومطوية تلقائياً
                     let htmlTable = `
-            <div style="background: #ebf8ff; padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border: 2px solid #90cdf4;" 
+            <div style="padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border: 2px solid #90cdf4;" 
                  onclick="let el=document.getElementById('${totalMonthContainerId}'); let ic=this.querySelector('.main-month-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}">
-                <span style="font-weight: bold; color: #2b6cb0; font-size: 15pt;"><span class="main-month-icon" style="font-family:monospace; margin-left:5px;">▼</span> 🗓️ فترة شهر: ${monthName}</span>
+                <span style="font-weight: bold; font-size: 15pt;"><span class="main-month-icon" style="font-family:monospace; margin-left:5px;">▼</span> 🗓️ فترة شهر: ${monthName}</span>
                 <table class="month-total-table" style="width: auto; margin: 0; display: inline-table;"><tr class="month-total-row"><td style="background: #2ecc71; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11pt; border: none;">إجمالي حجم الصرف: $${monthTotal.toFixed(2)}</td></tr></table>
             </div>
 
@@ -917,11 +916,7 @@ continue;
                     let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
                     let chartBodyId = `chart_body_${mIdx}`;
 
-                    let chartHtml = `<div class='native-chart-wrapper'>
-                <h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'>
-                    <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▲</span> 📊 التوزيع المرئي لنفقات شهر ${monthName} (اضغط للطي/التوسيع)
-                </h3>
-                <div id='${chartBodyId}'>`;
+                    let chartHtml = `<div class='native-chart-wrapper'><h3 onclick="let el=document.getElementById('${chartBodyId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-bottom:15px; cursor:pointer; user-select:none;'><span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📊 التوزيع المرئي لنفقات شهر ${monthName}</h3><div id='${chartBodyId}' style='display:none;'>`;
 
                     sortedCats.forEach((categoryName, cIdx) => {
                         let categoryTotal = categorySums[categoryName];
@@ -931,7 +926,7 @@ continue;
 
                         let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
                         // 🎯 تعديل الأيقونة الافتراضية للتصنيفات إلى ▼ لتطابق وضع الإغلاق التلقائي
-                        htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▼</span> 📁 [${categoryName}]</span><span style='color: #2B6CB0; font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
+                        htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▼</span> 📁 [${categoryName}]</span><span style='font-size: 13pt;'>إجمالي القسم: $${categoryTotal.toFixed(2)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
 
                         let descMap = categoriesMap[categoryName];
                         Object.keys(descMap)
@@ -1052,8 +1047,8 @@ continue;
 
                         let displayRealBalance =
                             currency === "\$"
-                                ? `$${Math.abs(realBalance).toFixed(2)}`
-                                : `${Math.abs(realBalance).toFixed(2)} ZWL`;
+                                ? `$${Math.abs(realBalance).toFixed(0)}`
+                                : `£${Math.abs(realBalance).toFixed(0)}`;
 
                         debtsHtml += `<tr>
                 <td style='font-weight: bold;'>👤 ${friend}</td>
