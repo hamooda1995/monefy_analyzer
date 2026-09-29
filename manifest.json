@@ -3,8 +3,8 @@
   "short_name": "تحليل مصاريف",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#F7FAFC",
-  "theme_color": "#1A365D",
+  "background_color": "#1a202c",
+  "theme_color": "#1a365d",
   "description": "A completely simple static page that can be installed.",
   "icons": [
     {
