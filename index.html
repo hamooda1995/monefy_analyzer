@@ -633,7 +633,7 @@
             <div style="margin-bottom: 5px;">📥 إضافات تلقائية من الـ CSV: <strong>$${formatMoney(csvAdditions)}</strong></div>
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
                 <label for="additions-input-${monthName}" style="margin: 0; font-weight: bold;">➕ تكملة يدوية من عندك ($):</label>
-                <input type="number" id="additions-input-${monthName}" value="${manualAdditions}" min="0" oninput="updateAdditionsMemory('${monthName}', this)" style="padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; background: var(--bg-input); color: var(--text-main);">
+                <input type="number" id="additions-input-${monthName}" value="${manualAdditions}" onblur="updateAdditionsMemory('${monthName}', this)" style="padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; background: var(--bg-input); color: var(--text-main);">
             </div>
             <div style="margin-top: 6px; border-top: 1px solid var(--border-color); padding-top: 4px; font-weight: bold;">
                 🔥 إجمالي إضافات الشهر الكلية: $${formatMoney(totalMonthAdditions)}
