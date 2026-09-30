@@ -630,7 +630,7 @@
         <p style='text-align:center; font-size:13px; color:var(--text-main); margin:0 0 12px 0;'>📈 المدوّر السابق: <strong>$${formatMoney(currentMonthCarryover)}</strong> | 💸 الصرف الكلي للشهر: <strong style='color:#E53E3E;'>$${formatMoney(totalMonthExpense)}</strong> | ✨ وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${formatMoney(Math.max(0, unspentSurplus))}</strong></p>
         
         <div style="background: var(--table-stripe); padding: 10px; border-radius: 8px; border: 1px dashed var(--border-jars); max-width: 420px; margin: 0 auto 15px auto; text-align: center; font-size: 12px; line-height: 1.5; color: var(--text-main);">
-            <div style="margin-bottom: 5px;">📥 إضافات تلقائية من الـ CSV: <strong>$${formatMoney(csvAdditions)}</strong></div>
+            <div style="margin-bottom: 5px;">📥 إضافات تلقائية من الـ CSV: <strong style='color:#38A169;'>$${formatMoney(csvAdditions)}</strong></div>
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
                 <label for="additions-input-${monthName}" style="margin: 0; font-weight: bold;">➕ تكملة يدوية من عندك ($):</label>
                 <input type="number" id="additions-input-${monthName}" value="${manualAdditions}" onblur="updateAdditionsMemory('${monthName}', this)" style="padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; width: 80px; text-align: center; font-weight: bold; background: var(--bg-input); color: var(--text-main);">
