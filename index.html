@@ -994,7 +994,7 @@
                 let globalChartId = `global_chart_body`;
                 let globalChartHtml = `<div class='global-block-wrapper'>
         <h2 onclick="let el=document.getElementById('${globalChartId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
-            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👑 المخطط التحليلي الشامل لكافة الأشهر (اضغط للتوسيع)
+            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👑 المخطط التحليلي الشامل لكافة الأشهر
         </h2>
         <p style='text-align:center; font-size:14px; margin-bottom:20px;'>يوضح الحجم الإجمالي التراكمي الاستهلاكي لكل تصنيف على مدار كامل فترة الفلترة المشمولة</p>
         <div id='${globalChartId}' style='display: none;'>`; // 🎯 حقن الإخفاء الافتراضي عند بداية الرفع
@@ -1016,7 +1016,7 @@
                 let subscriptionBoxId = `subscription_body_box`;
                 let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'>
         <h2 onclick="let el=document.getElementById('${subscriptionBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
-            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة (اضغط للتوسيع)
+            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة
         </h2>
         <div id='${subscriptionBoxId}' style='display: none;'> <!-- 🎯 حقن الإخفاء الافتراضي عند بداية الرفع -->
         <div class='table-responsive-wrapper'><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
@@ -1060,7 +1060,7 @@
                 let categoryAnalyticBoxId = `category_trent_body_box`;
                 let categoryHtml = `<div class='global-block-wrapper' style='border: 2px solid #38A169; margin-top: 25px;'>
     <h2 onclick="let el=document.getElementById('${categoryAnalyticBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
-        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🗂️ تحليلات التصنيفات التكرارية عبر الأشهر (اضغط للتوسيع)
+        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🗂️ تحليلات التصنيفات التكرارية عبر الأشهر
     </h2>
     <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز استهلاك الأقسام الرئيسية (مرتبة تنازلياً بحسب التكرار ثم القيمة الماليّة)</p>
     <div id='${categoryAnalyticBoxId}' style='display: none;'>
@@ -1109,8 +1109,7 @@
                 let friendsDebtsBoxId = `friends_debts_body_box`;
                 let debtsHtml = `<div class='global-block-wrapper' style='border: 2px solid #805AD5; margin-top: 35px;'>
         <h2 onclick="let el=document.getElementById('${friendsDebtsBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
-            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👥 سجل حسابات ديون الأصدقاء والمعاملات البينية (اضغط للتوسيع)
-        </h2>
+            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👥 سجل حسابات ديون الأصدقاء والمعاملات البينية        </h2>
         <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز الصافي المالي (مرتبة بحسب العملة ثم القيمة الحقيقية تنازلياً)</p>
         <div id='${friendsDebtsBoxId}' style='display: none;'> <!-- 🎯 حقن الإخفاء الافتراضي عند بداية الرفع -->
         <div class='table-responsive-wrapper'><table>
@@ -1162,6 +1161,44 @@
                 let debtsBlock = document.createElement("div");
                 debtsBlock.innerHTML = debtsHtml;
                 resultsContainer.appendChild(debtsBlock);
+				
+				const targetBaseIncome = parseFloat(document.getElementById("monthly-income-input").value) || 0;
+let calculatorBoxId = `budget_calculator_body_box`;
+
+let calculatorHtml = `<div class='global-block-wrapper' style='border: 2px solid #2B6CB0; margin-top: 25px;'>
+    <h2 onclick="let el=document.getElementById('${calculatorBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🧮 حاسبة التخطيط المالي الافتراضي المستهدف
+    </h2>
+    <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>دليل توزيع الراتب الاسترشادي بناءً على دخل شهري مستهدف وقدره: <strong style='color:#2B6CB0;'>$${formatMoney(targetBaseIncome)}</strong></p>
+    <div id='${calculatorBoxId}' style='display: none;'>
+    <div class='table-responsive-wrapper'><table>
+        <tr><th>اسم ظرف التوزيع المستهدف</th><th>الحصة المالية الصافية</th><th>توجيهات الاستهلاك الذكي لـ حمودة</th></tr>`;
+
+// توليد أسطر التوزيع الاسترشادي ديناميكياً بناءً على الخريطة المعتمدة JARS_MAPPING
+for (const key in JARS_MAPPING) {
+    const jar = JARS_MAPPING[key];
+    const estimatedAllowance = targetBaseIncome * jar.targetPercent;
+    let adviceText = "";
+
+    // توجيهات استرشادية مخصصة لكل ظرف مالي
+    if (key === "fixed") adviceText = "سقف الإنفاق الأقصى للإيجار والفواتير والطعام والمواصلات.";
+    else if (key === "guiltFree") adviceText = "ميزانية الرفاهية والمطاعم والتسوق غير الضروري دون تأنيب ضمير.";
+    else if (key === "debt") adviceText = "مخصصة لسداد أي التزامات سابقة أو دفعات بينية مستحقة للأصدقاء.";
+    else if (key === "savings") adviceText = "تُقتطع فوراً عند استلام الدخل وتُجمد للمستقبل والطوارئ.";
+    else if (key === "investing") adviceText = "مخصصة لضخها في حساب ثروة الاستثماري أو شراء الذهب لتنمية رأس المال.";
+
+    calculatorHtml += `<tr>
+        <td style='font-weight: bold;'>📍 ${jar.name}</td>
+        <td style='font-weight: bold; color: ${jar.color === "var(--jar-debt)" ? "#E53E3E" : "var(--text-main)"};'>$${formatMoney(estimatedAllowance)}</td>
+        <td style='font-size: 12px; color: var(--text-muted); max-width: 250px;'>${adviceText}</td>
+    </tr>`;
+}
+
+calculatorHtml += `</table></div></div></div>`;
+
+let calcBlock = document.createElement("div");
+calcBlock.innerHTML = calculatorHtml;
+resultsContainer.appendChild(calcBlock);
             }
 
             // دالة الذاكرة المحدثة الفورية والمحافظة على مكان مؤشر الماوس
