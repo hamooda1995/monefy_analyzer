@@ -228,6 +228,7 @@
                 border-bottom: 1px solid var(--border-color);
                 font-style: italic;
                 font-size: 14pt;
+				background-color: #3182ce !important;
             }
 
             .month-total-table {
@@ -873,9 +874,15 @@
                 // تصفير كاش التصنيفات تماماً عند كل عملية تحديث أو تغيير فلاتر
                 window.categoryMonthsTracker = {};
                 window.categoryAmountsTracker = {};
+				window.descriptionMaxDateTracker = {}; 
                 globalParsedRowsData.forEach((row) => {
                     if (!monthlyAnalysis[row.monthKey]) monthlyAnalysis[row.monthKey] = {};
                     if (!monthlyAnalysis[row.monthKey][row.category]) monthlyAnalysis[row.monthKey][row.category] = {};
+					let dateKey = `${row.monthKey}_${row.category}_${row.description}`;
+    if (!window.descriptionMaxDateTracker[dateKey] || row.date > window.descriptionMaxDateTracker[dateKey]) {
+        window.descriptionMaxDateTracker[dateKey] = row.date;
+    }
+	
                     monthlyAnalysis[row.monthKey][row.category][row.description] =
                         (monthlyAnalysis[row.monthKey][row.category][row.description] || 0) + row.amount;
 
@@ -971,15 +978,35 @@
                         // 🎯 تعديل الأيقونة الافتراضية للتصنيفات إلى ▼ لتطابق وضع الإغلاق التلقائي
                         htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▼</span> 📁 [${categoryName}]</span><span style='font-size: 13pt;'>إجمالي القسم: $${formatMoney(categoryTotal)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
 
-                        let descMap = categoriesMap[categoryName];
-                        Object.keys(descMap)
-                            .sort((a, b) => descMap[b] - descMap[a])
-                            .forEach((descriptionName) => {
-                                let amount = descMap[descriptionName];
-                                let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
-                                // حقن أسطر المعاملات الفردية (تكون مخفية تلقائياً وتتبع الـ category-header-row عند الضغط)
-                                htmlTable += `<tr${rowClass} name='${catRowsClass}' style='display: none;'><td style='text-align:center;'>${monthName}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${formatMoney(amount)}</td></tr>`;
-                            });
+                        // الكود الجديد المستبدل:
+let descMap = categoriesMap[categoryName];
+Object.keys(descMap)
+    .sort((a, b) => {
+        // 🌟 جلب التواريخ المقابلة للوصفين لمقارنتهما
+        let dateKeyA = `${monthName}_${categoryName}_${a}`;
+        let dateKeyB = `${monthName}_${categoryName}_${b}`;
+        let dateA = window.descriptionMaxDateTracker[dateKeyA] || new Date(0);
+        let dateB = window.descriptionMaxDateTracker[dateKeyB] || new Date(0);
+        
+        // ترتيب تصاعدي (من الأقدم للأحدث تاريخياً)
+        return dateA - dateB; 
+    })
+    .forEach((descriptionName) => {
+        let amount = descMap[descriptionName];
+        let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
+        
+        // 🌟 استخراج التاريخ الأكبر وصياغته: يوم-شهر-سنة
+        let dateKey = `${monthName}_${categoryName}_${descriptionName}`;
+        let maxDate = window.descriptionMaxDateTracker[dateKey];
+        let displayDate = monthName; 
+        if (maxDate) {
+            displayDate = `${maxDate.getDate()}-${maxDate.getMonth() + 1}-${maxDate.getFullYear()}`;
+        }
+
+        // حقن السطر مع التعديل الفوري للتاريخ في خانة الجدول الأولى
+        htmlTable += `<tr${rowClass} name='${catRowsClass}' style='display: none;'><td style='text-align:center;'>${displayDate}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${formatMoney(amount)}</td></tr>`;
+    });
+
                         htmlTable += `<tr class='category-total-row' name='${catRowsClass}' style='display: none;'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${formatMoney(categoryTotal)}</td></tr>`;
                     });
 
