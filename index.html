@@ -804,7 +804,7 @@
                                 // مستشعر التصفير الفوري الذكي (إذا كان الحساب قريباً من الصفر لا يظهر ويصفر تماماً)
                                 if (
                                     Math.abs(window.globalFriendsDebts[rowAccountName].balance) < 0.02 ||
-                                    Math.abs(window.globalFriendsDebts[rowAccountName].realBalance) < 0.02
+                                    Math.abs(window.globalFriendsDebts[rowAccountName].realBalance) < 1.00
                                 ) {
                                     window.globalFriendsDebts[rowAccountName].balance = 0;
                                     window.globalFriendsDebts[rowAccountName].realBalance = 0;
