@@ -636,8 +636,16 @@
                     monthJarsTotals.savings += unspentSurplus;
                 }
 
+                let jarsBodyId = `jars_body_${monthName.replace('-', '_')}`;
+
                 let html = `<div class='jars-section-box'>
-        <h3 style='text-align:center; margin-top:0; margin-bottom:10px; font-size:14pt;'>🎯 ميزانية الأظرف الخمسة لهذا الشهر</h3>
+        <div style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;" 
+             onclick="let el=document.getElementById('${jarsBodyId}'); let ic=this.querySelector('.jars-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}">
+            <h3 style='margin:0; font-size:14pt;'><span class='jars-icon' style='font-family:monospace; margin-left:5px;'>▼</span> 🎯 ميزانية الأظرف الخمسة لهذا الشهر</h3>
+            <span style='font-size: 11pt; color: var(--text-muted); font-weight: bold;'>اضغط للفتح / الطي</span>
+        </div>
+
+        <div id="${jarsBodyId}" style="display: none; margin-top: 15px; border-top: 1px dashed var(--border-jars); padding-top: 15px;">
         <p style='text-align:center; font-size:13px; color:var(--text-main); margin:0 0 12px 0;'>📈 المدوّر السابق: <strong>$${formatMoney(currentMonthCarryover)}</strong> | 💸 الصرف الكلي للشهر: <strong style='color:#E53E3E;'>$${formatMoney(totalMonthExpense)}</strong> | ✨ وفر هذا الشهر المحول للتحويش: <strong style='color:#38A169;'>$${formatMoney(Math.max(0, unspentSurplus))}</strong></p>
         
         <div style="background: var(--table-stripe); padding: 10px; border-radius: 8px; border: 1px dashed var(--border-jars); max-width: 420px; margin: 0 auto 15px auto; text-align: center; font-size: 12px; line-height: 1.5; color: var(--text-main);">
@@ -674,7 +682,7 @@
                 </div>
             </div>`;
                 }
-                html += `</div>`;
+                html += `</div></div>`;
                 return { html: html, monthSurplus: unspentSurplus };
             }
         </script>
@@ -1246,7 +1254,7 @@ Object.keys(descMap)
                 resultsContainer.appendChild(calcBlock);
             }
 
-            // دالة الذاكرة المحدثة الفورية والمحافظة على مكان مؤشر الماوس
+            // دالة الذاكرة المحدثة الفورية والمافظة على مكان مؤشر الماوس
             function updateAdditionsMemory(monthKey, inputElement) {
                 globalMonthAdditions[monthKey] = parseFloat(inputElement.value) || 0;
 
