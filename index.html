@@ -228,7 +228,7 @@
                 border-bottom: 1px solid var(--border-color);
                 font-style: italic;
                 font-size: 14pt;
-				background-color: #3182ce !important;
+                background-color: #3182ce !important;
             }
 
             .month-total-table {
@@ -636,7 +636,7 @@
                     monthJarsTotals.savings += unspentSurplus;
                 }
 
-                let jarsBodyId = `jars_body_${monthName.replace('-', '_')}`;
+                let jarsBodyId = `jars_body_${monthName.replace("-", "_")}`;
 
                 let html = `<div class='jars-section-box'>
         <div style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;" 
@@ -813,7 +813,7 @@
                                 // مستشعر التصفير الفوري الذكي (إذا كان الحساب قريباً من الصفر لا يظهر ويصفر تماماً)
                                 if (
                                     Math.abs(window.globalFriendsDebts[rowAccountName].balance) < 0.02 ||
-                                    Math.abs(window.globalFriendsDebts[rowAccountName].realBalance) < 1.00
+                                    Math.abs(window.globalFriendsDebts[rowAccountName].realBalance) < 1.0
                                 ) {
                                     window.globalFriendsDebts[rowAccountName].balance = 0;
                                     window.globalFriendsDebts[rowAccountName].realBalance = 0;
@@ -823,23 +823,29 @@
                             }
 
                             if (
-                                (category.startsWith("To '") || category.toLowerCase().includes("to '")) &&
-                                rowDate >= startDate &&
-                                rowDate <= endDate &&
-                                (accountName === "ثروة" || accountName === "ثروه")
+                                category.startsWith("To '") ||
+                                category.startsWith("From '") ||
+                                category.toLowerCase().includes("to '") ||
+                                category.toLowerCase().includes("from '")
                             ) {
-                                let monthKey =
-                                    rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
-                                globalParsedRowsData.push({
-                                    date: rowDate,
-                                    monthKey: monthKey,
-                                    category: "Investment",
-                                    description: "تحويل استثماري لحساب ثروة 💰",
-                                    amount: actualValue,
-                                });
+                                if (
+                                    (category.startsWith("To '") || category.toLowerCase().includes("to '")) &&
+                                    rowDate >= startDate &&
+                                    rowDate <= endDate &&
+                                    (accountName === "ثروة" || accountName === "ثروه")
+                                ) {
+                                    let monthKey =
+                                        rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
+                                    globalParsedRowsData.push({
+                                        date: rowDate,
+                                        monthKey: monthKey,
+                                        category: "Investment",
+                                        description: "تحويل استثماري لحساب ثروة 💰",
+                                        amount: actualValue,
+                                    });
+                                }
                                 continue;
                             }
-
                             if (rowDate >= startDate && rowDate <= endDate) {
                                 let convertedAmount = parseFloat(amountStr);
                                 let monthKey =
@@ -864,7 +870,9 @@
                                     amount: actualExpense,
                                 });
                             }
-                        } catch (err) {}
+                        } catch (err) {
+                            console.log(err);
+                        }
                     }
 
                     isFileAlreadyLoaded = true;
@@ -882,15 +890,18 @@
                 // تصفير كاش التصنيفات تماماً عند كل عملية تحديث أو تغيير فلاتر
                 window.categoryMonthsTracker = {};
                 window.categoryAmountsTracker = {};
-				window.descriptionMaxDateTracker = {}; 
+                window.descriptionMaxDateTracker = {};
                 globalParsedRowsData.forEach((row) => {
                     if (!monthlyAnalysis[row.monthKey]) monthlyAnalysis[row.monthKey] = {};
                     if (!monthlyAnalysis[row.monthKey][row.category]) monthlyAnalysis[row.monthKey][row.category] = {};
-					let dateKey = `${row.monthKey}_${row.category}_${row.description}`;
-    if (!window.descriptionMaxDateTracker[dateKey] || row.date > window.descriptionMaxDateTracker[dateKey]) {
-        window.descriptionMaxDateTracker[dateKey] = row.date;
-    }
-	
+                    let dateKey = `${row.monthKey}_${row.category}_${row.description}`;
+                    if (
+                        !window.descriptionMaxDateTracker[dateKey] ||
+                        row.date > window.descriptionMaxDateTracker[dateKey]
+                    ) {
+                        window.descriptionMaxDateTracker[dateKey] = row.date;
+                    }
+
                     monthlyAnalysis[row.monthKey][row.category][row.description] =
                         (monthlyAnalysis[row.monthKey][row.category][row.description] || 0) + row.amount;
 
@@ -948,14 +959,14 @@
 
                     // 👑 رأس كتلة الشهر المطور: يفتح ويغلق محتوى الشهر، ويترك تفاصيل الدفعات بالداخل منظمة ومطوية تلقائياً
                     let htmlTable = `
-            <div style="padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border: 2px solid #90cdf4;" 
-                 onclick="let el=document.getElementById('${totalMonthContainerId}'); let ic=this.querySelector('.main-month-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}">
-                <span style="font-weight: bold; font-size: 15pt;"><span class="main-month-icon" style="font-family:monospace; margin-left:5px;">▼</span> 🗓️ فترة شهر: ${monthName}</span>
-                <table class="month-total-table" style="width: auto; margin: 0; display: inline-table;"><tr class="month-total-row"><td style="background: #2ecc71; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11pt; border: none;">إجمالي حجم الصرف: $${formatMoney(monthTotal)}</td></tr></table>
-            </div>
+                        <div style="padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border: 2px solid #90cdf4;"
+                             onclick="let el=document.getElementById('${totalMonthContainerId}'); let ic=this.querySelector('.main-month-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}">
+                            <span style="font-weight: bold; font-size: 15pt;"><span class="main-month-icon" style="font-family:monospace; margin-left:5px;">▼</span> 🗓️ فترة شهر: ${monthName}</span>
+                            <table class="month-total-table" style="width: auto; margin: 0; display: inline-table;"><tr class="month-total-row"><td style="background: #2ecc71; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11pt; border: none;">إجمالي حجم الصرف: $${formatMoney(monthTotal)}</td></tr></table>
+                        </div>
 
-            <!-- حاوية المحتويات الكبرى للشهر (مغلقة تلقائياً بشكل افتراضي) -->
-            <div id="${totalMonthContainerId}" style="display: none; margin-top: 15px; border-top: 1px solid #cbd5e0; padding-top: 15px;">`;
+                        <!-- حاوية المحتويات الكبرى للشهر (مغلقة تلقائياً بشكل افتراضي) -->
+                        <div id="${totalMonthContainerId}" style="display: none; margin-top: 15px; border-top: 1px solid #cbd5e0; padding-top: 15px;">`;
 
                     // 1️⃣ أولاً: جلب وحقن أشرطة الأظرف الخمسة للشهر
                     let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, monthName);
@@ -963,13 +974,13 @@
 
                     // 2️⃣ ثانياً: بناء تفاصيل دفعات كل شهر (مع حقن الـ display: none لتكون التصنيفات مطوية تلقائياً عند الفتح الأول)
                     htmlTable += `<div class='table-responsive-wrapper'><table>
-            <tr class='month-header-row'>
-                <td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)" style="background: #edf2f7; color: #4a5568; font-size: 12pt; border: 1px solid #cbd5e0; padding: 8px;">
-                    <button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button>
-                    <span class='collapse-icon'>▼</span> 📋 جدول تفاصيل الدفعات والفواتير لهذا الشهر
-                </td>
-            </tr>
-            <tbody id='${monthBodyId}' style='display: none;'>`; // 🎯 تعديل عبقري: جعل الـ tbody مغلقاً افتراضياً لتبدو التصنيفات كـ كتل معلبة نظيفة عند فتح الشهر
+                        <tr class='month-header-row'>
+                            <td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)" style="background: #edf2f7; color: #4a5568; font-size: 12pt; border: 1px solid #cbd5e0; padding: 8px;">
+                                <button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button>
+                                <span class='collapse-icon'>▼</span> 📋 جدول تفاصيل الدفعات والفواتير لهذا الشهر
+                            </td>
+                        </tr>
+                        <tbody id='${monthBodyId}' style='display: none;'>`; // 🎯 تعديل عبقري: جعل الـ tbody مغلقاً افتراضياً لتبدو التصنيفات كـ كتل معلبة نظيفة عند فتح الشهر
 
                     let sortedCats = Object.keys(categorySums).sort((a, b) => categorySums[b] - categorySums[a]);
                     let chartBodyId = `chart_body_${mIdx}`;
@@ -987,33 +998,33 @@
                         htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▼</span> 📁 [${categoryName}]</span><span style='font-size: 13pt;'>إجمالي القسم: $${formatMoney(categoryTotal)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
 
                         // الكود الجديد المستبدل:
-let descMap = categoriesMap[categoryName];
-Object.keys(descMap)
-    .sort((a, b) => {
-        // 🌟 جلب التواريخ المقابلة للوصفين لمقارنتهما
-        let dateKeyA = `${monthName}_${categoryName}_${a}`;
-        let dateKeyB = `${monthName}_${categoryName}_${b}`;
-        let dateA = window.descriptionMaxDateTracker[dateKeyA] || new Date(0);
-        let dateB = window.descriptionMaxDateTracker[dateKeyB] || new Date(0);
-        
-        // ترتيب تصاعدي (من الأقدم للأحدث تاريخياً)
-        return dateA - dateB; 
-    })
-    .forEach((descriptionName) => {
-        let amount = descMap[descriptionName];
-        let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
-        
-        // 🌟 استخراج التاريخ الأكبر وصياغته: يوم-شهر-سنة
-        let dateKey = `${monthName}_${categoryName}_${descriptionName}`;
-        let maxDate = window.descriptionMaxDateTracker[dateKey];
-        let displayDate = monthName; 
-        if (maxDate) {
-            displayDate = `${maxDate.getDate()}-${maxDate.getMonth() + 1}-${maxDate.getFullYear()}`;
-        }
+                        let descMap = categoriesMap[categoryName];
+                        Object.keys(descMap)
+                            .sort((a, b) => {
+                                // 🌟 جلب التواريخ المقابلة للوصفين لمقارنتهما
+                                let dateKeyA = `${monthName}_${categoryName}_${a}`;
+                                let dateKeyB = `${monthName}_${categoryName}_${b}`;
+                                let dateA = window.descriptionMaxDateTracker[dateKeyA] || new Date(0);
+                                let dateB = window.descriptionMaxDateTracker[dateKeyB] || new Date(0);
 
-        // حقن السطر مع التعديل الفوري للتاريخ في خانة الجدول الأولى
-        htmlTable += `<tr${rowClass} name='${catRowsClass}' style='display: none;'><td style='text-align:center;'>${displayDate}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${formatMoney(amount)}</td></tr>`;
-    });
+                                // ترتيب تصاعدي (من الأقدم للأحدث تاريخياً)
+                                return dateA - dateB;
+                            })
+                            .forEach((descriptionName) => {
+                                let amount = descMap[descriptionName];
+                                let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
+
+                                // 🌟 استخراج التاريخ الأكبر وصياغته: يوم-شهر-سنة
+                                let dateKey = `${monthName}_${categoryName}_${descriptionName}`;
+                                let maxDate = window.descriptionMaxDateTracker[dateKey];
+                                let displayDate = monthName;
+                                if (maxDate) {
+                                    displayDate = `${maxDate.getDate()}-${maxDate.getMonth() + 1}-${maxDate.getFullYear()}`;
+                                }
+
+                                // حقن السطر مع التعديل الفوري للتاريخ في خانة الجدول الأولى
+                                htmlTable += `<tr${rowClass} name='${catRowsClass}' style='display: none;'><td style='text-align:center;'>${displayDate}</td><td>${categoryName}</td><td>${descriptionName}${amount >= 50.0 ? " ⚠️ [مصروف مرتفع]" : ""}</td><td style='font-weight: bold;'>$${formatMoney(amount)}</td></tr>`;
+                            });
 
                         htmlTable += `<tr class='category-total-row' name='${catRowsClass}' style='display: none;'><td colspan='3' style='text-align:right; padding-right:30px;'> ── مجموع نفقات [${categoryName}]</td><td style='font-weight: bold;'>$${formatMoney(categoryTotal)}</td></tr>`;
                     });
@@ -1043,11 +1054,11 @@ Object.keys(descMap)
                 // 🎯 1. المخطط التحليلي الشامل لكافة الأشهر (مدمج بميزة الطي الذكي)
                 let globalChartId = `global_chart_body`;
                 let globalChartHtml = `<div class='global-block-wrapper'>
-        <h2 onclick="let el=document.getElementById('${globalChartId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
-            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👑 المخطط التحليلي الشامل لكافة الأشهر
-        </h2>
-        <p style='text-align:center; font-size:14px; margin-bottom:20px;'>يوضح الحجم الإجمالي التراكمي الاستهلاكي لكل تصنيف على مدار كامل فترة الفلترة المشمولة</p>
-        <div id='${globalChartId}' style='display: none;'>`; // 🎯 حقن الإخفاء الافتراضي عند بداية الرفع
+                    <h2 onclick="let el=document.getElementById('${globalChartId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+                        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👑 المخطط التحليلي الشامل لكافة الأشهر
+                    </h2>
+                    <p style='text-align:center; font-size:14px; margin-bottom:20px;'>يوضح الحجم الإجمالي التراكمي الاستهلاكي لكل تصنيف على مدار كامل فترة الفلترة المشمولة</p>
+                    <div id='${globalChartId}' style='display: none;'>`; // 🎯 حقن الإخفاء الافتراضي عند بداية الرفع
 
                 let globalTotalAmount = Object.values(globalCategorySums).reduce((a, b) => a + b, 0);
                 Object.keys(globalCategorySums)
@@ -1065,11 +1076,11 @@ Object.keys(descMap)
                 // 🎯 2. جدول قائمة الاشتراكات الثابتة (مغلق تلقائياً بشكل افتراضي)
                 let subscriptionBoxId = `subscription_body_box`;
                 let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'>
-        <h2 onclick="let el=document.getElementById('${subscriptionBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
-            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة
-        </h2>
-        <div id='${subscriptionBoxId}' style='display: none;'> <!-- 🎯 حقن الإخفاء الافتراضي عند بداية الرفع -->
-        <div class='table-responsive-wrapper'><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
+                    <h2 onclick="let el=document.getElementById('${subscriptionBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+                        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة
+                    </h2>
+                    <div id='${subscriptionBoxId}' style='display: none;'> <!-- 🎯 حقن الإخفاء الافتراضي عند بداية الرفع -->
+                    <div class='table-responsive-wrapper'><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
 
                 let hasSubs = false;
                 // الفرز المركب التنازلي: بحسب تكرار الأشهر أولاً، ثم بحسب القيمة المالية الشهرية ثانياً
@@ -1109,13 +1120,13 @@ Object.keys(descMap)
                 // بناء جدول تحليلات التصنيفات التكرارية الجديد
                 let categoryAnalyticBoxId = `category_trent_body_box`;
                 let categoryHtml = `<div class='global-block-wrapper' style='border: 2px solid #38A169; margin-top: 25px;'>
-    <h2 onclick="let el=document.getElementById('${categoryAnalyticBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
-        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🗂️ تحليلات التصنيفات التكرارية عبر الأشهر
-    </h2>
-    <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز استهلاك الأقسام الرئيسية (مرتبة تنازلياً بحسب التكرار ثم القيمة الماليّة)</p>
-    <div id='${categoryAnalyticBoxId}' style='display: none;'>
-    <div class='table-responsive-wrapper'><table>
-        <tr><th>اسم التصنيف الرئيسي</th><th>معدل التكرار الزمني</th><th>المتوسط المالي الشهري</th></tr>`;
+                <h2 onclick="let el=document.getElementById('${categoryAnalyticBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+                    <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🗂️ تحليلات التصنيفات التكرارية عبر الأشهر
+                </h2>
+                <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز استهلاك الأقسام الرئيسية (مرتبة تنازلياً بحسب التكرار ثم القيمة الماليّة)</p>
+                <div id='${categoryAnalyticBoxId}' style='display: none;'>
+                <div class='table-responsive-wrapper'><table>
+                    <tr><th>اسم التصنيف الرئيسي</th><th>معدل التكرار الزمني</th><th>المتوسط المالي الشهري</th></tr>`;
 
                 let hasCategoryTrends = false;
 
@@ -1138,10 +1149,10 @@ Object.keys(descMap)
                                     window.categoryAmountsTracker[cat].reduce((a, b) => a + b, 0) /
                                     window.categoryMonthsTracker[cat].size;
                                 categoryHtml += `<tr>
-                    <td style='font-weight: bold;'>📁 ${cat}</td>
-                    <td style='text-align:center;'>${window.categoryMonthsTracker[cat].size} أشهر</td>
-                    <td style='font-weight: bold;'>$${formatMoney(avg)} / شهر</td>
-                </tr>`;
+                                <td style='font-weight: bold;'>📁 ${cat}</td>
+                                <td style='text-align:center;'>${window.categoryMonthsTracker[cat].size} أشهر</td>
+                                <td style='font-weight: bold;'>$${formatMoney(avg)} / شهر</td>
+                            </tr>`;
                             }
                         });
                 }
@@ -1158,12 +1169,12 @@ Object.keys(descMap)
                 // 🎯 3. جدول سجل حسابات ديون الأصدقاء (مغلق تلقائياً بشكل افتراضي)
                 let friendsDebtsBoxId = `friends_debts_body_box`;
                 let debtsHtml = `<div class='global-block-wrapper' style='border: 2px solid #805AD5; margin-top: 35px;'>
-        <h2 onclick="let el=document.getElementById('${friendsDebtsBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
-            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👥 سجل حسابات ديون الأصدقاء والمعاملات البينية        </h2>
-        <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز الصافي المالي (مرتبة بحسب العملة ثم القيمة الحقيقية تنازلياً)</p>
-        <div id='${friendsDebtsBoxId}' style='display: none;'> <!-- 🎯 حقن الإخفاء الافتراضي عند بداية الرفع -->
-        <div class='table-responsive-wrapper'><table>
-            <tr><th>اسم الحساب (صديق)</th><th>الصافي بالعملة الموحدة</th><th>الصافي التقريبي بالدولار</th><th>الحالة الماليّة لحمودة</th></tr>`;
+                    <h2 onclick="let el=document.getElementById('${friendsDebtsBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+                        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 👥 سجل حسابات ديون الأصدقاء والمعاملات البينية        </h2>
+                    <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز الصافي المالي (مرتبة بحسب العملة ثم القيمة الحقيقية تنازلياً)</p>
+                    <div id='${friendsDebtsBoxId}' style='display: none;'> <!-- 🎯 حقن الإخفاء الافتراضي عند بداية الرفع -->
+                    <div class='table-responsive-wrapper'><table>
+                        <tr><th>اسم الحساب (صديق)</th><th>الصافي بالعملة الموحدة</th><th>الصافي التقريبي بالدولار</th><th>الحالة الماليّة لحمودة</th></tr>`;
 
                 let hasDebtsData = false;
 
@@ -1195,11 +1206,11 @@ Object.keys(descMap)
                                 : `£${formatMoney(Math.abs(realBalance))}`;
 
                         debtsHtml += `<tr>
-                <td style='font-weight: bold;'>👤 ${friend}</td>
-                <td style='font-weight: bold; color: var(--text-main);'>${displayRealBalance}</td>
-                <td style='font-weight: bold; color: #718096;'>$${Math.abs(formatMoney(balance))}</td>
-                <td style='font-weight: bold; ${colorStyle}'>${statusText}</td>
-            </tr>`;
+                            <td style='font-weight: bold;'>👤 ${friend}</td>
+                            <td style='font-weight: bold; color: var(--text-main);'>${displayRealBalance}</td>
+                            <td style='font-weight: bold; color: #718096;'>$${Math.abs(formatMoney(balance))}</td>
+                            <td style='font-weight: bold; ${colorStyle}'>${statusText}</td>
+                        </tr>`;
                     });
                 }
 
@@ -1216,13 +1227,13 @@ Object.keys(descMap)
                 let calculatorBoxId = `budget_calculator_body_box`;
 
                 let calculatorHtml = `<div class='global-block-wrapper' style='border: 2px solid #2B6CB0; margin-top: 25px;'>
-    <h2 onclick="let el=document.getElementById('${calculatorBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
-        <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🧮 حاسبة التخطيط المالي الافتراضي المستهدف
-    </h2>
-    <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>دليل توزيع الراتب الاسترشادي بناءً على دخل شهري مستهدف وقدره: <strong style='color:#90cdf4;'>$${formatMoney(targetBaseIncome)}</strong></p>
-    <div id='${calculatorBoxId}' style='display: none;'>
-    <div class='table-responsive-wrapper'><table>
-        <tr><th>اسم ظرف التوزيع المستهدف</th><th>الحصة المالية الصافية</th><th>توجيهات الاستهلاك الذكي لـ حمودة</th></tr>`;
+                <h2 onclick="let el=document.getElementById('${calculatorBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+                    <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🧮 حاسبة التخطيط المالي الافتراضي المستهدف
+                </h2>
+                <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>دليل توزيع الراتب الاسترشادي بناءً على دخل شهري مستهدف وقدره: <strong style='color:#90cdf4;'>$${formatMoney(targetBaseIncome)}</strong></p>
+                <div id='${calculatorBoxId}' style='display: none;'>
+                <div class='table-responsive-wrapper'><table>
+                    <tr><th>اسم ظرف التوزيع المستهدف</th><th>الحصة المالية الصافية</th><th>توجيهات الاستهلاك الذكي لـ حمودة</th></tr>`;
 
                 // توليد أسطر التوزيع الاسترشادي ديناميكياً بناءً على الخريطة المعتمدة JARS_MAPPING
                 for (const key in JARS_MAPPING) {
@@ -1241,10 +1252,10 @@ Object.keys(descMap)
                         adviceText = "مخصصة لضخها في حساب ثروة الاستثماري أو شراء الذهب لتنمية رأس المال.";
 
                     calculatorHtml += `<tr>
-        <td style='font-weight: bold;'>📍 ${jar.name}</td>
-        <td style='font-weight: bold; color: ${jar.color === "var(--jar-debt)" ? "#E53E3E" : "var(--text-main)"};'>$${formatMoney(estimatedAllowance)}</td>
-        <td style='font-size: 12px; color: var(--text-muted); max-width: 250px;'>${adviceText}</td>
-    </tr>`;
+                    <td style='font-weight: bold;'>📍 ${jar.name}</td>
+                    <td style='font-weight: bold; color: ${jar.color === "var(--jar-debt)" ? "#E53E3E" : "var(--text-main)"};'>$${formatMoney(estimatedAllowance)}</td>
+                    <td style='font-size: 12px; color: var(--text-muted); max-width: 250px;'>${adviceText}</td>
+                </tr>`;
                 }
 
                 calculatorHtml += `</table></div></div></div>`;
