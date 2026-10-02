@@ -452,14 +452,14 @@
                     <label for="endDate">تاريخ النهاية (مشمول):</label>
                     <input type="date" id="endDate" />
                     <script>
-                      // 1. الحصول على تاريخ اليوم بالكامل بناءً على جهاز المستخدم
-                      const today = new Date();
-  
-                      // 2. تحويل التاريخ إلى صيغة YYYY-MM-DD المطلوبة لحقول التاريخ
-                      const formattedDate = today.toISOString().split('T')[0];
-  
-                      // 3. تعيين القيمة ديناميكياً للحقل
-                      document.getElementById('endDate').value = formattedDate;
+                        // 1. الحصول على تاريخ اليوم بالكامل بناءً على جهاز المستخدم
+                        const today = new Date();
+
+                        // 2. تحويل التاريخ إلى صيغة YYYY-MM-DD المطلوبة لحقول التاريخ
+                        const formattedDate = today.toISOString().split("T")[0];
+
+                        // 3. تعيين القيمة ديناميكياً للحقل
+                        document.getElementById("endDate").value = formattedDate;
                     </script>
                 </div>
             </div>
@@ -501,7 +501,7 @@
         <div id="resultsContainer"></div>
         <script>
             // الحفاظ الصارم على فهارس النواة المقدسة والمستقرة
-            const CSV_INDICES = { DATE: 0, CATEGORY: 2, REAL_AMOUNT: 3, CURRENCY: 4, AMOUNT: 5, DESC: 7 };
+            const CSV_INDICES = { DATE: 0, ACCOUNT: 1, CATEGORY: 2, REAL_AMOUNT: 3, CURRENCY: 4, AMOUNT: 5, DESC: 7 };
 
             // خريطة التوزيع المعتمدة والمحذوف منها Debt بناء على توجيهك
             const JARS_MAPPING = {
@@ -743,89 +743,94 @@
                             // الحسابات الشخصية المستبعدة تماماً من حسبة الديون بناء على طلبك
                             const excludedAccounts = ["usd", "cash", "new cash", "ثروة", "bank", "Gold(grams)"];
 
+                            // 2. قائمة الحسابات المعتمدة لحسابات ديون الأصدقاء والمعاملات البينية (يمكنك تعديل الأسماء هنا بحرية)
+                            const targetDebtAccounts = [
+                                "محمد دولار",
+                                "عمار دولار",
+                                "عبد دولار",
+                                "حافظ",
+                                "حكيم",
+                                "Shop",
+                                "محمد",
+                                "عمار",
+                                "حكيم دولار",
+                                "موني",
+                                "عبد",
+                            ];
+                            let rowAccountName = clean(columns.at(CSV_INDICES.ACCOUNT));
+
                             if (
-                                category.startsWith("To '") ||
-                                category.startsWith("From '") ||
-                                category.toLowerCase().includes("to '") ||
-                                category.toLowerCase().includes("from '")
+                                targetDebtAccounts
+                                    .map((acc) => acc.toLowerCase())
+                                    .includes(rowAccountName.toLowerCase())
                             ) {
-                                let accountName = category.replace(/To '|From '|'/gi, "").trim();
                                 let convertedAmount = parseFloat(amountStr);
                                 let realAmountStr = clean(columns.at(CSV_INDICES.REAL_AMOUNT));
-                                let actualValue = Math.abs(convertedAmount);
                                 let currencyStr = clean(columns.at(CSV_INDICES.CURRENCY));
+                                let description = clean(columns.at(CSV_INDICES.DESC)) || "";
 
-                                // تنظيف وتحويل النص الأصلي إلى رقم حقيقي
-                                let parsedRealValue = parseFloat(realAmountStr.replace(/[^\d.-]/g, "")) || 0;
-                                let actualRealValue = Math.abs(parsedRealValue);
+                                let cleanRealStr = realAmountStr ? realAmountStr.replace(/[^\d.-]/g, "") : "";
+                                let parsedRealValue = parseFloat(cleanRealStr);
+                                if (isNaN(parsedRealValue)) parsedRealValue = 0;
 
-                                // 🎯 كاشف وموحد العملات الذكي لحمودة
-                                let currencySymbol = "\$"; // الافتراضي هو الدولار
-                                // فحص العملة بناءً على النصوص المكتوبة في الفهرس 4 أو وصف المعاملة
-                                if (currencyStr.toLowerCase() === "syp") {
-                                    // تحويل الليرة السورية فوراً إلى ZWL بناء على القاعدة الذهبية (1 ZWL = 100 SYP)
+                                let actualValue = convertedAmount; // القيمة بإشارتها الأصلية من الـ CSV
+                                let actualRealValue = parsedRealValue; // القيمة الأصلية بإشارتها
+
+                                // كاشف وموحد العملات (1 ZWL = 100 SYP)
+                                let currencySymbol = "\$";
+                                let checkCurrency = (currencyStr || "").toLowerCase();
+                                let checkDesc = (description || "").toLowerCase();
+
+                                if (checkCurrency === "syp" || checkDesc.includes("syp")) {
                                     actualRealValue = actualRealValue / 100;
-                                    currencySymbol = "\£";
-                                } else if (currencyStr.toLowerCase() === "zwl") {
-                                    currencySymbol = "\£";
+                                    currencySymbol = "/£";
+                                } else if (checkCurrency === "zwl" || checkDesc.includes("zwl")) {
+                                    currencySymbol = "/£";
                                 }
 
-                                // 🌟 القاعدة 1: توجيه عمليات "إلى ثروة" فوراً لوعاء الاستثمار
-                                if (
-                                    rowDate >= startDate &&
-                                    rowDate <= endDate &&
-                                    category.toLowerCase().startsWith("to '") &&
-                                    (accountName === "ثروة" || accountName === "ثروه")
-                                ) {
-                                    let monthKey =
-                                        rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
-                                    globalParsedRowsData.push({
-                                        date: rowDate,
-                                        monthKey: monthKey,
-                                        category: "Investment",
-                                        description: "تحويل استثماري لحساب ثروة 💰",
-                                        amount: actualValue,
-                                    });
-                                    continue;
-                                }
-
-                                // 🌟 القاعدة 2: إذا كان الحساب مستبعداً، يتم تجاهله
-                                if (
-                                    excludedAccounts.map((acc) => acc.toLowerCase()).includes(accountName.toLowerCase())
-                                ) {
-                                    continue;
-                                }
-
-                                // 🌟 القاعدة 3: تجميع حسابات الديون التراكمية بناءً على نوع العملة المكتشفة
                                 if (!window.globalFriendsDebts) window.globalFriendsDebts = {};
-                                if (!window.globalFriendsDebts[accountName]) {
-                                    window.globalFriendsDebts[accountName] = {
+                                if (!window.globalFriendsDebts[rowAccountName]) {
+                                    window.globalFriendsDebts[rowAccountName] = {
                                         balance: 0,
                                         realBalance: 0,
                                         currency: currencySymbol,
                                     };
                                 }
 
-                                // تطبيق الحركات الحالية تراكمياً
-                                if (category.toLowerCase().startsWith("to '")) {
-                                    window.globalFriendsDebts[accountName].balance += actualValue; // حقك بالدولار يزيد
-                                    window.globalFriendsDebts[accountName].realBalance += actualRealValue; // حقك بالعملة الموحدة يزيد
-                                } else if (category.toLowerCase().startsWith("from '")) {
-                                    window.globalFriendsDebts[accountName].balance -= actualValue; // حقك بالدولار ينقص
-                                    window.globalFriendsDebts[accountName].realBalance -= actualRealValue; // حقك بالعملة الموحدة ينقص
-                                }
+                                // القاعدة الجديدة: القيمة الموجبة تعني حق لصالحك (دائن) والسالبة تعني دين عليك (مدين)
+                                window.globalFriendsDebts[rowAccountName].balance += actualValue;
+                                window.globalFriendsDebts[rowAccountName].realBalance += actualRealValue;
 
-                                // 🎯 مستشعر التصفير الفوري الذكي المحدث لمنع تداخل كسور فروق الصرف القديمة
+                                // مستشعر التصفير الفوري الذكي (إذا كان الحساب قريباً من الصفر لا يظهر ويصفر تماماً)
                                 if (
-                                    Math.abs(window.globalFriendsDebts[accountName].balance) < 0.02 ||
-                                    Math.abs(window.globalFriendsDebts[accountName].realBalance) < 0.02
+                                    Math.abs(window.globalFriendsDebts[rowAccountName].balance) < 0.02 ||
+                                    Math.abs(window.globalFriendsDebts[rowAccountName].realBalance) < 0.02
                                 ) {
-                                    window.globalFriendsDebts[accountName].balance = 0;
-                                    window.globalFriendsDebts[accountName].realBalance = 0;
+                                    window.globalFriendsDebts[rowAccountName].balance = 0;
+                                    window.globalFriendsDebts[rowAccountName].realBalance = 0;
                                 }
 
                                 continue;
                             }
+
+                            if (
+                                (category.startsWith("To '") || category.toLowerCase().includes("to '")) &&
+                                rowDate >= startDate &&
+                                rowDate <= endDate &&
+                                (accountName === "ثروة" || accountName === "ثروه")
+                            ) {
+                                let monthKey =
+                                    rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
+                                globalParsedRowsData.push({
+                                    date: rowDate,
+                                    monthKey: monthKey,
+                                    category: "Investment",
+                                    description: "تحويل استثماري لحساب ثروة 💰",
+                                    amount: actualValue,
+                                });
+                                continue;
+                            }
+
                             if (rowDate >= startDate && rowDate <= endDate) {
                                 let convertedAmount = parseFloat(amountStr);
                                 let monthKey =
@@ -1171,11 +1176,11 @@
                 let debtsBlock = document.createElement("div");
                 debtsBlock.innerHTML = debtsHtml;
                 resultsContainer.appendChild(debtsBlock);
-				
-				const targetBaseIncome = parseFloat(document.getElementById("monthly-income-input").value) || 0;
-let calculatorBoxId = `budget_calculator_body_box`;
 
-let calculatorHtml = `<div class='global-block-wrapper' style='border: 2px solid #2B6CB0; margin-top: 25px;'>
+                const targetBaseIncome = parseFloat(document.getElementById("monthly-income-input").value) || 0;
+                let calculatorBoxId = `budget_calculator_body_box`;
+
+                let calculatorHtml = `<div class='global-block-wrapper' style='border: 2px solid #2B6CB0; margin-top: 25px;'>
     <h2 onclick="let el=document.getElementById('${calculatorBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
         <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🧮 حاسبة التخطيط المالي الافتراضي المستهدف
     </h2>
@@ -1184,31 +1189,34 @@ let calculatorHtml = `<div class='global-block-wrapper' style='border: 2px solid
     <div class='table-responsive-wrapper'><table>
         <tr><th>اسم ظرف التوزيع المستهدف</th><th>الحصة المالية الصافية</th><th>توجيهات الاستهلاك الذكي لـ حمودة</th></tr>`;
 
-// توليد أسطر التوزيع الاسترشادي ديناميكياً بناءً على الخريطة المعتمدة JARS_MAPPING
-for (const key in JARS_MAPPING) {
-    const jar = JARS_MAPPING[key];
-    const estimatedAllowance = targetBaseIncome * jar.targetPercent;
-    let adviceText = "";
+                // توليد أسطر التوزيع الاسترشادي ديناميكياً بناءً على الخريطة المعتمدة JARS_MAPPING
+                for (const key in JARS_MAPPING) {
+                    const jar = JARS_MAPPING[key];
+                    const estimatedAllowance = targetBaseIncome * jar.targetPercent;
+                    let adviceText = "";
 
-    // توجيهات استرشادية مخصصة لكل ظرف مالي
-    if (key === "fixed") adviceText = "سقف الإنفاق الأقصى للإيجار والفواتير والطعام والمواصلات.";
-    else if (key === "guiltFree") adviceText = "ميزانية الرفاهية والمطاعم والتسوق غير الضروري دون تأنيب ضمير.";
-    else if (key === "debt") adviceText = "مخصصة لسداد أي التزامات سابقة أو دفعات بينية مستحقة للأصدقاء.";
-    else if (key === "savings") adviceText = "تُقتطع فوراً عند استلام الدخل وتُجمد للمستقبل والطوارئ.";
-    else if (key === "investing") adviceText = "مخصصة لضخها في حساب ثروة الاستثماري أو شراء الذهب لتنمية رأس المال.";
+                    // توجيهات استرشادية مخصصة لكل ظرف مالي
+                    if (key === "fixed") adviceText = "سقف الإنفاق الأقصى للإيجار والفواتير والطعام والمواصلات.";
+                    else if (key === "guiltFree")
+                        adviceText = "ميزانية الرفاهية والمطاعم والتسوق غير الضروري دون تأنيب ضمير.";
+                    else if (key === "debt")
+                        adviceText = "مخصصة لسداد أي التزامات سابقة أو دفعات بينية مستحقة للأصدقاء.";
+                    else if (key === "savings") adviceText = "تُقتطع فوراً عند استلام الدخل وتُجمد للمستقبل والطوارئ.";
+                    else if (key === "investing")
+                        adviceText = "مخصصة لضخها في حساب ثروة الاستثماري أو شراء الذهب لتنمية رأس المال.";
 
-    calculatorHtml += `<tr>
+                    calculatorHtml += `<tr>
         <td style='font-weight: bold;'>📍 ${jar.name}</td>
         <td style='font-weight: bold; color: ${jar.color === "var(--jar-debt)" ? "#E53E3E" : "var(--text-main)"};'>$${formatMoney(estimatedAllowance)}</td>
         <td style='font-size: 12px; color: var(--text-muted); max-width: 250px;'>${adviceText}</td>
     </tr>`;
-}
+                }
 
-calculatorHtml += `</table></div></div></div>`;
+                calculatorHtml += `</table></div></div></div>`;
 
-let calcBlock = document.createElement("div");
-calcBlock.innerHTML = calculatorHtml;
-resultsContainer.appendChild(calcBlock);
+                let calcBlock = document.createElement("div");
+                calcBlock.innerHTML = calculatorHtml;
+                resultsContainer.appendChild(calcBlock);
             }
 
             // دالة الذاكرة المحدثة الفورية والمحافظة على مكان مؤشر الماوس
