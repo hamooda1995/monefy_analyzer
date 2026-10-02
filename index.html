@@ -1268,7 +1268,7 @@
                     <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>موجز الأرصدة الحالية للحسابات الشخصية والمالية</p>
                     <div id='${personalAccountsBoxId}' style='display: none;'>
                     <div class='table-responsive-wrapper'><table>
-                        <tr><th>اسم الحساب الشخصي</th><th>الرصيد بالعملة الحقيقية</th><th>الرصيد المعادل بالدولار</th></tr>`;
+                        <tr><th>اسم الحساب الشخصي</th><th>الرصيد بالعملة الحقيقية</th></tr>`;
 
                 let hasPersonalData = false;
 
@@ -1284,7 +1284,6 @@
                         personalHtml += `<tr>
                             <td style='font-weight: bold;'>💳 ${accName}</td>
                             <td style='font-weight: bold; color: var(--text-main);'>${displayReal}</td>
-                            <td style='font-weight: bold; color: #3182CE;'>$${formatMoney(accObj.balance)}</td>
                         </tr>`;
                     });
                 }
