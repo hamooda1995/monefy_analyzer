@@ -1279,7 +1279,7 @@
 
                         let displayReal = accObj.currency === "\$" 
                             ? `$${formatMoney(accObj.realBalance)}` 
-                            : `${formatMoney(accObj.realBalance)} ${accObj.currency}`;
+                            : `£${formatMoney(accObj.realBalance)}`;
 
                         personalHtml += `<tr>
                             <td style='font-weight: bold;'>💳 ${accName}</td>
