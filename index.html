@@ -6,7 +6,6 @@
         <title>📊 لوحة تحليلات مصاريف Monefy الشاملة - حمودة</title>
         <link rel="manifest" href="manifest.json" />
         <style>
-            /* مغيرات الألوان الديناميكية للتحكم بالوضع الفاتح والداكن الشامل للوحة حمودة */
             :root {
                 --bg-body: #f7fafc;
                 --bg-container: #ffffff;
@@ -19,6 +18,7 @@
                 --bg-input: #ffffff;
                 --bg-jars: #f8fafc;
                 --border-jars: #cbd5e0;
+                --kpi-bg: #edf2f7;
             }
 
             [data-theme="dark"] {
@@ -33,6 +33,7 @@
                 --bg-input: #1a202c;
                 --bg-jars: #232d3f;
                 --border-jars: #4a5568;
+                --kpi-bg: #232d3f;
             }
             body {
                 font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -42,9 +43,7 @@
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                transition:
-                    background 0.3s,
-                    color 0.3s;
+                transition: background 0.3s, color 0.3s;
             }
             .container {
                 background: var(--bg-container);
@@ -52,7 +51,7 @@
                 border-radius: 12px;
                 box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
                 max-width: 800px;
-                width: 95%; /* تضمن ألا يلتصق الحواف في الشاشات الصغيرة */
+                width: 95%;
                 box-sizing: border-box;
                 margin-bottom: 30px;
                 border: 1px solid var(--border-color);
@@ -79,7 +78,8 @@
             }
             input[type="file"],
             input[type="date"],
-            input[type="number"] {
+            input[type="number"],
+            input[type="text"] {
                 padding: 10px;
                 border: 2px solid var(--border-color);
                 border-radius: 6px;
@@ -139,6 +139,33 @@
             }
             .global-block-wrapper {
                 border: 2px solid #2b6cb0;
+            }
+
+            /* بطاقات الإحصائيات KPI */
+            .kpi-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-bottom: 25px;
+            }
+            .kpi-card {
+                background: var(--kpi-bg);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                padding: 15px;
+                text-align: center;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            }
+            .kpi-title {
+                font-size: 13px;
+                color: var(--text-muted);
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .kpi-value {
+                font-size: 18pt;
+                font-weight: bold;
+                color: var(--text-main);
             }
 
             table {
@@ -369,7 +396,7 @@
             onclick="toggleDarkModeFinancialApp()"
             class="theme-toggle-btn"
             id="themeToggleBtn"
-            style="width: 5%; text-align: center; display: none"
+            style="width: auto; text-align: center;"
         >
             🌙
         </button>
@@ -465,58 +492,39 @@
                     targetPercent: 0.55,
                     color: "#3182CE",
                     categories: [
-                        "Rent",
-                        "Bills",
-                        "Food",
-                        "Transport",
-                        "House",
-                        "Home",
-                        "Babies",
-                        "Communications",
-                        "Mobile",
-                        "Android",
-                        "Car",
-                        "Health",
-                        "Moony",
-                        "Real estate",
-                        "Taxi",
-                    ],
+                        "Rent", "Bills", "Food", "Transport", "House", "Home", "Babies",
+                        "Communications", "Mobile", "Android", "Car", "Health", "Moony",
+                        "Real estate", "Taxi"
+                    ]
                 },
                 guiltFree: {
                     name: "متعة دون تأنيب ضمير (10%)",
                     targetPercent: 0.1,
                     color: "#DD6B20",
                     categories: [
-                        "Eating out",
-                        "Entertainment",
-                        "Sports",
-                        "Shaving",
-                        "Clothes",
-                        "Electronics",
-                        "Gifts",
-                        "Shop",
-                        "YYY",
-                    ],
+                        "Eating out", "Entertainment", "Sports", "Shaving", "Clothes",
+                        "Electronics", "Gifts", "Shop", "YYY"
+                    ]
                 },
                 debt: { name: "سداد ديون (10%)", targetPercent: 0.1, color: "#E53E3E", categories: [] },
                 savings: {
                     name: "تحويش للمستقبل (10%)",
                     targetPercent: 0.1,
                     color: "#38A169",
-                    categories: ["Savings", "Study"],
+                    categories: ["Savings", "Study"]
                 },
                 investing: {
                     name: "استثمار وتنمية الثروة (15%)",
                     targetPercent: 0.15,
                     color: "#805AD5",
-                    categories: ["Investment", "Gold"],
-                },
+                    categories: ["Investment", "Gold"]
+                }
             };
 
             let isDataAnalyzed = false;
             let globalParsedRowsData = [];
             let isFileAlreadyLoaded = false;
-            let globalMonthlySalary = {}; // كائن لحفظ الراتب المستخرج تلقائياً من الـ CSV لكل شهر
+            let globalMonthlySalary = {};
 
             function triggerConditionalCalculation() {
                 if (isDataAnalyzed) {
@@ -547,19 +555,34 @@
                     maximumFractionDigits: 2,
                 });
             }
+
+            function filterTableRows(searchInputId, tableBodyId) {
+                const input = document.getElementById(searchInputId);
+                const filter = input.value.toLowerCase();
+                const tbody = document.getElementById(tableBodyId);
+                const rows = tbody.getElementsByTagName("tr");
+
+                for (let i = 0; i < rows.length; i++) {
+                    let row = rows[i];
+                    if (row.classList.contains("category-header-row") || row.classList.contains("category-total-row")) continue;
+                    let text = row.textContent || row.innerText;
+                    if (text.toLowerCase().indexOf(filter) > -1) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                }
+            }
         </script>
         <script>
             function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, currentMonthCarryover, monthName) {
-                // جلب الراتب المستخرج تلقائيا للشهر الحالي من الـ CSV
                 const totalIncome = globalMonthlySalary[monthName] || 0;
-
                 const csvAdditions = globalCsvPositiveAdditions[monthName] || 0;
 
                 if (globalMonthAdditions[monthName] === undefined) {
                     globalMonthAdditions[monthName] = 0;
                 }
                 const manualAdditions = globalMonthAdditions[monthName];
-
                 const totalMonthAdditions = csvAdditions + manualAdditions;
 
                 let monthJarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
@@ -695,6 +718,7 @@
 
                             let rowDate = parseJavaDate(dateStr);
                             if (!rowDate || isNaN(rowDate.getTime())) continue;
+						
 
                             let currencySymbol = "\$";
                             let checkCurrency = (currencyStr || "").toLowerCase();
@@ -725,20 +749,27 @@
 
                                 window.globalPersonalAccounts[rowAccountName].balance += convertedAmount;
                                 window.globalPersonalAccounts[rowAccountName].realBalance += parsedRealValue;
+								
+								if (rowDate >= startDate &&
+                                    rowDate <= endDate &&
+                                    (lowerAccName === "ثروة" || lowerAccName === "ثروه")
+                                ) {
+                                    let monthKey =
+                                        rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
+
+                                    globalParsedRowsData.push({
+                                        date: rowDate,
+                                        monthKey: monthKey,
+                                        category: "Investment",
+                                        description: "تحويل استثماري لحساب ثروة 💰",
+                                        amount: parseFloat(amountStr),
+                                    });
+                                }
                             }
 
-                            const targetDebtAccounts = [
-                                "محمد دولار",
-                                "عمار دولار",
-                                "عبد دولار",
-                                "حافظ",
-                                "حكيم",
-                                "Shop",
-                                "محمد",
-                                "عمار",
-                                "حكيم دولار",
-                                "موني",
-                                "عبد",
+							const targetDebtAccounts = [
+                                "محمد دولار", "عمار دولار", "عبد دولار", "حافظ", "حكيم",
+                                "Shop", "محمد", "عمار", "حكيم دولار", "موني", "عبد"
                             ];
 
                             if (
@@ -780,36 +811,23 @@
                                 continue;
                             }
 
-                            if (
+							if (
                                 category.startsWith("To '") ||
                                 category.startsWith("From '") ||
                                 category.toLowerCase().includes("to '") ||
                                 category.toLowerCase().includes("from '")
                             ) {
-                                if (
-                                    (category.startsWith("To '") || category.toLowerCase().includes("to '")) &&
-                                    rowDate >= startDate &&
-                                    rowDate <= endDate &&
-                                    (lowerAccName === "ثروة" || lowerAccName === "ثروه")
-                                ) {
-                                    let monthKey =
-                                        rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
-                                    globalParsedRowsData.push({
-                                        date: rowDate,
-                                        monthKey: monthKey,
-                                        category: "Investment",
-                                        description: "تحويل استثماري لحساب ثروة 💰",
-                                        amount: parseFloat(amountStr),
-                                    });
-                                }
+													
+
+                                
                                 continue;
                             }
+							
                             if (rowDate >= startDate && rowDate <= endDate) {
                                 let convertedAmount = parseFloat(amountStr);
                                 let monthKey =
                                     rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
 
-                                // التحقق والتجميع التلقائي لمدخلات الراتب (Salary) لهذا الشهر
                                 if (category.toLowerCase() === "salary") {
                                     globalMonthlySalary[monthKey] = (globalMonthlySalary[monthKey] || 0) + Math.abs(convertedAmount);
                                     continue;
@@ -850,7 +868,12 @@
                 window.categoryMonthsTracker = {};
                 window.categoryAmountsTracker = {};
                 window.descriptionMaxDateTracker = {};
+
+                let totalAllExpenses = 0;
+
                 globalParsedRowsData.forEach((row) => {
+                    totalAllExpenses += row.amount;
+
                     if (!monthlyAnalysis[row.monthKey]) monthlyAnalysis[row.monthKey] = {};
                     if (!monthlyAnalysis[row.monthKey][row.category]) monthlyAnalysis[row.monthKey][row.category] = {};
                     let dateKey = `${row.monthKey}_${row.category}_${row.description}`;
@@ -873,9 +896,6 @@
                         descriptionAmounts[row.description].push(row.amount);
                     }
 
-                    if (!window.categoryMonthsTracker) window.categoryMonthsTracker = {};
-                    if (!window.categoryAmountsTracker) window.categoryAmountsTracker = {};
-
                     if (!window.categoryMonthsTracker[row.category])
                         window.categoryMonthsTracker[row.category] = new Set();
                     window.categoryMonthsTracker[row.category].add(row.monthKey);
@@ -894,6 +914,34 @@
                         "<div class='container' style='text-align:center; font-weight:bold; color:red;'>لم يتم العثور على أي مصاريف مطابقة!</div>";
                     return;
                 }
+
+                // احتساب إجمالي الرواتب المكتشفة
+                let totalIncomeSum = Object.values(globalMonthlySalary).reduce((a, b) => a + b, 0);
+
+                // احتساب إجمالي الإضافات التلقائية من الـ CSV عبر كل الأشهر المشمولة
+                let totalAutoAdditionsSum = Object.values(globalCsvPositiveAdditions).reduce((a, b) => a + b, 0);
+
+                // 3 بطاقات ملخص إحصائي (KPI Cards)
+                let kpiHtml = `
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-title">💳 إجمالي المصاريف الشاملة</div>
+                            <div class="kpi-value" style="color:#E53E3E;">$${formatMoney(totalAllExpenses)}</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">💰 إجمالي الرواتب المكتشفة</div>
+                            <div class="kpi-value" style="color:#38A169;">$${formatMoney(totalIncomeSum)}</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">📥 إجمالي الإضافات التلقائية</div>
+                            <div class="kpi-value" style="color:#3182CE;">$${formatMoney(totalAutoAdditionsSum)}</div>
+                        </div>
+                    </div>
+                `;
+
+                let kpiWrapper = document.createElement("div");
+                kpiWrapper.innerHTML = kpiHtml;
+                resultsContainer.appendChild(kpiWrapper);
 
                 let runningCarryover = parseFloat(document.getElementById("initial-carryover-input").value) || 0;
                 let previousMonthTotal = 0;
@@ -914,6 +962,7 @@
 
                     let totalMonthContainerId = `total_month_container_${mIdx}`;
                     let monthBodyId = `month_body_${mIdx}`;
+                    let searchInputId = `search_input_${mIdx}`;
 
                     let htmlTable = `
                         <div style="padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border: 2px solid #90cdf4;"
@@ -927,7 +976,11 @@
                     let jarsResult = generateJarsHtmlForMonth(categoriesMap, monthTotal, runningCarryover, monthName);
                     htmlTable += jarsResult.html;
 
-                    htmlTable += `<div class='table-responsive-wrapper'><table>
+                    htmlTable += `
+                    <div style="margin-top: 15px; margin-bottom: 10px;">
+                        <input type="text" id="${searchInputId}" onkeyup="filterTableRows('${searchInputId}', '${monthBodyId}')" placeholder="🔍 بحث سريع عن مصروف أو بند داخل هذا الشهر..." style="width: 100%; box-sizing: border-box; padding: 8px 12px; font-size: 13px;">
+                    </div>
+                    <div class='table-responsive-wrapper'><table>
                         <tr class='month-header-row'>
                             <td colspan='4' onclick="toggleMonthSection('${monthBodyId}', this)" style="background: #edf2f7; color: #4a5568; font-size: 12pt; border: 1px solid #cbd5e0; padding: 8px;">
                                 <button class='toggle-all-btn' onclick="toggleAllCategoriesInMonth('${monthBodyId}', event)">📁 طي/توسيع الكل</button>
@@ -1019,25 +1072,22 @@
                 globalBlock.innerHTML = globalChartHtml;
                 resultsContainer.appendChild(globalBlock);
 
-                // 🎯 2. جدول قائمة الاشتراكات الثابتة
+                // 🎯 2. قسم الاشتراكات والمصاريف الدورية المتكررة (جدول إحصائي بدون Pie Chart)
                 let subscriptionBoxId = `subscription_body_box`;
                 let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'>
-                    <h2 onclick="let el=document.getElementById('${subscriptionBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style=' text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+                    <h2 onclick="let el=document.getElementById('${subscriptionBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
                         <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📦 قائمة الاشتراكات الثابتة والمصاريف الدورية المتكررة
                     </h2>
-                    <div id='${subscriptionBoxId}' style='display: none;'>
-                    <div class='table-responsive-wrapper'><table><tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>`;
+                    <div id='${subscriptionBoxId}' style='display: none;'>`;
 
+                let subTableRowsHtml = "";
                 let hasSubs = false;
+
                 Object.keys(descriptionMonths)
                     .sort((a, b) => {
                         let sizeA = descriptionMonths[a].size;
                         let sizeB = descriptionMonths[b].size;
-
-                        if (sizeA !== sizeB) {
-                            return sizeB - sizeA;
-                        }
-
+                        if (sizeA !== sizeB) return sizeB - sizeA;
                         let avgA = descriptionAmounts[a].reduce((x, y) => x + y, 0) / sizeA;
                         let avgB = descriptionAmounts[b].reduce((x, y) => x + y, 0) / sizeB;
                         return avgB - avgA;
@@ -1045,16 +1095,24 @@
                     .forEach((desc) => {
                         if (descriptionMonths[desc].size >= 2) {
                             hasSubs = true;
-                            let avg =
-                                descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
-                            subscriptionHtml += `<tr><td >🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold;'>$${formatMoney(avg)} / شهر</td></tr>`;
+                            let avg = descriptionAmounts[desc].reduce((a, b) => a + b, 0) / descriptionMonths[desc].size;
+                            subTableRowsHtml += `<tr><td>🔄 ${desc}</td><td style='text-align:center;'>${descriptionMonths[desc].size} أشهر</td><td style='font-weight: bold;'>$${formatMoney(avg)} / شهر</td></tr>`;
                         }
                     });
 
-                subscriptionHtml += `</table></div></div></div>`;
-                if (!hasSubs) {
-                    subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'><h2 style='color:#234E52; text-align:center;'>📦 قائمة الاشتراكات الثابتة</h2><p style='text-align:center;'>لم يتم اكتشاف أي نفقات أو اشتراكات متكررة في هذه الفترة يا حمودة.</p></div>`;
+                if (hasSubs) {
+                    subscriptionHtml += `
+                        <div class='table-responsive-wrapper'>
+                            <table>
+                                <tr><th>الوصف</th><th>عدد الأشهر</th><th>متوسط الصرف</th></tr>
+                                ${subTableRowsHtml}
+                            </table>
+                        </div>`;
+                } else {
+                    subscriptionHtml += `<p style='text-align:center;'>لم يتم اكتشاف أي نفقات أو اشتراكات متكررة في هذه الفترة يا حمودة.</p>`;
                 }
+
+                subscriptionHtml += `</div></div>`;
 
                 let subBlock = document.createElement("div");
                 subBlock.innerHTML = subscriptionHtml;
@@ -1165,7 +1223,6 @@
                 debtsBlock.innerHTML = debtsHtml;
                 resultsContainer.appendChild(debtsBlock);
 
-                // حساب متوسط الرواتب المكتشفة من الـ CSV لحاسبة التخطيط المستهدف
                 let salaryValues = Object.values(globalMonthlySalary);
                 let targetBaseIncome = salaryValues.length > 0
                     ? salaryValues.reduce((a, b) => a + b, 0) / salaryValues.length
@@ -1320,6 +1377,6 @@
                 });
             })();
         </script>
-        <div class="footer">تم تحديث وقفل كامل ميزات لوحة التحكم المالية الشخصية بنجاح يا حمودة 🚀</div>
+        <div class="footer">تم إلغاء الرسم الدائري وإضافة بطاقة إجمالي الإضافات التلقائية بنجاح يا حمودة 🚀</div>
     </body>
 </html>
