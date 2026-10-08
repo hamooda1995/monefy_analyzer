@@ -141,7 +141,6 @@
                 border: 2px solid #2b6cb0;
             }
 
-            /* إعادة الجدول لطبيعته الكاملة والعريضة على اللابتوب */
             table {
                 width: 100%;
                 border-collapse: collapse;
@@ -150,7 +149,6 @@
                 margin-bottom: 0px;
             }
 
-            /* حاوية ذكية تلتف حول الجدول لحمايته على الموبايل ومنع التداخل */
             .table-responsive-wrapper {
                 width: 100%;
                 overflow-x: auto;
@@ -256,7 +254,7 @@
             }
             .chart-bar-row {
                 display: flex;
-                flex-wrap: wrap; /* ينزل لسطر جديد إذا كانت الشاشة صغيرة جداً */
+                flex-wrap: wrap;
                 align-items: center;
                 margin-bottom: 12px;
                 font-size: 13px;
@@ -264,7 +262,7 @@
                 gap: 10px;
             }
             .chart-label {
-                width: 100%; /* تأخذ سطر كامل على الموبايل ليعطي مساحة للشريط */
+                width: 100%;
                 max-width: 150px;
                 text-overflow: ellipsis;
                 overflow: hidden;
@@ -323,28 +321,6 @@
                 margin-top: 15px;
                 margin-bottom: 15px;
             }
-            .jars-bar-row {
-                display: flex;
-                align-items: center;
-                margin-bottom: 10px;
-                font-size: 13px;
-                font-weight: bold;
-            }
-            .jars-bar-container {
-                flex: 1;
-                background-color: var(--bg-body);
-                height: 16px;
-                border-radius: 8px;
-                overflow: hidden;
-                margin: 0 15px;
-                position: relative;
-                border: 1px solid var(--border-color);
-            }
-            .jars-bar-fill {
-                height: 100%;
-                border-radius: 8px;
-                transition: width 0.4s ease;
-            }
             .footer {
                 text-align: center;
                 margin-top: 20px;
@@ -352,7 +328,6 @@
                 color: #a0aec0;
             }
 
-            /* زر التبديل الملون العائم للوضع الداكن والفاتح */
             .theme-toggle-btn {
                 position: fixed;
                 top: 20px;
@@ -390,7 +365,6 @@
         </style>
     </head>
     <body>
-        <!-- زر التبديل الديناميكي العائم المدمج هندسياً بقفل صفحة حمودة -->
         <button
             onclick="toggleDarkModeFinancialApp()"
             class="theme-toggle-btn"
@@ -404,18 +378,15 @@
             <button id="installBtn" style="display: none">Install App</button>
 
             <script>
-                // كود التدمير الذاتي للـ Service Worker ومسح كاش المتصفح لضمان ظهور التعديلات فوراً
                 if ("serviceWorker" in navigator) {
                     navigator.serviceWorker.getRegistrations().then(function (registrations) {
                         for (let registration of registrations) {
-                            // إلغاء تسجيل الـ Service Worker القديم الذي يتسبب في حجز وتجميد الكاش
                             registration.unregister().then(function () {
                                 console.log("تم تدمير الـ Service Worker بنجاح لضمان تحديث الكاش التلقائي!");
                             });
                         }
                     });
 
-                    // مسح كاش الـ Cache Storage الخاص بالتطبيق نهائياً
                     if (window.caches) {
                         caches.keys().then(function (names) {
                             for (let name of names) caches.delete(name);
@@ -453,18 +424,13 @@
                     <label for="endDate">تاريخ النهاية (مشمول):</label>
                     <input type="date" id="endDate" />
                     <script>
-                        // 1. الحصول على تاريخ اليوم بالكامل بناءً على جهاز المستخدم
                         const today = new Date();
-
-                        // 2. تحويل التاريخ إلى صيغة YYYY-MM-DD المطلوبة لحقول التاريخ
                         const formattedDate = today.toISOString().split("T")[0];
-
-                        // 3. تعيين القيمة ديناميكياً للحقل
                         document.getElementById("endDate").value = formattedDate;
                     </script>
                 </div>
             </div>
-            <!-- حقول الدخل والمدوّر البداعي المحدثة والمحمية من الحساب العشوائي المسبق -->
+            
             <div
                 class="date-row"
                 style="
@@ -475,17 +441,7 @@
                     border: 1px solid var(--border-color);
                 "
             >
-                <div class="form-group">
-                    <label for="monthly-income-input">💰 الدخل الشهري المستهدف ($):</label>
-                    <input
-                        type="number"
-                        id="monthly-income-input"
-                        value="2200"
-                        min="0"
-                        oninput="triggerConditionalCalculation()"
-                    />
-                </div>
-                <div class="form-group">
+                <div class="form-group" style="width: 100%;">
                     <label for="initial-carryover-input">📥 مبلغ مدوّر من الشهر السابق ($):</label>
                     <input
                         type="number"
@@ -501,10 +457,8 @@
 
         <div id="resultsContainer"></div>
         <script>
-            // الحفاظ الصارم على فهارس النواة المقدسة والمستقرة
             const CSV_INDICES = { DATE: 0, ACCOUNT: 1, CATEGORY: 2, REAL_AMOUNT: 3, CURRENCY: 4, AMOUNT: 5, DESC: 7 };
 
-            // خريطة التوزيع المعتمدة والمحذوف منها Debt بناء على توجيهك
             const JARS_MAPPING = {
                 fixed: {
                     name: "مصاريف ثابتة وأساسية (55%)",
@@ -559,10 +513,10 @@
                 },
             };
 
-            let isDataAnalyzed = false; // راية حماية لمنع العمل التلقائي قبل الضغط على الزر
-            // مصفوفة عالمية مقدسة لحفظ بيانات الـ CSV في الذاكرة ومنع التصفير عند التحديث اللحظي
+            let isDataAnalyzed = false;
             let globalParsedRowsData = [];
             let isFileAlreadyLoaded = false;
+            let globalMonthlySalary = {}; // كائن لحفظ الراتب المستخرج تلقائياً من الـ CSV لكل شهر
 
             function triggerConditionalCalculation() {
                 if (isDataAnalyzed) {
@@ -582,16 +536,12 @@
                 const year = parseInt(parts[2], 10);
                 return new Date(year, month, day);
             }
+            
             function formatMoney(amount) {
-                // تحويل القيمة إلى رقم نقي وفحصها
                 let num = parseFloat(amount);
-
-                // إذا كانت القيمة غير صالحة أو NaN، نعيد 0.00 فوراً لحماية الواجهة
                 if (isNaN(num) || !isFinite(num)) {
                     return "0.00";
                 }
-
-                // تنسيق الرقم مع فاصلة الآلاف وخانتين عشريتين
                 return num.toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -599,22 +549,17 @@
             }
         </script>
         <script>
-            // محرك حساب الأظرف وضخ فائض الوفر المالي بداخل خانة تحويش المستقبل
-            // محرك حساب الأظرف المطور المدمج به حقل الإضافات والمدور المالي التراكمي
-            // القسم 3: محرك الأظرف الخمسة الموحد والمطور هندسياً على مفتاح الشهر لمنع التضارب
             function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, currentMonthCarryover, monthName) {
-                const totalIncome = parseFloat(document.getElementById("monthly-income-input").value) || 0;
+                // جلب الراتب المستخرج تلقائيا للشهر الحالي من الـ CSV
+                const totalIncome = globalMonthlySalary[monthName] || 0;
 
-                // جلب الإضافات التلقائية المجمعة من الـ CSV لهذا الشهر المحدد
                 const csvAdditions = globalCsvPositiveAdditions[monthName] || 0;
 
-                // جلب الإضافات اليدوية المخزنة في الذاكرة
                 if (globalMonthAdditions[monthName] === undefined) {
                     globalMonthAdditions[monthName] = 0;
                 }
                 const manualAdditions = globalMonthAdditions[monthName];
 
-                // الحسبة الشاملة: إجمالي إضافات الشهر = إيداعات الـ CSV الموجبة + الإدخال اليدوي المكمل
                 const totalMonthAdditions = csvAdditions + manualAdditions;
 
                 let monthJarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
@@ -628,7 +573,7 @@
                         }
                     }
                 });
-                // الحسبة الهندسية الكبرى المحدثة: الموازنة المتاحة = الراتب + المدوّر + توتال الإضافات الشاملة
+                
                 const totalAvailableBudget = totalIncome + currentMonthCarryover + totalMonthAdditions;
                 const unspentSurplus = totalAvailableBudget - totalMonthExpense;
 
@@ -641,7 +586,7 @@
                 let html = `<div class='jars-section-box'>
         <div style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;" 
              onclick="let el=document.getElementById('${jarsBodyId}'); let ic=this.querySelector('.jars-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}">
-            <h3 style='margin:0; font-size:14pt;'><span class='jars-icon' style='font-family:monospace; margin-left:5px;'>▼</span> 🎯 ميزانية الأظرف الخمسة لهذا الشهر</h3>
+            <h3 style='margin:0; font-size:14pt;'><span class='jars-icon' style='font-family:monospace; margin-left:5px;'>▼</span> 🎯 ميزانية الأظرف الخمسة لهذا الشهر (الراتب المكتشف: <span style='color: #3182ce; font-weight: bold;'>$${formatMoney(totalIncome)}</span>)</h3>
             <span style='font-size: 11pt; color: var(--text-muted); font-weight: bold;'>اضغط للفتح / الطي</span>
         </div>
 
@@ -687,7 +632,6 @@
             }
         </script>
         <script>
-            // دالة التحليل الكبرى (تقرأ الملف لمرة واحدة وتخزنه في الذاكرة العالمية لمنع تصفير القيم)
             let globalMonthAdditions = {};
             let globalCsvPositiveAdditions = {};
 
@@ -725,6 +669,7 @@
                     const separator = text.includes("\t") ? "\t" : ",";
                     globalParsedRowsData = [];
                     globalCsvPositiveAdditions = {};
+                    globalMonthlySalary = {};
                     window.globalFriendsDebts = {};
                     window.globalPersonalAccounts = {};
 
@@ -738,7 +683,7 @@
                         try {
                             let dateStr = clean(columns.at(CSV_INDICES.DATE));
                             let category = clean(columns.at(CSV_INDICES.CATEGORY));
-                            let amountStr = clean(columns.at(CSV_INDICES.AMOUNT));
+                            let amountStr = clean(columns.at(CSV_INDICES.AMOUNT)).replace(/[^\d.-]/g, "");
                             let rowAccountName = clean(columns.at(CSV_INDICES.ACCOUNT));
                             let currencyStr = clean(columns.at(CSV_INDICES.CURRENCY));
                             let realAmountStr = clean(columns.at(CSV_INDICES.REAL_AMOUNT));
@@ -751,7 +696,6 @@
                             let rowDate = parseJavaDate(dateStr);
                             if (!rowDate || isNaN(rowDate.getTime())) continue;
 
-                            // كاشف وموحد العملات
                             let currencySymbol = "\$";
                             let checkCurrency = (currencyStr || "").toLowerCase();
                             let checkDesc = (description || "").toLowerCase();
@@ -762,7 +706,6 @@
                                 currencySymbol = "/£";
                             }
 
-                            // قائمة الحسابات الشخصية الخاصة بك
                             const personalAccounts = ["usd", "new cash", "ثروة"];
                             let lowerAccName = rowAccountName.toLowerCase();
 
@@ -784,7 +727,6 @@
                                 window.globalPersonalAccounts[rowAccountName].realBalance += parsedRealValue;
                             }
 
-                            // قائمة الحسابات المعتمدة لحسابات ديون الأصدقاء والمعاملات البينية
                             const targetDebtAccounts = [
                                 "محمد دولار",
                                 "عمار دولار",
@@ -867,11 +809,15 @@
                                 let monthKey =
                                     rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
 
+                                // التحقق والتجميع التلقائي لمدخلات الراتب (Salary) لهذا الشهر
+                                if (category.toLowerCase() === "salary") {
+                                    globalMonthlySalary[monthKey] = (globalMonthlySalary[monthKey] || 0) + Math.abs(convertedAmount);
+                                    continue;
+                                }
+
                                 if (convertedAmount >= 0) {
-                                    if (category.toLowerCase() !== "salary") {
-                                        globalCsvPositiveAdditions[monthKey] =
-                                            (globalCsvPositiveAdditions[monthKey] || 0) + convertedAmount;
-                                    }
+                                    globalCsvPositiveAdditions[monthKey] =
+                                        (globalCsvPositiveAdditions[monthKey] || 0) + convertedAmount;
                                     continue;
                                 }
 
@@ -1114,7 +1060,6 @@
                 subBlock.innerHTML = subscriptionHtml;
                 resultsContainer.appendChild(subBlock);
 
-                // بناء جدول تحليلات التصنيفات التكرارية
                 let categoryAnalyticBoxId = `category_trent_body_box`;
                 let categoryHtml = `<div class='global-block-wrapper' style='border: 2px solid #38A169; margin-top: 25px;'>
                 <h2 onclick="let el=document.getElementById('${categoryAnalyticBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
@@ -1220,14 +1165,19 @@
                 debtsBlock.innerHTML = debtsHtml;
                 resultsContainer.appendChild(debtsBlock);
 
-                const targetBaseIncome = parseFloat(document.getElementById("monthly-income-input").value) || 0;
+                // حساب متوسط الرواتب المكتشفة من الـ CSV لحاسبة التخطيط المستهدف
+                let salaryValues = Object.values(globalMonthlySalary);
+                let targetBaseIncome = salaryValues.length > 0
+                    ? salaryValues.reduce((a, b) => a + b, 0) / salaryValues.length
+                    : 0;
+
                 let calculatorBoxId = `budget_calculator_body_box`;
 
                 let calculatorHtml = `<div class='global-block-wrapper' style='border: 2px solid #2B6CB0; margin-top: 25px;'>
                 <h2 onclick="let el=document.getElementById('${calculatorBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
                     <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🧮 حاسبة التخطيط المالي الافتراضي المستهدف
                 </h2>
-                <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>دليل توزيع الراتب الاسترشادي بناءً على دخل شهري مستهدف وقدره: <strong style='color:#90cdf4;'>$${formatMoney(targetBaseIncome)}</strong></p>
+                <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>دليل توزيع الراتب الاسترشادي بناءً على متوسط الراتب المكتشف من الـ CSV وقدره: <strong style='color:#90cdf4;'>$${formatMoney(targetBaseIncome)}</strong></p>
                 <div id='${calculatorBoxId}' style='display: none;'>
                 <div class='table-responsive-wrapper'><table>
                     <tr><th>اسم ظرف التوزيع المستهدف</th><th>الحصة المالية الصافية</th><th>توجيهات الاستهلاك الذكي لـ حمودة</th></tr>`;
