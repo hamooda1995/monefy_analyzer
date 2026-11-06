@@ -375,6 +375,104 @@
                 background: #2b6cb0;
             }
 
+            /* --- تنسيقات نافذة حاسبة فئات العملات --- */
+            .calc-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(3px);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 2000;
+            }
+            .calc-modal-content {
+                background: var(--bg-container);
+                color: var(--text-main);
+                border: 2px solid var(--border-color);
+                border-radius: 12px;
+                width: 90%;
+                max-width: 480px;
+                max-height: 85vh;
+                overflow-y: auto;
+                padding: 20px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+                box-sizing: border-box;
+                position: relative;
+            }
+            .calc-modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 2px solid var(--border-color);
+                padding-bottom: 10px;
+                margin-bottom: 15px;
+            }
+            .calc-modal-header h3 {
+                margin: 0;
+                font-size: 16pt;
+                color: var(--text-header);
+            }
+            .calc-close-btn {
+                background: transparent;
+                border: none;
+                font-size: 20px;
+                cursor: pointer;
+                color: var(--text-muted);
+                padding: 0;
+                width: auto;
+                margin: 0;
+            }
+            .currency-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 10px;
+                background: var(--table-stripe);
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid var(--border-color);
+            }
+            .currency-label {
+                font-weight: bold;
+                min-width: 70px;
+                font-size: 14px;
+            }
+            .currency-input {
+                flex: 1;
+                padding: 6px 10px !important;
+                font-size: 14px !important;
+                text-align: center;
+            }
+            .currency-subtotal {
+                min-width: 90px;
+                text-align: left;
+                font-weight: bold;
+                font-size: 14px;
+                color: #3182ce;
+            }
+            .calc-total-box {
+                background: #3182ce;
+                color: white;
+                text-align: center;
+                padding: 12px;
+                border-radius: 8px;
+                font-size: 18pt;
+                font-weight: bold;
+                margin-top: 15px;
+            }
+            .calc-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 15px;
+            }
+            .calc-btn-secondary {
+                background-color: #718096 !important;
+            }
+
             @media (max-width: 600px) {
                 .date-row {
                     flex-direction: column;
@@ -388,6 +486,12 @@
                 h2 {
                     font-size: 16px !important;
                 }
+                .calc-toggle-btn {
+                    bottom: 15px;
+                    left: 15px;
+                    padding: 10px 14px;
+                    font-size: 13px;
+                }
             }
         </style>
     </head>
@@ -400,6 +504,36 @@
         >
             🌙
         </button>
+
+        <!-- زر الآلة الحاسبة العائم -->
+    <button onclick="toggleCurrencyCalcModal(true)" class="theme-toggle-btn" style="
+    width: auto;
+    text-align: center;
+    margin-top: 200pt;
+    position: absolute;
+">🧮</button>
+
+        <!-- النافذة المنبثقة Modal للآلة الحاسبة -->
+        <div class="calc-modal-overlay" id="calcModalOverlay" onclick="if(event.target===this) toggleCurrencyCalcModal(false)">
+            <div class="calc-modal-content">
+                <div class="calc-modal-header">
+                    <h3>🧮 حاسبة العملات والنقد</h3>
+                    <button class="calc-close-btn" onclick="toggleCurrencyCalcModal(false)">✖</button>
+                </div>
+                <div id="currencyRowsContainer">
+                    <!-- سيتم توليد أسطر العملات هنا -->
+                </div>
+                
+                <div class="calc-actions">
+                    <button onclick="addNewCurrencyRow()" style="margin-top:0; font-size: 13px;">➕ إضافة فئة عملة جديدة</button>
+                    <button onclick="resetCurrencyCalc()" class="calc-btn-secondary" style="margin-top:0; font-size: 13px;">🔄 تصفير</button>
+                </div>
+
+                <div class="calc-total-box" id="calcGrandTotal">
+                    المجموع: 0.00
+                </div>
+            </div>
+        </div>
 
         <div class="container">
             <button id="installBtn" style="display: none">Install App</button>
@@ -483,6 +617,90 @@
         </div>
 
         <div id="resultsContainer"></div>
+
+        <script>
+            // --- برمجية آلة حاسبة الفئات والعملات ---
+            const defaultDenominations = [10, 25, 50, 100, 200, 500];
+            let activeDenominations = [...defaultDenominations];
+
+            function toggleCurrencyCalcModal(show) {
+                const modal = document.getElementById("calcModalOverlay");
+                if (show) {
+                    if (document.getElementById("currencyRowsContainer").children.length === 0) {
+                        initCurrencyCalc();
+                    }
+                    modal.style.display = "flex";
+                } else {
+                    modal.style.display = "none";
+                }
+            }
+
+            function initCurrencyCalc() {
+                const container = document.getElementById("currencyRowsContainer");
+                container.innerHTML = "";
+                activeDenominations.forEach((denom, idx) => {
+                    appendCurrencyRowHTML(container, denom, idx);
+                });
+                calculateCurrencyTotal();
+            }
+
+            function appendCurrencyRowHTML(container, val, idx) {
+                const row = document.createElement("div");
+                row.className = "currency-row";
+                row.setAttribute("data-index", idx);
+
+                const isCustom = typeof val === "string" || !defaultDenominations.includes(val);
+
+                let labelHtml = isCustom
+                    ? `<input type="number" class="currency-input" style="width: 65px; font-weight: bold; text-align: right;" value="${val}" placeholder="الفئة" oninput="updateCustomDenom(this, ${idx})">`
+                    : `<span class="currency-label">فئة ${val}:</span>`;
+
+                row.innerHTML = `
+                    ${labelHtml}
+                    <input type="number" min="0" class="currency-input count-input" placeholder="العدد" oninput="calculateCurrencyTotal()">
+                    <span class="currency-subtotal">= 0</span>
+                `;
+                container.appendChild(row);
+            }
+
+            function updateCustomDenom(inputEl, idx) {
+                let newVal = parseFloat(inputEl.value) || 0;
+                activeDenominations[idx] = newVal;
+                calculateCurrencyTotal();
+            }
+
+            function addNewCurrencyRow() {
+                const container = document.getElementById("currencyRowsContainer");
+                const newIdx = activeDenominations.length;
+                activeDenominations.push(0);
+                appendCurrencyRowHTML(container, 0, newIdx);
+            }
+
+            function calculateCurrencyTotal() {
+                const rows = document.querySelectorAll("#currencyRowsContainer .currency-row");
+                let total = 0;
+
+                rows.forEach((row, i) => {
+                    let denom = activeDenominations[i];
+                    if (typeof denom !== "number" || isNaN(denom)) denom = 0;
+
+                    const countInput = row.querySelector(".count-input");
+                    const count = parseFloat(countInput.value) || 0;
+                    const subtotal = denom * count;
+
+                    row.querySelector(".currency-subtotal").innerText = `= ${formatMoney(subtotal)}`;
+                    total += subtotal;
+                });
+
+                document.getElementById("calcGrandTotal").innerText = `المجموع: ${formatMoney(total)}`;
+            }
+
+            function resetCurrencyCalc() {
+                activeDenominations = [...defaultDenominations];
+                initCurrencyCalc();
+            }
+        </script>
+
         <script>
             const CSV_INDICES = { DATE: 0, ACCOUNT: 1, CATEGORY: 2, REAL_AMOUNT: 3, CURRENCY: 4, AMOUNT: 5, DESC: 7 };
 
@@ -718,7 +936,6 @@
 
                             let rowDate = parseJavaDate(dateStr);
                             if (!rowDate || isNaN(rowDate.getTime())) continue;
-						
 
                             let currencySymbol = "\$";
                             let checkCurrency = (currencyStr || "").toLowerCase();
@@ -817,9 +1034,6 @@
                                 category.toLowerCase().includes("to '") ||
                                 category.toLowerCase().includes("from '")
                             ) {
-													
-
-                                
                                 continue;
                             }
 							
@@ -1072,7 +1286,7 @@
                 globalBlock.innerHTML = globalChartHtml;
                 resultsContainer.appendChild(globalBlock);
 
-                // 🎯 2. قسم الاشتراكات والمصاريف الدورية المتكررة (جدول إحصائي بدون Pie Chart)
+                // 🎯 2. قسم الاشتراكات والمصاريف الدورية المتكررة
                 let subscriptionBoxId = `subscription_body_box`;
                 let subscriptionHtml = `<div class='global-block-wrapper' style='border: 2px solid #319795; margin-top: 35px;'>
                     <h2 onclick="let el=document.getElementById('${subscriptionBoxId}'); let ic=this.querySelector('.collapse-icon'); if(el.style.display==='none'){el.style.display=''; ic.innerHTML='▲';}else{el.style.display='none'; ic.innerHTML='▼';}" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
