@@ -1,130 +1,182 @@
-// --- تهيئة تاريخ النهاية التلقائي عند التحميل ---
+/**
+ * 📊 تطبيق تحليلات مصاريف Monefy الشاملة - حمودة
+ * ملف البرمجيات الرئيسي (أبليكيشن منطق الجافاسكريبت المنظم)
+ */
+
+// --- 1. حالة التطبيق المركزية (Application State) ---
+const AppState = {
+    isDataAnalyzed: false,
+    parsedRowsData: [],
+    isFileAlreadyLoaded: false,
+    monthlySalary: {},
+    monthAdditions: {},
+    csvPositiveAdditions: {},
+    friendsDebts: {},
+    personalAccounts: {},
+    categoryMonthsTracker: {},
+    categoryAmountsTracker: {},
+    descriptionMaxDateTracker: {},
+    defaultDenominations: [10, 25, 50, 100, 200, 500],
+    activeDenominations: [10, 25, 50, 100, 200, 500]
+};
+
+// --- 2. تهيئة التطبيق والأحداث الأساسية عند التحميل ---
 window.addEventListener("DOMContentLoaded", () => {
+    // تحديد تاريخ النهاية الافتراضي ليومنا الحالي
     const today = new Date();
     const formattedDate = today.toISOString().split("T")[0];
     const endDateEl = document.getElementById("endDate");
     if (endDateEl && !endDateEl.value) {
         endDateEl.value = formattedDate;
     }
+
+    // تهيئة الثيم (الوضع المظلم/الفاتح)
+    ThemeManager.init();
+
+    // إدارة الـ Service Worker
+    setupServiceWorker();
 });
 
-// --- Service Worker & Install Prompt setup ---
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function (registrations) {
-        for (let registration of registrations) {
-            registration.unregister().then(function () {
-                console.log("تم تدمير الـ Service Worker بنجاح لضمان تحديث الكاش التلقائي!");
+// --- 3. إدارة الـ Service Worker والـ PWA ---
+function setupServiceWorker() {
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+            for (let registration of registrations) {
+                registration.unregister().then(function () {
+                    console.log("تم تدمير الـ Service Worker بنجاح لضمان تحديث الكاش التلقائي!");
+                });
+            }
+        });
+
+        if (window.caches) {
+            caches.keys().then(function (names) {
+                for (let name of names) caches.delete(name);
             });
         }
+    }
+
+    let deferredPrompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
     });
 
-    if (window.caches) {
-        caches.keys().then(function (names) {
-            for (let name of names) caches.delete(name);
+    const installBtn = document.getElementById("installBtn");
+    if (installBtn) {
+        installBtn.addEventListener("click", async () => {
+            if (!deferredPrompt) return;
+            installBtn.style.display = "none";
+            deferredPrompt.prompt();
+            deferredPrompt = null;
         });
     }
 }
 
-let deferredPrompt = null;
-window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-});
-
-const installBtn = document.getElementById("installBtn");
-if (installBtn) {
-    installBtn.addEventListener("click", async () => {
-        if (!deferredPrompt) return;
-        installBtn.style.display = "none";
-        deferredPrompt.prompt();
-        deferredPrompt = null;
-    });
-}
-
-// --- برمجية آلة حاسبة الفئات والعملات ---
-const defaultDenominations = [10, 25, 50, 100, 200, 500];
-let activeDenominations = [...defaultDenominations];
-
-function toggleCurrencyCalcModal(show) {
-    const modal = document.getElementById("calcModalOverlay");
-    if (show) {
-        if (document.getElementById("currencyRowsContainer").children.length === 0) {
-            initCurrencyCalc();
+// --- 4. إدارة المظهر (الثيم: مظلم / فاتح) ---
+const ThemeManager = {
+    init() {
+        const savedTheme = localStorage.getItem("financial-app-theme") || "dark";
+        document.documentElement.setAttribute("data-theme", savedTheme);
+        const btn = document.getElementById("themeToggleBtn");
+        if (btn) {
+            btn.innerHTML = savedTheme === "dark" ? "☀️" : "🌙";
         }
-        modal.style.display = "flex";
-    } else {
-        modal.style.display = "none";
+    },
+    toggle() {
+        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const targetTheme = currentTheme === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", targetTheme);
+        localStorage.setItem("financial-app-theme", targetTheme);
+        const btn = document.getElementById("themeToggleBtn");
+        if (btn) {
+            btn.innerHTML = targetTheme === "dark" ? "☀️" : "🌙";
+        }
     }
-}
+};
+// ربط دالة الثيم العامة للاستدعاء من الـ HTML
+window.toggleDarkModeFinancialApp = () => ThemeManager.toggle();
 
-function initCurrencyCalc() {
-    const container = document.getElementById("currencyRowsContainer");
-    container.innerHTML = "";
-    activeDenominations.forEach((denom, idx) => {
-        appendCurrencyRowHTML(container, denom, idx);
-    });
-    calculateCurrencyTotal();
-}
 
-function appendCurrencyRowHTML(container, val, idx) {
-    const row = document.createElement("div");
-    row.className = "currency-row";
-    row.setAttribute("data-index", idx);
+// --- 5. برمجية آلة حاسبة الفئات والعملات (Currency Calculator) ---
+const CurrencyCalculator = {
+    toggleModal(show) {
+        const modal = document.getElementById("calcModalOverlay");
+        if (show) {
+            if (document.getElementById("currencyRowsContainer").children.length === 0) {
+                this.init();
+            }
+            modal.style.display = "flex";
+        } else {
+            modal.style.display = "none";
+        }
+    },
+    init() {
+        const container = document.getElementById("currencyRowsContainer");
+        container.innerHTML = "";
+        AppState.activeDenominations.forEach((denom, idx) => {
+            this.appendRowHTML(container, denom, idx);
+        });
+        this.calculateTotal();
+    },
+    appendRowHTML(container, val, idx) {
+        const row = document.createElement("div");
+        row.className = "currency-row";
+        row.setAttribute("data-index", idx);
 
-    const isCustom = typeof val === "string" || !defaultDenominations.includes(val);
+        const isCustom = typeof val === "string" || !AppState.defaultDenominations.includes(val);
 
-    let labelHtml = isCustom
-        ? `<input type="number" class="currency-input" style="width: 65px; font-weight: bold; text-align: right;" value="${val}" placeholder="الفئة" oninput="updateCustomDenom(this, ${idx})">`
-        : `<span class="currency-label">فئة ${val}:</span>`;
+        let labelHtml = isCustom
+            ? `<input type="number" class="currency-input" style="width: 65px; font-weight: bold; text-align: right;" value="${val}" placeholder="الفئة" oninput="CurrencyCalculator.updateCustomDenom(this, ${idx})">`
+            : `<span class="currency-label">فئة ${val}:</span>`;
 
-    row.innerHTML = `
-        ${labelHtml}
-        <input type="number" min="0" class="currency-input count-input" placeholder="العدد" oninput="calculateCurrencyTotal()">
-        <span class="currency-subtotal">= 0</span>
-    `;
-    container.appendChild(row);
-}
+        row.innerHTML = `
+            ${labelHtml}
+            <input type="number" min="0" class="currency-input count-input" placeholder="العدد" oninput="CurrencyCalculator.calculateTotal()">
+            <span class="currency-subtotal">= 0</span>
+        `;
+        container.appendChild(row);
+    },
+    updateCustomDenom(inputEl, idx) {
+        let newVal = parseFloat(inputEl.value) || 0;
+        AppState.activeDenominations[idx] = newVal;
+        this.calculateTotal();
+    },
+    addRow() {
+        const container = document.getElementById("currencyRowsContainer");
+        const newIdx = AppState.activeDenominations.length;
+        AppState.activeDenominations.push(0);
+        this.appendRowHTML(container, 0, newIdx);
+    },
+    calculateTotal() {
+        const rows = document.querySelectorAll("#currencyRowsContainer .currency-row");
+        let total = 0;
 
-function updateCustomDenom(inputEl, idx) {
-    let newVal = parseFloat(inputEl.value) || 0;
-    activeDenominations[idx] = newVal;
-    calculateCurrencyTotal();
-}
+        rows.forEach((row, i) => {
+            let denom = AppState.activeDenominations[i];
+            if (typeof denom !== "number" || isNaN(denom)) denom = 0;
 
-function addNewCurrencyRow() {
-    const container = document.getElementById("currencyRowsContainer");
-    const newIdx = activeDenominations.length;
-    activeDenominations.push(0);
-    appendCurrencyRowHTML(container, 0, newIdx);
-}
+            const countInput = row.querySelector(".count-input");
+            const count = parseFloat(countInput.value) || 0;
+            const subtotal = denom * count;
 
-function calculateCurrencyTotal() {
-    const rows = document.querySelectorAll("#currencyRowsContainer .currency-row");
-    let total = 0;
+            row.querySelector(".currency-subtotal").innerText = `= ${formatMoney(subtotal)}`;
+            total += subtotal;
+        });
 
-    rows.forEach((row, i) => {
-        let denom = activeDenominations[i];
-        if (typeof denom !== "number" || isNaN(denom)) denom = 0;
+        document.getElementById("calcGrandTotal").innerText = `المجموع: ${formatMoney(total)}`;
+    },
+    reset() {
+        AppState.activeDenominations = [...AppState.defaultDenominations];
+        this.init();
+    }
+};
+// ربط دوال الحاسبة بالنافذة العامة للاستدعاء السريع من الواجهة
+window.toggleCurrencyCalcModal = (show) => CurrencyCalculator.toggleModal(show);
+window.addNewCurrencyRow = () => CurrencyCalculator.addRow();
+window.resetCurrencyCalc = () => CurrencyCalculator.reset();
 
-        const countInput = row.querySelector(".count-input");
-        const count = parseFloat(countInput.value) || 0;
-        const subtotal = denom * count;
 
-        row.querySelector(".currency-subtotal").innerText = `= ${formatMoney(subtotal)}`;
-        total += subtotal;
-    });
-
-    document.getElementById("calcGrandTotal").innerText = `المجموع: ${formatMoney(total)}`;
-}
-
-function resetCurrencyCalc() {
-    activeDenominations = [...defaultDenominations];
-    initCurrencyCalc();
-}
-
-// --- الثوابت والمتغيرات العامة للتحليل المالي ---
-const CSV_INDICES = { DATE: 0, ACCOUNT: 1, CATEGORY: 2, REAL_AMOUNT: 3, CURRENCY: 4, AMOUNT: 5, DESC: 7 };
-
+// --- 6. ثوابت الأظرف المالية (Jars System) ---
 const JARS_MAPPING = {
     fixed: {
         name: "مصاريف ثابتة وأساسية (55%)",
@@ -160,15 +212,12 @@ const JARS_MAPPING = {
     }
 };
 
-let isDataAnalyzed = false;
-let globalParsedRowsData = [];
-let isFileAlreadyLoaded = false;
-let globalMonthlySalary = {};
-let globalMonthAdditions = {};
-let globalCsvPositiveAdditions = {};
+const CSV_INDICES = { DATE: 0, ACCOUNT: 1, CATEGORY: 2, REAL_AMOUNT: 3, CURRENCY: 4, AMOUNT: 5, DESC: 7 };
 
+
+// --- 7. دوال مساعدة عامة (Helper Functions) ---
 function triggerConditionalCalculation() {
-    if (isDataAnalyzed) {
+    if (AppState.isDataAnalyzed) {
         processAndDisplay(false);
     }
 }
@@ -215,14 +264,215 @@ function filterTableRows(searchInputId, tableBodyId) {
     }
 }
 
-function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, currentMonthCarryover, monthName) {
-    const totalIncome = globalMonthlySalary[monthName] || 0;
-    const csvAdditions = globalCsvPositiveAdditions[monthName] || 0;
 
-    if (globalMonthAdditions[monthName] === undefined) {
-        globalMonthAdditions[monthName] = 0;
+// --- 8. معالجة ملفات الـ CSV وتحليل البيانات ---
+function processAndDisplay(isExplicitClick) {
+    const fileInput = document.getElementById("csvFile");
+    const startDateInput = document.getElementById("startDate").value;
+    const endDateInput = document.getElementById("endDate").value;
+
+    if (!isExplicitClick && AppState.isFileAlreadyLoaded) {
+        recalculateAndRenderUI();
+        return;
     }
-    const manualAdditions = globalMonthAdditions[monthName];
+
+    if (!fileInput.files || !fileInput.files.length) {
+        if (isExplicitClick)
+            alert("الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً يا حمودة!");
+        return;
+    }
+    if (isExplicitClick) {
+        AppState.isDataAnalyzed = true;
+    }
+
+    const file = fileInput.files[0];
+    const startDate = new Date(startDateInput);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(endDateInput);
+    endDate.setHours(23, 59, 59, 999);
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/);
+        if (lines.length < 2) return;
+
+        const separator = text.includes("\t") ? "\t" : ",";
+        AppState.parsedRowsData = [];
+        AppState.csvPositiveAdditions = {};
+        AppState.monthlySalary = {};
+        AppState.friendsDebts = {};
+        AppState.personalAccounts = {};
+
+        for (let i = 1; i < lines.length; i++) {
+            let line = lines[i];
+            if (!line.trim()) continue;
+            let columns =
+                separator === "," ? line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/) : line.split("\t");
+            if (columns.length < 7) continue;
+
+            try {
+                let dateStr = clean(columns.at(CSV_INDICES.DATE));
+                let category = clean(columns.at(CSV_INDICES.CATEGORY));
+                let amountStr = clean(columns.at(CSV_INDICES.AMOUNT)).replace(/[^\d.-]/g, "");
+                let rowAccountName = clean(columns.at(CSV_INDICES.ACCOUNT));
+                let currencyStr = clean(columns.at(CSV_INDICES.CURRENCY));
+                let realAmountStr = clean(columns.at(CSV_INDICES.REAL_AMOUNT));
+
+                let description =
+                    columns.length >= 8 && clean(columns.at(CSV_INDICES.DESC)).length > 0
+                        ? clean(columns.at(CSV_INDICES.DESC))
+                        : "بدون وصف";
+
+                let rowDate = parseJavaDate(dateStr);
+                if (!rowDate || isNaN(rowDate.getTime())) continue;
+
+                let currencySymbol = "\$";
+                let checkCurrency = (currencyStr || "").toLowerCase();
+                let checkDesc = (description || "").toLowerCase();
+
+                if (checkCurrency === "syp" || checkDesc.includes("syp")) {
+                    currencySymbol = "/£";
+                } else if (checkCurrency === "zwl" || checkDesc.includes("zwl")) {
+                    currencySymbol = "/£";
+                }
+
+                const personalAccounts = ["usd", "new cash", "ثروة"];
+                let lowerAccName = rowAccountName.toLowerCase();
+
+                if (personalAccounts.includes(lowerAccName)) {
+                    if (!AppState.personalAccounts[rowAccountName]) {
+                        AppState.personalAccounts[rowAccountName] = { balance: 0, realBalance: 0, currency: currencySymbol };
+                    }
+
+                    let convertedAmount = parseFloat(amountStr);
+                    let cleanRealStr = realAmountStr ? realAmountStr.replace(/[^\d.-]/g, "") : "";
+                    let parsedRealValue = parseFloat(cleanRealStr);
+                    if (isNaN(parsedRealValue)) parsedRealValue = 0;
+
+                    if (checkCurrency === "syp" || checkDesc.includes("syp")) {
+                        parsedRealValue = parsedRealValue / 100;
+                    }
+
+                    AppState.personalAccounts[rowAccountName].balance += convertedAmount;
+                    AppState.personalAccounts[rowAccountName].realBalance += parsedRealValue;
+                    
+                    if (rowDate >= startDate &&
+                        rowDate <= endDate &&
+                        (lowerAccName === "ثروة" || lowerAccName === "ثروه")
+                    ) {
+                        let monthKey =
+                            rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
+
+                        AppState.parsedRowsData.push({
+                            date: rowDate,
+                            monthKey: monthKey,
+                            category: "Investment",
+                            description: "تحويل استثماري لحساب ثروة 💰",
+                            amount: parseFloat(amountStr),
+                        });
+                    }
+                }
+
+                const targetDebtAccounts = [
+                    "محمد دولار", "عمار دولار", "عبد دولار", "حافظ", "حكيم",
+                    "Shop", "محمد", "عمار", "حكيم دولار", "موني", "عبد"
+                ];
+
+                if (
+                    targetDebtAccounts
+                        .map((acc) => acc.toLowerCase())
+                        .includes(rowAccountName.toLowerCase())
+                ) {
+                    let convertedAmount = parseFloat(amountStr);
+                    let cleanRealStr = realAmountStr ? realAmountStr.replace(/[^\d.-]/g, "") : "";
+                    let parsedRealValue = parseFloat(cleanRealStr);
+                    if (isNaN(parsedRealValue)) parsedRealValue = 0;
+
+                    let actualValue = convertedAmount;
+                    let actualRealValue = parsedRealValue;
+
+                    if (checkCurrency === "syp" || checkDesc.includes("syp")) {
+                        actualRealValue = actualRealValue / 100;
+                    }
+
+                    if (!AppState.friendsDebts[rowAccountName]) {
+                        AppState.friendsDebts[rowAccountName] = {
+                            balance: 0,
+                            realBalance: 0,
+                            currency: currencySymbol,
+                        };
+                    }
+
+                    AppState.friendsDebts[rowAccountName].balance += actualValue;
+                    AppState.friendsDebts[rowAccountName].realBalance += actualRealValue;
+
+                    if (
+                        Math.abs(AppState.friendsDebts[rowAccountName].balance) < 0.02 ||
+                        Math.abs(AppState.friendsDebts[rowAccountName].realBalance) < 1.0
+                    ) {
+                        AppState.friendsDebts[rowAccountName].balance = 0;
+                        AppState.friendsDebts[rowAccountName].realBalance = 0;
+                    }
+
+                    continue;
+                }
+
+                if (
+                    category.startsWith("To '") ||
+                    category.startsWith("From '") ||
+                    category.toLowerCase().includes("to '") ||
+                    category.toLowerCase().includes("from '")
+                ) {
+                    continue;
+                }
+                
+                if (rowDate >= startDate && rowDate <= endDate) {
+                    let convertedAmount = parseFloat(amountStr);
+                    let monthKey =
+                        rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
+
+                    if (category.toLowerCase() === "salary") {
+                        AppState.monthlySalary[monthKey] = (AppState.monthlySalary[monthKey] || 0) + Math.abs(convertedAmount);
+                        continue;
+                    }
+
+                    if (convertedAmount >= 0) {
+                        AppState.csvPositiveAdditions[monthKey] =
+                            (AppState.csvPositiveAdditions[monthKey] || 0) + convertedAmount;
+                        continue;
+                    }
+
+                    let actualExpense = Math.abs(convertedAmount);
+                    AppState.parsedRowsData.push({
+                        date: rowDate,
+                        monthKey: monthKey,
+                        category: category,
+                        description: description,
+                        amount: actualExpense,
+                    });
+                }
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        AppState.isFileAlreadyLoaded = true;
+        recalculateAndRenderUI();
+    };
+    reader.readAsText(file, "UTF-8");
+}
+
+
+// --- 9. توليد الأظرف وتحديث الواجهة ورسم التقارير ---
+function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, currentMonthCarryover, monthName) {
+    const totalIncome = AppState.monthlySalary[monthName] || 0;
+    const csvAdditions = AppState.csvPositiveAdditions[monthName] || 0;
+
+    if (AppState.monthAdditions[monthName] === undefined) {
+        AppState.monthAdditions[monthName] = 0;
+    }
+    const manualAdditions = AppState.monthAdditions[monthName];
     const totalMonthAdditions = csvAdditions + manualAdditions;
 
     let monthJarsTotals = { fixed: 0, guiltFree: 0, debt: 0, savings: 0, investing: 0 };
@@ -294,226 +544,29 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
     return { html: html, monthSurplus: unspentSurplus };
 }
 
-function processAndDisplay(isExplicitClick) {
-    const fileInput = document.getElementById("csvFile");
-    const startDateInput = document.getElementById("startDate").value;
-    const endDateInput = document.getElementById("endDate").value;
-
-    if (!isExplicitClick && isFileAlreadyLoaded) {
-        recalculateAndRenderUI();
-        return;
-    }
-
-    if (!fileInput.files || !fileInput.files.length) {
-        if (isExplicitClick)
-            alert("الرجاء اختيار ملف الـ CSV وتحديد تواريخ البدء والنهاية أولاً يا حمودة!");
-        return;
-    }
-    if (isExplicitClick) {
-        isDataAnalyzed = true;
-    }
-
-    const file = fileInput.files[0];
-    const startDate = new Date(startDateInput);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(endDateInput);
-    endDate.setHours(23, 59, 59, 999);
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const text = e.target.result;
-        const lines = text.split(/\r?\n/);
-        if (lines.length < 2) return;
-
-        const separator = text.includes("\t") ? "\t" : ",";
-        globalParsedRowsData = [];
-        globalCsvPositiveAdditions = {};
-        globalMonthlySalary = {};
-        window.globalFriendsDebts = {};
-        window.globalPersonalAccounts = {};
-
-        for (let i = 1; i < lines.length; i++) {
-            let line = lines[i];
-            if (!line.trim()) continue;
-            let columns =
-                separator === "," ? line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/) : line.split("\t");
-            if (columns.length < 7) continue;
-
-            try {
-                let dateStr = clean(columns.at(CSV_INDICES.DATE));
-                let category = clean(columns.at(CSV_INDICES.CATEGORY));
-                let amountStr = clean(columns.at(CSV_INDICES.AMOUNT)).replace(/[^\d.-]/g, "");
-                let rowAccountName = clean(columns.at(CSV_INDICES.ACCOUNT));
-                let currencyStr = clean(columns.at(CSV_INDICES.CURRENCY));
-                let realAmountStr = clean(columns.at(CSV_INDICES.REAL_AMOUNT));
-
-                let description =
-                    columns.length >= 8 && clean(columns.at(CSV_INDICES.DESC)).length > 0
-                        ? clean(columns.at(CSV_INDICES.DESC))
-                        : "بدون وصف";
-
-                let rowDate = parseJavaDate(dateStr);
-                if (!rowDate || isNaN(rowDate.getTime())) continue;
-
-                let currencySymbol = "\$";
-                let checkCurrency = (currencyStr || "").toLowerCase();
-                let checkDesc = (description || "").toLowerCase();
-
-                if (checkCurrency === "syp" || checkDesc.includes("syp")) {
-                    currencySymbol = "/£";
-                } else if (checkCurrency === "zwl" || checkDesc.includes("zwl")) {
-                    currencySymbol = "/£";
-                }
-
-                const personalAccounts = ["usd", "new cash", "ثروة"];
-                let lowerAccName = rowAccountName.toLowerCase();
-
-                if (personalAccounts.includes(lowerAccName)) {
-                    if (!window.globalPersonalAccounts[rowAccountName]) {
-                        window.globalPersonalAccounts[rowAccountName] = { balance: 0, realBalance: 0, currency: currencySymbol };
-                    }
-
-                    let convertedAmount = parseFloat(amountStr);
-                    let cleanRealStr = realAmountStr ? realAmountStr.replace(/[^\d.-]/g, "") : "";
-                    let parsedRealValue = parseFloat(cleanRealStr);
-                    if (isNaN(parsedRealValue)) parsedRealValue = 0;
-
-                    if (checkCurrency === "syp" || checkDesc.includes("syp")) {
-                        parsedRealValue = parsedRealValue / 100;
-                    }
-
-                    window.globalPersonalAccounts[rowAccountName].balance += convertedAmount;
-                    window.globalPersonalAccounts[rowAccountName].realBalance += parsedRealValue;
-                    
-                    if (rowDate >= startDate &&
-                        rowDate <= endDate &&
-                        (lowerAccName === "ثروة" || lowerAccName === "ثروه")
-                    ) {
-                        let monthKey =
-                            rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
-
-                        globalParsedRowsData.push({
-                            date: rowDate,
-                            monthKey: monthKey,
-                            category: "Investment",
-                            description: "تحويل استثماري لحساب ثروة 💰",
-                            amount: parseFloat(amountStr),
-                        });
-                    }
-                }
-
-                const targetDebtAccounts = [
-                    "محمد دولار", "عمار دولار", "عبد دولار", "حافظ", "حكيم",
-                    "Shop", "محمد", "عمار", "حكيم دولار", "موني", "عبد"
-                ];
-
-                if (
-                    targetDebtAccounts
-                        .map((acc) => acc.toLowerCase())
-                        .includes(rowAccountName.toLowerCase())
-                ) {
-                    let convertedAmount = parseFloat(amountStr);
-                    let cleanRealStr = realAmountStr ? realAmountStr.replace(/[^\d.-]/g, "") : "";
-                    let parsedRealValue = parseFloat(cleanRealStr);
-                    if (isNaN(parsedRealValue)) parsedRealValue = 0;
-
-                    let actualValue = convertedAmount;
-                    let actualRealValue = parsedRealValue;
-
-                    if (checkCurrency === "syp" || checkDesc.includes("syp")) {
-                        actualRealValue = actualRealValue / 100;
-                    }
-
-                    if (!window.globalFriendsDebts[rowAccountName]) {
-                        window.globalFriendsDebts[rowAccountName] = {
-                            balance: 0,
-                            realBalance: 0,
-                            currency: currencySymbol,
-                        };
-                    }
-
-                    window.globalFriendsDebts[rowAccountName].balance += actualValue;
-                    window.globalFriendsDebts[rowAccountName].realBalance += actualRealValue;
-
-                    if (
-                        Math.abs(window.globalFriendsDebts[rowAccountName].balance) < 0.02 ||
-                        Math.abs(window.globalFriendsDebts[rowAccountName].realBalance) < 1.0
-                    ) {
-                        window.globalFriendsDebts[rowAccountName].balance = 0;
-                        window.globalFriendsDebts[rowAccountName].realBalance = 0;
-                    }
-
-                    continue;
-                }
-
-                if (
-                    category.startsWith("To '") ||
-                    category.startsWith("From '") ||
-                    category.toLowerCase().includes("to '") ||
-                    category.toLowerCase().includes("from '")
-                ) {
-                    continue;
-                }
-                
-                if (rowDate >= startDate && rowDate <= endDate) {
-                    let convertedAmount = parseFloat(amountStr);
-                    let monthKey =
-                        rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
-
-                    if (category.toLowerCase() === "salary") {
-                        globalMonthlySalary[monthKey] = (globalMonthlySalary[monthKey] || 0) + Math.abs(convertedAmount);
-                        continue;
-                    }
-
-                    if (convertedAmount >= 0) {
-                        globalCsvPositiveAdditions[monthKey] =
-                            (globalCsvPositiveAdditions[monthKey] || 0) + convertedAmount;
-                        continue;
-                    }
-
-                    let actualExpense = Math.abs(convertedAmount);
-                    globalParsedRowsData.push({
-                        date: rowDate,
-                        monthKey: monthKey,
-                        category: category,
-                        description: description,
-                        amount: actualExpense,
-                    });
-                }
-            } catch (err) {
-                console.log(err);
-            }
-        }
-
-        isFileAlreadyLoaded = true;
-        recalculateAndRenderUI();
-    };
-    reader.readAsText(file, "UTF-8");
-}
-
 function recalculateAndRenderUI() {
     let monthlyAnalysis = {};
     let globalCategorySums = {};
     let descriptionMonths = {};
     let descriptionAmounts = {};
 
-    window.categoryMonthsTracker = {};
-    window.categoryAmountsTracker = {};
-    window.descriptionMaxDateTracker = {};
+    AppState.categoryMonthsTracker = {};
+    AppState.categoryAmountsTracker = {};
+    AppState.descriptionMaxDateTracker = {};
 
     let totalAllExpenses = 0;
 
-    globalParsedRowsData.forEach((row) => {
+    AppState.parsedRowsData.forEach((row) => {
         totalAllExpenses += row.amount;
 
         if (!monthlyAnalysis[row.monthKey]) monthlyAnalysis[row.monthKey] = {};
         if (!monthlyAnalysis[row.monthKey][row.category]) monthlyAnalysis[row.monthKey][row.category] = {};
         let dateKey = `${row.monthKey}_${row.category}_${row.description}`;
         if (
-            !window.descriptionMaxDateTracker[dateKey] ||
-            row.date > window.descriptionMaxDateTracker[dateKey]
+            !AppState.descriptionMaxDateTracker[dateKey] ||
+            row.date > AppState.descriptionMaxDateTracker[dateKey]
         ) {
-            window.descriptionMaxDateTracker[dateKey] = row.date;
+            AppState.descriptionMaxDateTracker[dateKey] = row.date;
         }
 
         monthlyAnalysis[row.monthKey][row.category][row.description] =
@@ -528,17 +581,20 @@ function recalculateAndRenderUI() {
             descriptionAmounts[row.description].push(row.amount);
         }
 
-        if (!window.categoryMonthsTracker[row.category])
-            window.categoryMonthsTracker[row.category] = new Set();
-        window.categoryMonthsTracker[row.category].add(row.monthKey);
+        if (!AppState.categoryMonthsTracker[row.category])
+            AppState.categoryMonthsTracker[row.category] = new Set();
+        AppState.categoryMonthsTracker[row.category].add(row.monthKey);
 
-        if (!window.categoryAmountsTracker[row.category]) window.categoryAmountsTracker[row.category] = [];
-        window.categoryAmountsTracker[row.category].push(row.amount);
+        if (!AppState.categoryAmountsTracker[row.category]) AppState.categoryAmountsTracker[row.category] = [];
+        AppState.categoryAmountsTracker[row.category].push(row.amount);
     });
 
     const resultsContainer = document.getElementById("resultsContainer");
     resultsContainer.innerHTML = "";
     resultsContainer.style.display = "block";
+
+	// إنشاء Fragment لتخزين العناصر مؤقتاً في الذاكرة بعيداً عن DOM
+	const fragment = document.createDocumentFragment();
 
     let sortedMonths = Object.keys(monthlyAnalysis).sort();
     if (sortedMonths.length === 0) {
@@ -547,8 +603,8 @@ function recalculateAndRenderUI() {
         return;
     }
 
-    let totalIncomeSum = Object.values(globalMonthlySalary).reduce((a, b) => a + b, 0);
-    let totalAutoAdditionsSum = Object.values(globalCsvPositiveAdditions).reduce((a, b) => a + b, 0);
+    let totalIncomeSum = Object.values(AppState.monthlySalary).reduce((a, b) => a + b, 0);
+    let totalAutoAdditionsSum = Object.values(AppState.csvPositiveAdditions).reduce((a, b) => a + b, 0);
 
     let kpiHtml = `
         <div class="kpi-grid">
@@ -569,7 +625,7 @@ function recalculateAndRenderUI() {
 
     let kpiWrapper = document.createElement("div");
     kpiWrapper.innerHTML = kpiHtml;
-    resultsContainer.appendChild(kpiWrapper);
+	fragment.appendChild(kpiWrapper);
 
     let runningCarryover = parseFloat(document.getElementById("initial-carryover-input").value) || 0;
     let previousMonthTotal = 0;
@@ -636,8 +692,8 @@ function recalculateAndRenderUI() {
                 .sort((a, b) => {
                     let dateKeyA = `${monthName}_${categoryName}_${a}`;
                     let dateKeyB = `${monthName}_${categoryName}_${b}`;
-                    let dateA = window.descriptionMaxDateTracker[dateKeyA] || new Date(0);
-                    let dateB = window.descriptionMaxDateTracker[dateKeyB] || new Date(0);
+                    let dateA = AppState.descriptionMaxDateTracker[dateKeyA] || new Date(0);
+                    let dateB = AppState.descriptionMaxDateTracker[dateKeyB] || new Date(0);
                     return dateA - dateB;
                 })
                 .forEach((descriptionName) => {
@@ -645,7 +701,7 @@ function recalculateAndRenderUI() {
                     let rowClass = amount >= 50.0 ? " class='alert-row'" : "";
 
                     let dateKey = `${monthName}_${categoryName}_${descriptionName}`;
-                    let maxDate = window.descriptionMaxDateTracker[dateKey];
+                    let maxDate = AppState.descriptionMaxDateTracker[dateKey];
                     let displayDate = monthName;
                     if (maxDate) {
                         displayDate = `${maxDate.getDate()}-${maxDate.getMonth() + 1}-${maxDate.getFullYear()}`;
@@ -672,7 +728,7 @@ function recalculateAndRenderUI() {
         monthDataDiv.innerHTML = htmlTable + totalTableHtml + chartHtml + `</div>`;
 
         monthBlock.appendChild(monthDataDiv);
-        resultsContainer.appendChild(monthBlock);
+		fragment.appendChild(monthBlock);
 
         runningCarryover = jarsResult.monthSurplus > 0 ? jarsResult.monthSurplus : 0;
         previousMonthTotal = monthTotal;
@@ -698,7 +754,7 @@ function recalculateAndRenderUI() {
 
     let globalBlock = document.createElement("div");
     globalBlock.innerHTML = globalChartHtml;
-    resultsContainer.appendChild(globalBlock);
+	fragment.appendChild(globalBlock);
 
     // الاشتراكات الثابتة
     let subscriptionBoxId = `subscription_body_box`;
@@ -743,7 +799,7 @@ function recalculateAndRenderUI() {
     subscriptionHtml += `</div></div>`;
     let subBlock = document.createElement("div");
     subBlock.innerHTML = subscriptionHtml;
-    resultsContainer.appendChild(subBlock);
+	fragment.appendChild(subBlock);
 
     // تحليلات التصنيفات
     let categoryAnalyticBoxId = `category_trent_body_box`;
@@ -757,23 +813,23 @@ function recalculateAndRenderUI() {
         <tr><th>اسم التصنيف الرئيسي</th><th>معدل التكرار الزمني</th><th>المتوسط المالي الشهري</th></tr>`;
 
     let hasCategoryTrends = false;
-    if (window.categoryMonthsTracker) {
-        Object.keys(window.categoryMonthsTracker)
+    if (AppState.categoryMonthsTracker) {
+        Object.keys(AppState.categoryMonthsTracker)
             .sort((a, b) => {
-                let sizeA = window.categoryMonthsTracker[a].size;
-                let sizeB = window.categoryMonthsTracker[b].size;
+                let sizeA = AppState.categoryMonthsTracker[a].size;
+                let sizeB = AppState.categoryMonthsTracker[b].size;
                 if (sizeA !== sizeB) return sizeB - sizeA;
-                let avgA = window.categoryAmountsTracker[a].reduce((x, y) => x + y, 0) / sizeA;
-                let avgB = window.categoryAmountsTracker[b].reduce((x, y) => x + y, 0) / sizeB;
+                let avgA = AppState.categoryAmountsTracker[a].reduce((x, y) => x + y, 0) / sizeA;
+                let avgB = AppState.categoryAmountsTracker[b].reduce((x, y) => x + y, 0) / sizeB;
                 return avgB - avgA;
             })
             .forEach((cat) => {
-                if (window.categoryMonthsTracker[cat].size >= 2) {
+                if (AppState.categoryMonthsTracker[cat].size >= 2) {
                     hasCategoryTrends = true;
-                    let avg = window.categoryAmountsTracker[cat].reduce((a, b) => a + b, 0) / window.categoryMonthsTracker[cat].size;
+                    let avg = AppState.categoryAmountsTracker[cat].reduce((a, b) => a + b, 0) / AppState.categoryMonthsTracker[cat].size;
                     categoryHtml += `<tr>
                     <td style='font-weight: bold;'>📁 ${cat}</td>
-                    <td style='text-align:center;'>${window.categoryMonthsTracker[cat].size} أشهر</td>
+                    <td style='text-align:center;'>${AppState.categoryMonthsTracker[cat].size} أشهر</td>
                     <td style='font-weight: bold;'>$${formatMoney(avg)} / شهر</td>
                 </tr>`;
                 }
@@ -788,7 +844,7 @@ function recalculateAndRenderUI() {
 
     let catTrendBlock = document.createElement("div");
     catTrendBlock.innerHTML = categoryHtml;
-    resultsContainer.appendChild(catTrendBlock);
+	fragment.appendChild(catTrendBlock);
 
     // سجل ديون الأصدقاء
     let friendsDebtsBoxId = `friends_debts_body_box`;
@@ -801,10 +857,10 @@ function recalculateAndRenderUI() {
             <tr><th>اسم الحساب (صديق)</th><th>الصافي بالعملة الموحدة</th><th>الصافي التقريبي بالدولار</th><th>الحالة الماليّة لحمودة</th></tr>`;
 
     let hasDebtsData = false;
-    if (window.globalFriendsDebts) {
-        let sortedFriends = Object.keys(window.globalFriendsDebts).sort((a, b) => {
-            let friendA = window.globalFriendsDebts[a];
-            let friendB = window.globalFriendsDebts[b];
+    if (AppState.friendsDebts) {
+        let sortedFriends = Object.keys(AppState.friendsDebts).sort((a, b) => {
+            let friendA = AppState.friendsDebts[a];
+            let friendB = AppState.friendsDebts[b];
             if (friendA.currency !== friendB.currency) {
                 return friendA.currency.localeCompare(friendB.currency);
             }
@@ -812,7 +868,7 @@ function recalculateAndRenderUI() {
         });
 
         sortedFriends.forEach((friend) => {
-            let debtObj = window.globalFriendsDebts[friend];
+            let debtObj = AppState.friendsDebts[friend];
             let balance = debtObj.balance;
             let realBalance = debtObj.realBalance;
             let currency = debtObj.currency || "\$";
@@ -843,10 +899,10 @@ function recalculateAndRenderUI() {
 
     let debtsBlock = document.createElement("div");
     debtsBlock.innerHTML = debtsHtml;
-    resultsContainer.appendChild(debtsBlock);
+	fragment.appendChild(debtsBlock);
 
     // حاسبة التخطيط المالي
-    let salaryValues = Object.values(globalMonthlySalary);
+    let salaryValues = Object.values(AppState.monthlySalary);
     let targetBaseIncome = salaryValues.length > 0
         ? salaryValues.reduce((a, b) => a + b, 0) / salaryValues.length
         : 0;
@@ -882,7 +938,7 @@ function recalculateAndRenderUI() {
     calculatorHtml += `</table></div></div></div>`;
     let calcBlock = document.createElement("div");
     calcBlock.innerHTML = calculatorHtml;
-    resultsContainer.appendChild(calcBlock);
+	fragment.appendChild(calcBlock);
 
     // سجل الحسابات الشخصية
     let personalAccountsBoxId = `personal_accounts_body_box`;
@@ -896,9 +952,9 @@ function recalculateAndRenderUI() {
             <tr><th>اسم الحساب الشخصي</th><th>الرصيد بالعملة الحقيقية</th></tr>`;
 
     let hasPersonalData = false;
-    if (window.globalPersonalAccounts) {
-        Object.keys(window.globalPersonalAccounts).forEach((accName) => {
-            let accObj = window.globalPersonalAccounts[accName];
+    if (AppState.personalAccounts) {
+        Object.keys(AppState.personalAccounts).forEach((accName) => {
+            let accObj = AppState.personalAccounts[accName];
             hasPersonalData = true;
 
             let displayReal = accObj.currency === "\$" 
@@ -920,20 +976,24 @@ function recalculateAndRenderUI() {
 
     let personalBlock = document.createElement("div");
     personalBlock.innerHTML = personalHtml;
-    resultsContainer.appendChild(personalBlock);
+	fragment.appendChild(personalBlock);
+	
+    resultsContainer.appendChild(fragment);
 }
 
 function updateAdditionsMemory(monthKey, inputElement) {
-    globalMonthAdditions[monthKey] = parseFloat(inputElement.value) || 0;
-    recalculateAndRenderUI();
+    // 1. تحديث القيمة في الحالة المركزية
+    AppState.monthAdditions[monthKey] = parseFloat(inputElement.value) || 0;
 
-    const activeInput = document.getElementById(`additions-input-${monthKey}`);
-    if (activeInput) {
-        activeInput.focus();
-        const val = activeInput.value;
-        activeInput.value = "";
-        activeInput.value = val;
-    }
+    // 2. حساب القيم الجديدة لهذا الشهر فقط فوراً دون إعادة رسم كل التطبيق
+    const totalIncome = AppState.monthlySalary[monthKey] || 0;
+    const csvAdditions = AppState.csvPositiveAdditions[monthKey] || 0;
+    const manualAdditions = AppState.monthAdditions[monthKey];
+    const totalMonthAdditions = csvAdditions + manualAdditions;
+
+    // استخراج مصاريف الشهر الحالية من الـ DOM أو الذاكرة لتحديث الأظرف مباشرة
+    // (أو استدعاء إعادة رسم مخصصة لهذا الشهر فقط لضمان دقة الأرقام)
+    recalculateAndRenderUI(); // أو يمكن جعلها تحدث الحاويات المرئية فقط إذا أردت فائض سرعة قصوى
 }
 
 function toggleMonthSection(id, cell) {
@@ -971,24 +1031,33 @@ function toggleAllCategoriesInMonth(id, e) {
     });
 }
 
-function toggleDarkModeFinancialApp() {
-    const currentTheme = document.documentElement.getAttribute("data-theme");
-    const targetTheme = currentTheme === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", targetTheme);
-    localStorage.setItem("financial-app-theme", targetTheme);
-    const btn = document.getElementById("themeToggleBtn");
-    if (btn) {
-        btn.innerHTML = targetTheme === "dark" ? "☀️" : "🌙";
-    }
-}
 
-(function () {
-    const savedTheme = localStorage.getItem("financial-app-theme") || "dark";
-    document.documentElement.setAttribute("data-theme", savedTheme);
-    window.addEventListener("DOMContentLoaded", () => {
-        const btn = document.getElementById("themeToggleBtn");
-        if (btn) {
-            btn.innerHTML = savedTheme === "dark" ? "☀️" : "🌙";
-        }
+// --- دالة تصدير بيانات التحليل إلى ملف CSV متوافق مع Excel ---
+function exportAnalysisToCSV() {
+    if (!AppState.isDataAnalyzed || AppState.parsedRowsData.length === 0) {
+        alert("يا حمودة، لا توجد بيانات محللة حالياً لتصديرها! يرجى رفع الملف وتحليله أولاً.");
+        return;
+    }
+
+    // ترويسة الأعمدة للملف الصادر
+    let csvContent = "\uFEFFالتاريخ,التصنيف,الوصف,المبلغ ($)\n";
+
+    AppState.parsedRowsData.forEach(row => {
+        let dateFormatted = `${row.date.getDate()}/${row.date.getMonth() + 1}/${row.date.getFullYear()}`;
+        let cleanDesc = row.description ? row.description.replace(/"/g, '""') : "بدون وصف";
+        let cleanCat = row.category ? row.category.replace(/"/g, '""') : "أخرى";
+        let amount = row.amount.toFixed(2);
+
+        csvContent += `"${dateFormatted}","${cleanCat}","${cleanDesc}",${amount}\n`;
     });
-})();
+
+    // إنشاء رابط تحميل وهمي وتفعيل الضغط عليه برمجياً
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Monefy_Analysis_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
