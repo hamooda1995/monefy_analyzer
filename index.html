@@ -5,110 +5,93 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>📊 لوحة تحليلات مصاريف Monefy الشاملة - حمودة</title>
         <link rel="manifest" href="manifest.json" />
-        <!-- ربط Tailwind CSS لتصميم عصرية وسريع -->
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-            tailwind.config = {
-                darkMode: 'class',
-                theme: {
-                    extend: {
-                        colors: {
-                            brand: { 50: '#ebf8ff', 500: '#3182ce', 900: '#1a365d' }
-                        }
-                    }
-                }
-            }
-        </script>
-        <!-- ربط ملف التصميم المخصص المتبقي -->
+        <!-- ربط ملف التصميم الخارجي -->
         <link rel="stylesheet" href="style.css" />
     </head>
-    <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col items-center p-4 transition-colors duration-300">
-        
-        <!-- زر التبديل بين الوضعين المظلم والفاتح -->
+    <body>
         <button
             onclick="toggleDarkModeFinancialApp()"
-            class="fixed top-5 left-5 bg-blue-900 dark:bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition z-50 flex items-center justify-center w-12 h-12"
+            class="theme-toggle-btn"
             id="themeToggleBtn"
-            style="visibility: hidden;"
+            style="width: auto; text-align: center;visibility: hidden;"
         >
             🌙
         </button>
 
         <!-- زر الآلة الحاسبة العائم -->
-        <button onclick="toggleCurrencyCalcModal(true)" class="fixed bottom-6 left-6 bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-full shadow-xl transition z-40 flex items-center justify-center w-14 h-14 text-xl">
-            🧮
-        </button>
+        <button onclick="toggleCurrencyCalcModal(true)" class="theme-toggle-btn" style="width: auto; text-align: center;">🧮</button>
 
         <!-- النافذة المنبثقة Modal للآلة الحاسبة -->
-        <div class="calc-modal-overlay fixed inset-0 bg-black/60 backdrop-blur-sm hidden justify-center items-center z-50 p-4" id="calcModalOverlay" onclick="if(event.target===this) toggleCurrencyCalcModal(false)">
-            <div class="calc-modal-content bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-6 shadow-2xl relative">
-                <div class="calc-modal-header flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-3 mb-4">
-                    <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400">🧮 حاسبة العملات والنقد</h3>
-                    <button class="calc-close-btn text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-bold" onclick="toggleCurrencyCalcModal(false)">✖</button>
+        <div class="calc-modal-overlay" id="calcModalOverlay" onclick="if(event.target===this) toggleCurrencyCalcModal(false)">
+            <div class="calc-modal-content">
+                <div class="calc-modal-header">
+                    <h3>🧮 حاسبة العملات والنقد</h3>
+                    <button class="calc-close-btn" onclick="toggleCurrencyCalcModal(false)">✖</button>
                 </div>
-                <div id="currencyRowsContainer" class="space-y-3">
+                <div id="currencyRowsContainer">
                     <!-- سيتم توليد أسطر العملات هنا -->
                 </div>
                 
-                <div class="calc-actions flex gap-2 mt-5">
-                    <button onclick="addNewCurrencyRow()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition">➕ إضافة فئة جديدة</button>
-                    <button onclick="resetCurrencyCalc()" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-3 rounded-lg text-sm transition">🔄 تصفير</button>
+                <div class="calc-actions">
+                    <button onclick="addNewCurrencyRow()" style="margin-top:0; font-size: 13px;">➕ إضافة فئة عملة جديدة</button>
+                    <button onclick="resetCurrencyCalc()" class="calc-btn-secondary" style="margin-top:0; font-size: 13px;">🔄 تصفير</button>
                 </div>
 
-                <div class="calc-total-box bg-blue-600 text-white text-center py-3 rounded-xl text-xl font-bold mt-5 shadow-inner" id="calcGrandTotal">
+                <div class="calc-total-box" id="calcGrandTotal">
                     المجموع: 0.00
                 </div>
             </div>
         </div>
 
-        <!-- الحاوية الرئيسية للتحكم ورفع الملفات -->
-        <div class="container bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl max-w-2xl w-full mb-8 border border-gray-200 dark:border-gray-700">
-            <button id="installBtn" class="hidden mb-4 bg-purple-600 text-white py-2 px-4 rounded-lg font-bold w-full">Install App</button>
+        <div class="container">
+            <button id="installBtn" style="display: none">Install App</button>
 
-            <h2 class="text-xl md:text-2xl font-bold text-center text-blue-900 dark:text-blue-300 mb-6">📊 لوحة تحليلات ومخططات مصاريف Monefy</h2>
+            <h2>📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة</h2>
 
-            <div class="form-group mb-5">
-                <label for="csvFile" class="block font-semibold text-gray-600 dark:text-gray-300 mb-2">1. اختر ملف البيانات الصادر (CSV):</label>
-                <input type="file" id="csvFile" accept=".csv" class="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-sm cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+            <div class="form-group">
+                <label for="csvFile">1. اختر ملف البيانات الصادر (CSV):</label>
+                <input type="file" id="csvFile" accept=".csv" />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            <div class="date-row">
                 <div class="form-group">
-                    <label for="startDate" class="block font-semibold text-gray-600 dark:text-gray-300 mb-2">تاريخ البدء:</label>
-                    <input type="date" id="startDate" value="2026-05-01" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100" />
+                    <label for="startDate">تاريخ البدء:</label>
+                    <input type="date" id="startDate" value="2026-05-01" />
                 </div>
                 <div class="form-group">
-                    <label for="endDate" class="block font-semibold text-gray-600 dark:text-gray-300 mb-2">تاريخ النهاية (مشمول):</label>
-                    <input type="date" id="endDate" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100" />
+                    <label for="endDate">تاريخ النهاية (مشمول):</label>
+                    <input type="date" id="endDate" />
                 </div>
             </div>
             
-            <div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl mb-6 border border-gray-200 dark:border-gray-700">
-                <div class="form-group">
-                    <label for="initial-carryover-input" class="block font-semibold text-gray-700 dark:text-gray-300 mb-2">📥 مبلغ مدوّر من الشهر السابق ($):</label>
+            <div
+                class="date-row"
+                style="
+                    background: var(--table-stripe);
+                    padding: 15px;
+                    border-radius: 8px;
+                    margin-top: 15px;
+                    border: 1px solid var(--border-color);
+                "
+            >
+                <div class="form-group" style="width: 100%;">
+                    <label for="initial-carryover-input">📥 مبلغ مدوّر من الشهر السابق ($):</label>
                     <input
                         type="number"
                         id="initial-carryover-input"
                         value="0"
                         oninput="triggerConditionalCalculation()"
-                        class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 font-bold"
                     />
                 </div>
             </div>
 
-            <!-- أزرار الإجراءات (تحليل وتصدير) -->
-            <div class="flex flex-col sm:flex-row gap-3">
-                <button onclick="processAndDisplay(true)" class="flex-2 w-full bg-blue-900 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition transform active:scale-95">
-                    تحليل وعرض الحسابات فورا 🚀
-                </button>
-                <button onclick="exportAnalysisToCSV()" class="flex-1 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition transform active:scale-95">
-                    📥 تصدير (CSV)
-                </button>
-            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+    <button onclick="processAndDisplay(true)" style="flex: 2;">تحليل وعرض الحسابات والمخططات فورا 🚀</button>
+    <button onclick="exportAnalysisToCSV()" class="calc-btn-secondary" style="flex: 1; margin-top: 10px; background-color: #38A169 !important;">📥 تصدير التقرير (CSV)</button>
+</div>
         </div>
 
-        <!-- حاوية النتائج والتقارير -->
-        <div id="resultsContainer" class="w-full max-w-4xl"></div>
+        <div id="resultsContainer"></div>
 
         <!-- ربط ملف البرمجيات الخارجي -->
         <script src="app.js"></script>
