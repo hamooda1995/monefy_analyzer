@@ -465,7 +465,110 @@ tr:nth-child(even) {
     background-color: #718096 !important;
 }
 
+/* --- بطاقات إحصائيات الشهر داخل قسم الأظرف --- */
+.month-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin: 0 0 12px 0;
+}
+.month-stat-card {
+    background: var(--bg-container);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+}
+.month-stat-card.stat-highlight {
+    border: 2px solid #38A169;
+}
+.stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+.stat-value {
+    font-size: 16pt;
+    font-weight: bold;
+    color: var(--text-main);
+}
+
+/* --- بطاقات تدفقات الديون داخل قسم الأظرف --- */
+.debt-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin: 0 0 12px 0;
+}
+.debt-repaid-card {
+    border: 2px solid #38A169;
+}
+.debt-incurred-card {
+    border: 2px solid #DD6B20;
+}
+
+/* --- بطاقات تفصيل المتبقي حسب العملة --- */
+.saved-breakdown {
+    margin: 0 0 12px 0;
+}
+.saved-breakdown-title {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 6px;
+}
+.saved-breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+}
+.saved-ccy-card {
+    background: var(--bg-container);
+    border: 1px dashed var(--border-jars);
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+}
+.saved-ccy-title {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+.saved-ccy-raw {
+    font-size: 14pt;
+    font-weight: bold;
+    color: var(--text-main);
+}
+.saved-ccy-usd {
+    font-size: 12px;
+    font-weight: bold;
+    color: #38A169;
+    margin-top: 2px;
+}
+.saved-ccy-rate {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
 @media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 14px;
+        width: 100%;
+    }
+    .month-block-wrapper,
+    .global-block-wrapper {
+        padding: 12px;
+    }
+    .jars-section-box {
+        padding: 12px;
+    }
     .date-row {
         flex-direction: column;
         gap: 10px;
@@ -477,6 +580,19 @@ tr:nth-child(even) {
     }
     h2 {
         font-size: 16px !important;
+    }
+    .stat-value {
+        font-size: 13pt;
+    }
+    .saved-ccy-raw {
+        font-size: 12pt;
+    }
+    .kpi-value {
+        font-size: 14pt;
+    }
+    .calc-modal-content {
+        width: 95%;
+        padding: 14px;
     }
     .calc-toggle-btn {
         bottom: 15px;
