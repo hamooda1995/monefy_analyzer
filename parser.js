@@ -17,20 +17,20 @@ function getCurrencySymbol(currencyStr, description) {
     return "$";
 }
 
-// هل هذا الصف عملة الجنيه السوري/الزيمبابوي؟ (تُقسم القيمة الحقيقية على 100)
-function isPoundCurrency(currencyStr, description) {
+// Is this row the old pound currency (SYP)? (real value divided by 100)
+// Note: the new pound (ZWL) real value is already ready, no division
+function isOldPoundCurrency(currencyStr, description) {
     const checkCurrency = (currencyStr || "").toLowerCase();
     const checkDesc = (description || "").toLowerCase();
-    return checkCurrency === "syp" || checkDesc.includes("syp") ||
-           checkCurrency === "zwl" || checkDesc.includes("zwl");
+    return checkCurrency === "syp" || checkDesc.includes("syp");
 }
 
-// استخراج القيمة الحقيقية من عمود REAL_AMOUNT مع معالجة عملة الجنيه
+// Extract the real value from REAL_AMOUNT column with old-pound handling
 function parseRealAmount(realAmountStr, currencyStr, description) {
     let cleanRealStr = realAmountStr ? realAmountStr.replace(/[^\d.-]/g, "") : "";
     let parsed = parseFloat(cleanRealStr);
     if (isNaN(parsed)) parsed = 0;
-    if (isPoundCurrency(currencyStr, description)) parsed = parsed / 100;
+    if (isOldPoundCurrency(currencyStr, description)) parsed = parsed / 100;
     return parsed;
 }
 
