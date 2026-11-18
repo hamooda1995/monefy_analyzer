@@ -181,24 +181,23 @@ function processCsvRow(columns, startDate, endDate) {
 
     // 2) حسابات ديون الأصدقاء (تُستهلك دائماً)
     if (DEBT_ACCOUNTS_SET.has(lowerAccName)) {
-        // تتبع التحويلات بين الحسابات الشخصية وحسابات الديون:
-        // مبلغ موجب داخل حساب الدين = دين جديد حصل | سالب = دين سُدد
-        // (التحويلات بين حسابي دين وحساب دين آخر تُتجاهل)
+        // Track transfers between debt accounts and personal accounts:
+        // debt balance < 0 = I owe them | > 0 = they owe me
+        // (transfers between two debt accounts are ignored)
+        const amt = parseFloat(fields.amountStr) || 0;
+        let isFlow = false;
         if (isTransferCategory(fields.category)) {
             const counterparty = getTransferCounterparty(fields.category);
-            if (counterparty && !DEBT_ACCOUNTS_SET.has(counterparty)) {
-                const monthKey = rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0");
-                const amt = parseFloat(fields.amountStr) || 0;
-                if (!AppState.debtMonthlyFlows[monthKey]) {
-                    AppState.debtMonthlyFlows[monthKey] = { incurred: 0, repaid: 0 };
-                }
-                if (amt >= 0) {
-                    AppState.debtMonthlyFlows[monthKey].incurred += amt;
-                } else {
-                    AppState.debtMonthlyFlows[monthKey].repaid += Math.abs(amt);
-                }
-            }
+            isFlow = !!(counterparty && !DEBT_ACCOUNTS_SET.has(counterparty));
         }
+        // Raw row for chronological balance reconstruction (netting runs after parsing)
+        AppState.debtAccountRows.push({
+            date: rowDate,
+            account: fields.account,
+            amt: amt,
+            monthKey: rowDate.getFullYear() + "-" + String(rowDate.getMonth() + 1).padStart(2, "0"),
+            isFlow: isFlow
+        });
         handleFriendDebt(fields);
         return;
     }
@@ -210,7 +209,63 @@ function processCsvRow(columns, startDate, endDate) {
     handleExpenseRow(fields, rowDate, startDate, endDate);
 }
 
-// --- الدالة الرئيسية: قراءة الملف وتحليله ---
+// Net debt transfers per account per month, then classify into 4 buckets.
+// Net > 0 = I paid them net | net < 0 = they paid me net.
+// Classification uses the debt account balance after the LAST transfer of that month (chronological).
+function finalizeDebtMonthlyFlows() {
+    // Reconstruct each debt account balance chronologically (file order may not be sorted)
+    const byAccount = {};
+    AppState.debtAccountRows.forEach((r) => {
+        (byAccount[r.account] = byAccount[r.account] || []).push(r);
+    });
+
+    const groups = {}; // monthKey -> account -> { net, lastBalance }
+    Object.keys(byAccount).forEach((acc) => {
+        const rows = byAccount[acc].sort((a, b) => a.date - b.date);
+
+        // Pass 1: balance at the END of each month for this account
+        // (non-flow rows like debt-to-debt transfers also move the balance)
+        const monthEndBal = {};
+        let bal = 0;
+        rows.forEach((r) => {
+            bal += r.amt;
+            monthEndBal[r.monthKey] = bal;
+        });
+
+        // Pass 2: net flow transfers per month; classify by month-end balance
+        bal = 0;
+        rows.forEach((r) => {
+            bal += r.amt;
+            if (!r.isFlow) return;
+            if (!groups[r.monthKey]) groups[r.monthKey] = {};
+            const g = groups[r.monthKey][acc] || (groups[r.monthKey][acc] = { net: 0, lastBalance: 0 });
+            g.net += r.amt;
+            g.lastBalance = monthEndBal[r.monthKey];
+        });
+    });
+
+    console.log("[DebtDebug] groups=", JSON.stringify(groups));
+    Object.keys(groups).forEach((mk) => {
+        const flow = { repaid: 0, collected: 0, newDebt: 0, lent: 0 };
+        Object.keys(groups[mk]).forEach((acc) => {
+            const g = groups[mk][acc];
+            if (g.net === 0) return;
+            const absNet = Math.abs(g.net);
+            if (g.net > 0) {
+                // net I paid the debt account
+                if (g.lastBalance < 0) flow.repaid += absNet;
+                else flow.lent += absNet;
+            } else {
+                // net the debt account paid me
+                if (g.lastBalance >= 0) flow.collected += absNet;
+                else flow.newDebt += absNet;
+            }
+        });
+        AppState.debtMonthlyFlows[mk] = flow;
+    });
+}
+
+// --- Main function: read and parse the file ---
 function processAndDisplay(isExplicitClick) {
     const fileInput = document.getElementById("csvFile");
     const startDateInput = document.getElementById("startDate").value;
@@ -257,6 +312,7 @@ function processAndDisplay(isExplicitClick) {
         AppState.friendsDebts = {};
         AppState.personalAccounts = {};
         AppState.debtMonthlyFlows = {};
+        AppState.debtAccountRows = [];
 
         for (let i = 1; i < lines.length; i++) {
             let line = lines[i];
@@ -269,6 +325,7 @@ function processAndDisplay(isExplicitClick) {
             }
         }
 
+        finalizeDebtMonthlyFlows();
         AppState.isFileAlreadyLoaded = true;
         recalculateAndRenderUI();
     };

@@ -155,8 +155,8 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
         ? `<div class='saved-breakdown'><div class='saved-breakdown-title'>💰 تفصيل المتبقي من الأموال:</div><div class='saved-breakdown-grid'>${savedCards.join("")}</div></div>`
         : "";
 
-    // تدفقات الديون لهذا الشهر: مسددة (رجعت لك) / متولدة (أعطيتها لأصحاب)
-    const debtFlows = AppState.debtMonthlyFlows[monthName] || { incurred: 0, repaid: 0 };
+    // تدفقات الديون لهذا الشهر: 4 بطاقات حسب اتجاه التحويل ورصيد حساب الدين بعده
+    const debtFlows = AppState.debtMonthlyFlows[monthName] || { repaid: 0, collected: 0, newDebt: 0, lent: 0 };
 
     let jarsBodyId = `jars_body_${monthName.replace("-", "_")}`;
 
@@ -174,8 +174,10 @@ function generateJarsHtmlForMonth(monthCategoriesMap, totalMonthExpense, current
             <div class='month-stat-card stat-highlight'><div class='stat-label'>✨ المتبقي من الأموال</div><div class='stat-value' style='color:#38A169;'>$${formatMoney(savedBreakdown.total)}</div></div>
         </div>
         <div class='debt-stats-grid'>
-            <div class='month-stat-card debt-repaid-card'><div class='stat-label'>🤝 ديون سُددت هذا الشهر</div><div class='stat-value' style='color:#38A169;'>$${formatMoney(debtFlows.repaid)}</div></div>
-            <div class='month-stat-card debt-incurred-card'><div class='stat-label'>📤 ديون حصلت هذا الشهر</div><div class='stat-value' style='color:#DD6B20;'>$${formatMoney(debtFlows.incurred)}</div></div>
+            <div class='month-stat-card debt-repaid-card'><div class='stat-label'>💸 الديون يلي انا سددتها</div><div class='stat-value' style='color:#38A169;'>$${formatMoney(debtFlows.repaid)}</div></div>
+            <div class='month-stat-card debt-collected-card'><div class='stat-label'>🤝 الديون يلي انا حصلتها</div><div class='stat-value' style='color:#3182CE;'>$${formatMoney(debtFlows.collected)}</div></div>
+            <div class='month-stat-card debt-newdebt-card'><div class='stat-label'>📥 ديون تسجّلت عليّ جديدة هالشهر</div><div class='stat-value' style='color:#DD6B20;'>$${formatMoney(debtFlows.newDebt)}</div></div>
+            <div class='month-stat-card debt-lent-card'><div class='stat-label'>🤲 ديون دينت فيها حسابات تانية</div><div class='stat-value' style='color:#805AD5;'>$${formatMoney(debtFlows.lent)}</div></div>
         </div>
         ${savedBreakdownHtml}
         ${totalIncome === 0 ? `<p style='text-align:center; font-size:12px; color:#DD6B20; margin:0 0 10px 0;'>⚠️ لم يُكتشف راتب لهذا الشهر — المستهدفات أدناه ستظهر بقيمة صفر. تأكد من تصنيف Salary في Monefy.</p>` : ""}

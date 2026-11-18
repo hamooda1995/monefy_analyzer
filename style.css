@@ -545,6 +545,18 @@ tbody tr:hover td { background-color: rgba(147, 197, 253, 0.12); }
     border: 1.5px solid var(--warning);
     background: rgba(59, 130, 246, 0.12);
 }
+.debt-collected-card {
+    border: 1.5px solid #3182ce;
+    background: rgba(49, 130, 206, 0.12);
+}
+.debt-newdebt-card {
+    border: 1.5px solid #DD6B20;
+    background: rgba(221, 107, 32, 0.12);
+}
+.debt-lent-card {
+    border: 1.5px solid #805ad5;
+    background: rgba(128, 90, 213, 0.12);
+}
 .saved-breakdown { margin: 0 0 12px 0; }
 .saved-breakdown-title {
     font-size: 12px;

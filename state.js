@@ -30,8 +30,11 @@ const AppState = {
     friendsDebts: {},
 
     // تدفقات الديون الشهرية بين الحسابات الشخصية وحسابات الأصدقاء
-    // { monthKey: { incurred: ديون جديدة حصلت, repaid: ديون سُددت } } — بالقيمة الدولارية
+    // { monthKey: { repaid, collected, newDebt, lent } } — بالقيمة الدولارية
     debtMonthlyFlows: {},
+
+    // raw rows of debt accounts, used to rebuild balances chronologically for monthly netting
+    debtAccountRows: [],
 
     // أرصدة الحسابات الشخصية: { accountName: { balance, realBalance, currency } }
     personalAccounts: {},
