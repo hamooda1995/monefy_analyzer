@@ -219,33 +219,66 @@ function finalizeDebtMonthlyFlows() {
         (byAccount[r.account] = byAccount[r.account] || []).push(r);
     });
 
-    const groups = {}; // monthKey -> account -> { net, lastBalance }
+    const groups = {}; // monthKey -> account -> { net, balBefore }
     Object.keys(byAccount).forEach((acc) => {
         const rows = byAccount[acc].sort((a, b) => a.date - b.date);
 
-        // Pass 1: balance at the END of each month for this account
-        // (non-flow rows like debt-to-debt transfers also move the balance)
-        const monthEndBal = {};
+        // Pass واحد: صافي التدفقات الشهرية + الرصيد قبل أول تدفق بالشهر.
+        // نستخدم رصيد ما قبل حركات الشهر (وليس رصيد نهاية الشهر) لأن حركات الشهر
+        // نفسها قد تقلب إشارة الرصيد (مثلاً دفعة تسوية أخيرة تصفّر الدين).
         let bal = 0;
+        const monthFirstFlowBal = {};
         rows.forEach((r) => {
-            bal += r.amt;
-            monthEndBal[r.monthKey] = bal;
-        });
-
-        // Pass 2: net flow transfers per month; classify by month-end balance
-        bal = 0;
-        rows.forEach((r) => {
+            if (r.isFlow && monthFirstFlowBal[r.monthKey] === undefined) {
+                monthFirstFlowBal[r.monthKey] = bal; // الرصيد قبل أول تدفق بالشهر
+            }
             bal += r.amt;
             if (!r.isFlow) return;
             if (!groups[r.monthKey]) groups[r.monthKey] = {};
-            const g = groups[r.monthKey][acc] || (groups[r.monthKey][acc] = { net: 0, lastBalance: 0 });
+            const g = groups[r.monthKey][acc] || (groups[r.monthKey][acc] = { net: 0, balBefore: 0 });
             g.net += r.amt;
-            g.lastBalance = monthEndBal[r.monthKey];
+            g.balBefore = monthFirstFlowBal[r.monthKey];
         });
     });
 
     console.log("[DebtDebug] groups=", JSON.stringify(groups));
+
+    // تسجيل تفصيلي: كل صف تدفق مع تاريخه ومبلغه والرصيد قبل حركات الشهر — لتشخيص أي مبلغ غلط
+    const flowRowsDetail = {};
+    Object.keys(byAccount).forEach((acc) => {
+        const rows = byAccount[acc].sort((a, b) => a.date - b.date);
+        let bal = 0;
+        const monthFirstFlowBal = {};
+        rows.forEach((r) => {
+            if (r.isFlow && monthFirstFlowBal[r.monthKey] === undefined) {
+                monthFirstFlowBal[r.monthKey] = bal;
+            }
+            bal += r.amt;
+        });
+        rows.forEach((r) => {
+            if (!r.isFlow) return;
+            const mk = r.monthKey;
+            if (!flowRowsDetail[mk]) flowRowsDetail[mk] = {};
+            if (!flowRowsDetail[mk][acc]) flowRowsDetail[mk][acc] = [];
+            flowRowsDetail[mk][acc].push({
+                date: r.date.toISOString().slice(0, 10),
+                amt: r.amt,
+                balBefore: monthFirstFlowBal[mk]
+            });
+        });
+    });
+    console.log("[DebtDebug] flowRowsDetail=", JSON.stringify(flowRowsDetail, null, 1));
+
+    // حصر الأشهر على فترة التحليل المحددة (بداية/نهاية) — تجنب أشهر خارج الفترة
+    const inPeriod = (mk) => {
+        if (!AppState.periodStart || !AppState.periodEnd) return true;
+        const [y, m] = mk.split("-").map(Number);
+        const monthStart = new Date(y, m - 1, 1);
+        const monthEnd = new Date(y, m, 0, 23, 59, 59, 999);
+        return monthEnd >= AppState.periodStart && monthStart <= AppState.periodEnd;
+    };
     Object.keys(groups).forEach((mk) => {
+        if (!inPeriod(mk)) return;
         const flow = { repaid: 0, collected: 0, newDebt: 0, lent: 0 };
         Object.keys(groups[mk]).forEach((acc) => {
             const g = groups[mk][acc];
@@ -253,11 +286,11 @@ function finalizeDebtMonthlyFlows() {
             const absNet = Math.abs(g.net);
             if (g.net > 0) {
                 // net I paid the debt account
-                if (g.lastBalance < 0) flow.repaid += absNet;
+                if (g.balBefore < 0) flow.repaid += absNet;
                 else flow.lent += absNet;
             } else {
                 // net the debt account paid me
-                if (g.lastBalance >= 0) flow.collected += absNet;
+                if (g.balBefore >= 0) flow.collected += absNet;
                 else flow.newDebt += absNet;
             }
         });

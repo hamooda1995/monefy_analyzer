@@ -13,8 +13,8 @@
 // warnOnOver = true إذا تجاوز الصرف المستهدف يُعتبر تجاوزاً للميزانية (شريط أحمر)
 const JARS_MAPPING = {
     fixed: {
-        name: "مصاريف ثابتة وأساسية (55%)",
-        targetPercent: 0.55,
+        name: "مصاريف ثابتة وأساسية (65%)",
+        targetPercent: 0.65,
         color: "#3182CE",
         warnOnOver: true,
         categories: [
@@ -34,13 +34,6 @@ const JARS_MAPPING = {
             "Electronics", "Gifts", "Shop", "YYY"
         ],
         advice: "ميزانية الرفاهية والمطاعم والتسوق غير الضروري دون تأنيب ضمير."
-    },
-    debt: {
-        name: "سداد ديون (10%)",
-        targetPercent: 0.1,
-        color: "#E53E3E",
-        categories: [],
-        advice: "مخصصة لسداد أي التزامات سابقة أو دفعات بينية مستحقة للأصدقاء."
     },
     savings: {
         name: "تحويش للمستقبل (10%)",

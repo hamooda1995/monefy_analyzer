@@ -39,6 +39,9 @@ const AppState = {
     // أرصدة الحسابات الشخصية: { accountName: { balance, realBalance, currency } }
     personalAccounts: {},
 
+    // ميزانيات التصنيفات الشهرية: { category: budgetAmount } — تُحمَّل من localStorage
+    categoryBudgets: {},
+
     // متتبعات التصنيفات (تُبنى أثناء التحليل)
     categoryMonthsTracker: {},      // { category: Set<monthKey> }
     categoryAmountsTracker: {},     // { category: [amounts...] }

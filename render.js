@@ -152,7 +152,7 @@ function recalculateAndRenderUI() {
             chartHtml += `<div class='chart-bar-row'><div class='chart-label'>📁 ${categoryName}</div><div class='chart-bar-container'><div class='chart-bar-fill' style='width: ${categoryPercentage.toFixed(1)}%;'></div></div><div class='chart-value'>$${formatMoney(categoryTotal)} (${categoryPercentage.toFixed(1)}%)</div></div>`;
 
             let catRowsClass = `cat_rows_${mIdx}_${cIdx}`;
-            htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▼</span> 📁 [${categoryName}]</span><span style='font-size: 13pt;'>إجمالي القسم: $${formatMoney(categoryTotal)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
+            htmlTable += `<tr class='category-header-row' onclick="toggleCategorySection('${catRowsClass}', this)" data-target-class='${catRowsClass}'><td colspan='4'><div class='cat-header-flex'><span><span class='collapse-icon'>▼</span> 📁 [${categoryName}]</span>${BudgetManager.progressHtml(categoryName, categoryTotal)}<span style='font-size: 13pt;'>إجمالي القسم: $${formatMoney(categoryTotal)} (${categoryPercentage.toFixed(1)}%)</span></div></td></tr>`;
 
             let descMap = categoriesMap[categoryName];
             Object.keys(descMap)

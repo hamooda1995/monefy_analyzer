@@ -138,7 +138,7 @@ button:active {
     transform: translateY(0);
     box-shadow: 0 3px 10px rgba(59, 130, 246, 0.35);
 }
-#resultsContainer { max-width: 800px; width: 100%; display: none; }
+#resultsContainer { max-width: 1400px; width: 100%; display: none; }
 .month-block-wrapper,
 .global-block-wrapper {
     background: var(--glass-bg);
@@ -608,6 +608,13 @@ tbody tr:hover td { background-color: rgba(147, 197, 253, 0.12); }
     color: var(--text-muted);
     margin-top: 5px;
 }
+@media (max-width: 900px) {
+    #resultsContainer { max-width: 100%; }
+    .month-block-wrapper,
+    .global-block-wrapper { padding: 18px; }
+    th { font-size: 12pt; padding: 10px 8px; }
+    td { font-size: 11pt; padding: 8px 6px; }
+}
 @media (max-width: 600px) {
     body { padding: 10px; }
     .container { padding: 18px; width: 100%; border-radius: var(--radius-lg); }
@@ -658,4 +665,45 @@ tbody tr:hover td { background-color: rgba(147, 197, 253, 0.12); }
 }
 [data-theme="dark"] .search-results-table .search-total-row td {
     background: #1e293b;
+}
+
+/* ===== شارات الميزانية داخل ترويسة التصنيف ===== */
+.budget-badge {
+    font-size: 11pt;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.budget-badge.budget-ok { background: rgba(46, 204, 113, 0.15); color: #27ae60; border: 1px solid rgba(46, 204, 113, 0.4); }
+.budget-badge.budget-warn { background: rgba(243, 156, 18, 0.15); color: #e67e22; border: 1px solid rgba(243, 156, 18, 0.4); }
+.budget-badge.budget-over { background: rgba(231, 76, 60, 0.15); color: #c0392b; border: 1px solid rgba(231, 76, 60, 0.4); }
+
+/* ===== صفوف نافذة إعدادات الميزانية ===== */
+.budget-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--glass-border-soft);
+}
+.budget-cat-info { display: flex; flex-direction: column; }
+.budget-cat-name { font-weight: bold; color: var(--text-main); }
+.budget-cat-avg { font-size: 11pt; color: var(--text-muted); }
+.budget-input {
+    width: 110px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--glass-bg-strong);
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+/* ===== شارات داخل صف الإجمالي (خلفية متدرجة) ===== */
+.category-total-row .budget-badge {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #1a202c !important;
+    border: 1px solid rgba(255, 255, 255, 0.7) !important;
 }

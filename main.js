@@ -17,6 +17,9 @@ window.addEventListener("DOMContentLoaded", () => {
     // تهيئة الثيم (الوضع المظلم/الفاتح)
     ThemeManager.init();
 
+    // تحميل ميزانيات التصنيفات المحفوظة
+    if (typeof BudgetManager !== "undefined") BudgetManager.init();
+
     // إدارة الـ Service Worker
     setupServiceWorker();
 });
