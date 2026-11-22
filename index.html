@@ -43,6 +43,25 @@
             </div>
         </div>
 
+        <!-- نافذة نتائج البحث العامة -->
+        <div class="calc-modal-overlay" id="searchModalOverlay" onclick="if(event.target===this) toggleSearchModal(false)">
+            <div class="calc-modal-content" style="max-width: 900px;">
+                <div class="calc-modal-header">
+                    <h3>🔍 نتائج البحث</h3>
+                    <button class="calc-close-btn" onclick="toggleSearchModal(false)">✖</button>
+                </div>
+                <div id="searchResultsCount" style="margin-bottom: 10px; font-weight: bold; color: var(--text-muted);"></div>
+                <div style="max-height: 60vh; overflow-y: auto;">
+                    <table class="search-results-table">
+                        <thead>
+                            <tr><th>التاريخ</th><th>الشهر</th><th>التصنيف</th><th>الوصف</th><th>المبلغ</th></tr>
+                        </thead>
+                        <tbody id="searchResultsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div class="container">
             <button id="installBtn" style="display: none">Install App</button>
 
@@ -89,6 +108,16 @@
     <button onclick="processAndDisplay(true)" style="flex: 2;">تحليل وعرض الحسابات والمخططات فورا 🚀</button>
     <button onclick="exportAnalysisToCSV()" class="calc-btn-secondary" style="flex: 1; margin-top: 10px; background-color: #38A169 !important;">📥 تصدير التقرير (CSV)</button>
 </div>
+
+            <div class="date-row" style="margin-top: 10px;">
+                <div class="form-group" style="width: 100%;">
+                    <label for="globalSearchInput">🔍 بحث عام بحسب الوصف:</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="globalSearchInput" placeholder="اكتب كلمة للبحث في كل المصاريف المحللة..." style="flex: 1;" onkeydown="if(event.key==='Enter') openSearchResults()" />
+                        <button onclick="openSearchResults()" style="width: auto; margin-top: 0;">بحث 🔍</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="resultsContainer"></div>

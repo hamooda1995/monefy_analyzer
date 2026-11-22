@@ -624,3 +624,38 @@ tbody tr:hover td { background-color: rgba(147, 197, 253, 0.12); }
     .calc-toggle-btn { bottom: 15px; left: 15px; padding: 10px 14px; font-size: 13px; }
     .theme-toggle-btn { top: 12px; left: 12px; padding: 8px 14px; font-size: 13px; }
 }
+/* ===== جدول نتائج البحث العامة ===== */
+.search-results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.search-results-table th {
+    background: #f1f5f9;
+    padding: 8px;
+    text-align: right;
+    border-bottom: 2px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    color: var(--text-header);
+}
+[data-theme="dark"] .search-results-table th {
+    background: #1e293b;
+}
+.search-results-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-main);
+}
+.search-results-table tbody tr:hover td {
+    background: var(--kpi-bg);
+}
+.search-results-table .search-total-row td {
+    background: #f1f5f9;
+    font-weight: bold;
+    border-top: 2px solid var(--border-color);
+}
+[data-theme="dark"] .search-results-table .search-total-row td {
+    background: #1e293b;
+}

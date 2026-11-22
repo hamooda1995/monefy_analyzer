@@ -117,7 +117,6 @@ function recalculateAndRenderUI() {
 
         let totalMonthContainerId = `total_month_container_${mIdx}`;
         let monthBodyId = `month_body_${mIdx}`;
-        let searchInputId = `search_input_${mIdx}`;
 
         let htmlTable = `
             <div style="padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border: 2px solid #90cdf4;"
@@ -132,9 +131,6 @@ function recalculateAndRenderUI() {
         htmlTable += jarsResult.html;
 
         htmlTable += `
-        <div style="margin-top: 15px; margin-bottom: 10px;">
-            <input type="text" id="${searchInputId}" onkeyup="filterTableRows('${searchInputId}', '${monthBodyId}')" placeholder="🔍 بحث سريع عن مصروف أو بند داخل هذا الشهر..." style="width: 100%; box-sizing: border-box; padding: 8px 12px; font-size: 13px;">
-        </div>
         <div class='table-responsive-wrapper'><table>
             <tr class='month-header-row'>
                 <td colspan='4' onclick="toggleSectionBox('${monthBodyId}', this)" style="background: #edf2f7; color: #4a5568; font-size: 12pt; border: 1px solid #cbd5e0; padding: 8px;">
