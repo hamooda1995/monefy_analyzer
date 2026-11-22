@@ -761,13 +761,13 @@ function renderPersonalAccountsSection(data) {
 //    لإضافة قسم جديد: اكتب دالة render(data) وأضفها هنا.
 // ===============================================================
 const ReportSectionsRegistry = [
-    { key: "subscriptions",    render: renderSubscriptionsSection },
-    { key: "categoryTrends",   render: renderCategoryTrendsSection },
-    { key: "benchmark",        render: renderBenchmarkSection },
-    { key: "expenseTrends",   render: renderExpenseTrendsSection },
-    { key: "savingsRate",      render: renderSavingsRateSection },
-    { key: "projection",       render: renderProjectionSection },
-    { key: "friendsDebts",     render: renderFriendsDebtsSection },
-    { key: "budgetCalculator", render: renderBudgetCalculatorSection },
-    { key: "personalAccounts", render: renderPersonalAccountsSection }
+    { key: "subscriptions",    label: "🔁 الاشتراكات",      render: renderSubscriptionsSection },
+    { key: "categoryTrends",   label: "🗂️ التصنيفات",       render: renderCategoryTrendsSection },
+    { key: "benchmark",        label: "📈 المقارنة",         render: renderBenchmarkSection },
+    { key: "expenseTrends",    label: "📉 الاتجاهات",        render: renderExpenseTrendsSection },
+    { key: "savingsRate",      label: "💰 الادخار",          render: renderSavingsRateSection },
+    { key: "projection",       label: "🔮 التوقع",           render: renderProjectionSection },
+    { key: "friendsDebts",     label: "🤝 الديون",           render: renderFriendsDebtsSection },
+    { key: "budgetCalculator", label: "🧮 حاسبة الميزانية",  render: renderBudgetCalculatorSection },
+    { key: "personalAccounts", label: "🏦 الحسابات",         render: renderPersonalAccountsSection }
 ];

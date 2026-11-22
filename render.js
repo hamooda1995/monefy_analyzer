@@ -69,6 +69,7 @@ function recalculateAndRenderUI() {
             `<span style='font-size:13px; font-weight:normal; color:var(--text-muted);'>` +
             `تأكد من: اختيار ملف CSV صحيح، وأن التواريخ تشمل حركات Monefy الفعلية، ` +
             `وأن التصنيفات ليست تحويلات داخلية (To '/From ').</span></div>`;
+        if (typeof clearTopNav === "function") clearTopNav();
         return;
     }
 
@@ -94,12 +95,28 @@ function recalculateAndRenderUI() {
     `;
 
     let kpiWrapper = document.createElement("div");
+    kpiWrapper.id = "kpi-section";
+    kpiWrapper.className = "nav-section";
     kpiWrapper.innerHTML = kpiHtml;
     fragment.appendChild(kpiWrapper);
 
-    // ===== 3) أقسام الأشهر =====
+    // ===== 3) أقسام الأشهر (مجموعة قابلة للطي) =====
     let runningCarryover = parseFloat(document.getElementById("initial-carryover-input").value) || 0;
     let previousMonthTotal = 0;
+
+    // غلاف مجموعة الأشهر — مطوي افتراضياً، يُفتح لعرض كل شهر
+    const monthsWrapper = document.createElement("div");
+    monthsWrapper.className = "global-block-wrapper months-group-wrapper nav-section";
+    monthsWrapper.id = "months-group-section";
+    monthsWrapper.innerHTML = `
+        <h2 onclick="toggleSectionBox('months_group_body', this)" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📅 تحليل الأشهر (${sortedMonths.length} شهر)
+        </h2>
+        <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>اضغط لعرض الأشهر — كل شهر قابل للطي بشكل مستقل لعرض تفاصيله</p>
+        <div id='months_group_body' style='display: none;'></div>
+    `;
+    fragment.appendChild(monthsWrapper);
+    const monthsBody = monthsWrapper.querySelector("#months_group_body");
 
     sortedMonths.forEach((monthName, mIdx) => {
         let monthTotal = 0;
@@ -114,6 +131,7 @@ function recalculateAndRenderUI() {
 
         let monthBlock = document.createElement("div");
         monthBlock.className = "month-block-wrapper";
+        monthBlock.id = "month-block-" + mIdx;
 
         let totalMonthContainerId = `total_month_container_${mIdx}`;
         let monthBodyId = `month_body_${mIdx}`;
@@ -195,7 +213,7 @@ function recalculateAndRenderUI() {
         monthDataDiv.innerHTML = htmlTable + totalTableHtml + chartHtml + `</div>`;
 
         monthBlock.appendChild(monthDataDiv);
-        fragment.appendChild(monthBlock);
+        monthsBody.appendChild(monthBlock);
 
         runningCarryover = jarsResult.monthSurplus > 0 ? jarsResult.monthSurplus : 0;
         previousMonthTotal = monthTotal;
@@ -220,6 +238,8 @@ function recalculateAndRenderUI() {
     globalChartHtml += `</div></div>`;
 
     let globalBlock = document.createElement("div");
+    globalBlock.id = "global-chart-section";
+    globalBlock.className = "nav-section";
     globalBlock.innerHTML = globalChartHtml;
     fragment.appendChild(globalBlock);
 
@@ -236,9 +256,14 @@ function recalculateAndRenderUI() {
 
     ReportSectionsRegistry.forEach((section) => {
         let sectionDiv = document.createElement("div");
+        sectionDiv.id = "section-" + section.key;
+        sectionDiv.className = "nav-section";
         sectionDiv.innerHTML = section.render(reportData);
         fragment.appendChild(sectionDiv);
     });
 
     resultsContainer.appendChild(fragment);
+
+    // بناء روابط شريط التنقل العلوي
+    if (typeof buildTopNav === "function") buildTopNav();
 }

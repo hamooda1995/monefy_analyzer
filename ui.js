@@ -109,3 +109,63 @@ function openSearchResults() {
 
     toggleSearchModal(true);
 }
+
+// ===============================================================
+// 🧭 شريط التنقل العلوي (Top Navigation)
+// ===============================================================
+
+// بناء روابط الأقسام في شريط التنقل بعد كل تحليل
+function buildTopNav() {
+    const linksEl = document.getElementById("topNavLinks");
+    if (!linksEl) return;
+
+    const links = [
+        { id: "kpi-section",        label: "📊 نظرة عامة" },
+        { id: "months-group-section", label: "📅 الأشهر" },
+        { id: "global-chart-section", label: "👑 الشامل" }
+    ];
+    ReportSectionsRegistry.forEach((s) => {
+        links.push({ id: "section-" + s.key, label: s.label });
+    });
+
+    linksEl.innerHTML = links
+        .map((l) => `<button class="top-nav-link" onclick="scrollToSection('${l.id}')">${l.label}</button>`)
+        .join("");
+}
+
+// مسح روابط شريط التنقل (عند عدم وجود بيانات)
+function clearTopNav() {
+    const linksEl = document.getElementById("topNavLinks");
+    if (linksEl) linksEl.innerHTML = "";
+}
+
+// فتح أول قسم مطوي داخل الهدف (لتحسين تجربة التنقل)
+function openFirstCollapsed(root) {
+    const candidates = root.querySelectorAll(
+        ".global-block-wrapper > div[id], .month-block-wrapper [id^='total_month_container_']"
+    );
+    for (const c of candidates) {
+        if (c.style.display === "none") {
+            c.style.display = "";
+            const wrapper = c.closest(".global-block-wrapper, .month-block-wrapper");
+            const icon = wrapper ? wrapper.querySelector(".collapse-icon") : null;
+            if (icon) icon.innerHTML = "▲";
+            break;
+        }
+    }
+}
+
+// التمرير السلس إلى قسم معيّن + فتحه إذا كان مطوياً + تمييزه مؤقتاً
+function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    openFirstCollapsed(el);
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.classList.add("nav-flash");
+    setTimeout(() => el.classList.remove("nav-flash"), 1400);
+}
+
+// العودة إلى أعلى الصفحة
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
