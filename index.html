@@ -17,6 +17,7 @@
                     <button class="top-nav-icon-btn" id="themeToggleBtn" onclick="toggleDarkModeFinancialApp()" title="تبديل المظهر">🌙</button>
                     <button class="top-nav-icon-btn" onclick="toggleCurrencyCalcModal(true)" title="حاسبة العملات">🧮</button>
                     <button class="top-nav-icon-btn" onclick="toggleBudgetModal(true)" title="ميزانية التصنيفات">💰</button>
+                    <button class="top-nav-icon-btn" onclick="toggleMappingModal(true)" title="ربط الأوصاف المتشابهة">🔗</button>
                     <button class="top-nav-icon-btn" onclick="exportAnalysisToCSV()" title="تصدير التقرير (CSV)">📥</button>
                     <button class="top-nav-icon-btn" onclick="toggleSearchModal(true)" title="البحث">🔍</button>
                     <button class="top-nav-icon-btn" onclick="scrollToTop()" title="العودة للأعلى">⬆️</button>
@@ -66,6 +67,21 @@
                         <tbody id="searchResultsBody"></tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- نافذة ربط الأوصاف المتشابهة -->
+        <div class="calc-modal-overlay" id="mappingModalOverlay" onclick="if(event.target===this) toggleMappingModal(false)">
+            <div class="calc-modal-content" style="max-width: 800px;">
+                <div class="calc-modal-header">
+                    <h3>🔗 ربط الأوصاف المتشابهة</h3>
+                    <button class="calc-close-btn" onclick="toggleMappingModal(false)">✖</button>
+                </div>
+                <p style="margin: 0 0 12px; color: var(--text-muted); font-size: 13px;">
+                    🏷️ التصنيفات الموحدة: عدّل الكلمات أو أضف تصنيفات جديدة.
+                    📋 الأوصاف غير الموحدة: حدّد أوصافاً وأضفها لتصنيف موجود أو أنشئ واحد جديد.
+                </p>
+                <div id="mappingSuggestionsContainer" style="max-height: 60vh; overflow-y: auto;"></div>
             </div>
         </div>
 
@@ -131,6 +147,7 @@
         <script src="parser.js"></script>
         <script src="jars.js"></script>
         <script src="budget.js"></script>
+        <script src="mapper.js"></script>
         <script src="sections.js"></script>
         <script src="render.js"></script>
         <script src="ui.js"></script>

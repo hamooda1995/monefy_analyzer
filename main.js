@@ -20,6 +20,9 @@ window.addEventListener("DOMContentLoaded", () => {
     // تحميل ميزانيات التصنيفات المحفوظة
     if (typeof BudgetManager !== "undefined") BudgetManager.init();
 
+    // تحميل ربط الأوصاف المتشابهة المحفوظ
+    if (typeof DescriptionMapper !== "undefined") DescriptionMapper.init();
+
     // إدارة الـ Service Worker
     setupServiceWorker();
 });

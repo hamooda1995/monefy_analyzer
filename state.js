@@ -42,6 +42,12 @@ const AppState = {
     // ميزانيات التصنيفات الشهرية: { category: budgetAmount } — تُحمَّل من localStorage
     categoryBudgets: {},
 
+    // ربط الأوصاف المتشابهة: { originalLower: canonicalName } — تُحمَّل من localStorage
+    descriptionMappings: {},
+
+    // تصنيفات الأوصاف الموحدة: { categoryName: [keywords...] } — تُحمَّل من localStorage
+    descriptionCategories: {},
+
     // متتبعات التصنيفات (تُبنى أثناء التحليل)
     categoryMonthsTracker: {},      // { category: Set<monthKey> }
     categoryAmountsTracker: {},     // { category: [amounts...] }

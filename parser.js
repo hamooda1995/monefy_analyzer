@@ -359,6 +359,10 @@ function processAndDisplay(isExplicitClick) {
         }
 
         finalizeDebtMonthlyFlows();
+        // تطبيق ربط الأوصاف المتشابهة قبل إعادة الرسم
+        if (typeof DescriptionMapper !== "undefined" && DescriptionMapper.applyAllMappings) {
+            DescriptionMapper.applyAllMappings();
+        }
         AppState.isFileAlreadyLoaded = true;
         recalculateAndRenderUI();
     };
