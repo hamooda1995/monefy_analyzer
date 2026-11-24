@@ -66,13 +66,22 @@ function updateAdditionsMemory(monthKey, inputElement) {
     recalculateAndRenderUI();
 }
 
-// فتح/إغلاق نافذة نتائج البحث العامة
+// فتح/إغلاق نافذة نتائج البحث العامة — مع مسح النتائج عند الإغلاق
 function toggleSearchModal(show) {
     const modal = document.getElementById("searchModalOverlay");
-    if (modal) modal.style.display = show ? "flex" : "none";
+    if (!modal) return;
+    modal.style.display = show ? "flex" : "none";
+    if (!show) {
+        const input = document.getElementById("globalSearchInput");
+        const tbody = document.getElementById("searchResultsBody");
+        const countEl = document.getElementById("searchResultsCount");
+        if (input) input.value = "";
+        if (countEl) countEl.textContent = "";
+        if (tbody) tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>اكتب كلمة للبحث أولاً...</td></tr>";
+    }
 }
 
-// البحث العام بحسب الوصف عبر كل البيانات المحللة وعرض النتائج في modal
+// البحث العام بحسب الوصف أو التصنيف عبر كل البيانات المحللة وعرض النتائج في modal
 function openSearchResults() {
     const query = (document.getElementById("globalSearchInput").value || "").trim().toLowerCase();
     const tbody = document.getElementById("searchResultsBody");
@@ -86,7 +95,10 @@ function openSearchResults() {
     }
 
     const results = AppState.parsedRowsData
-        .filter((r) => (r.description || "").toLowerCase().includes(query))
+        .filter((r) =>
+            (r.description || "").toLowerCase().includes(query) ||
+            (r.category || "").toLowerCase().includes(query)
+        )
         .sort((a, b) => a.date - b.date);
 
     countEl.textContent = `عدد النتائج: ${results.length}`;
@@ -114,10 +126,10 @@ function openSearchResults() {
 // 🧭 شريط التنقل العلوي (Top Navigation)
 // ===============================================================
 
-// بناء روابط الأقسام في شريط التنقل بعد كل تحليل
+// بناء تبويبات أقسام التقرير في الشريط المنفصل بعد كل تحليل
 function buildTopNav() {
-    const linksEl = document.getElementById("topNavLinks");
-    if (!linksEl) return;
+    const bar = document.getElementById("reportTabsBar");
+    if (!bar) return;
 
     const links = [
         { id: "kpi-section",        label: "📊 نظرة عامة" },
@@ -128,15 +140,42 @@ function buildTopNav() {
         links.push({ id: "section-" + s.key, label: s.label });
     });
 
-    linksEl.innerHTML = links
-        .map((l) => `<button class="top-nav-link" onclick="scrollToSection('${l.id}')">${l.label}</button>`)
+    bar.innerHTML = links
+        .map((l) => `<button class="top-nav-link" data-tab="${l.id}" onclick="switchReportTab('${l.id}')">${l.label}</button>`)
         .join("");
+
+    bar.style.display = "";
+
+    // إظهار تبويب "نظرة عامة" افتراضياً وإخفاء باقي الأقسام لتقليل الـ scroll
+    switchReportTab("kpi-section", true);
 }
 
-// مسح روابط شريط التنقل (عند عدم وجود بيانات)
+// مسح تبويبات التقرير وإخفاء الشريط (عند عدم وجود بيانات)
 function clearTopNav() {
-    const linksEl = document.getElementById("topNavLinks");
-    if (linksEl) linksEl.innerHTML = "";
+    const bar = document.getElementById("reportTabsBar");
+    if (bar) {
+        bar.innerHTML = "";
+        bar.style.display = "none";
+    }
+}
+
+// طي/فتح نموذج الإدخال يدوياً
+function toggleFormCollapse() {
+    const body = document.getElementById("formCollapseBody");
+    const icon = document.getElementById("formCollapseIcon");
+    if (!body) return;
+    const willShow = body.style.display === "none";
+    body.style.display = willShow ? "" : "none";
+    if (icon) icon.innerHTML = willShow ? "▲" : "▼";
+}
+
+// طي نموذج الإدخال تلقائياً بعد التحليل لعرض النتائج مباشرة
+function collapseInputForm() {
+    const body = document.getElementById("formCollapseBody");
+    const icon = document.getElementById("formCollapseIcon");
+    if (!body) return;
+    body.style.display = "none";
+    if (icon) icon.innerHTML = "▼";
 }
 
 // فتح أول قسم مطوي داخل الهدف (لتحسين تجربة التنقل)
@@ -152,6 +191,28 @@ function openFirstCollapsed(root) {
             if (icon) icon.innerHTML = "▲";
             break;
         }
+    }
+}
+
+// التبديل بين تبويبات التقرير — إظهار قسم واحد فقط لتقليل الـ scroll
+function switchReportTab(id, skipScroll) {
+    const container = document.getElementById("resultsContainer");
+    if (!container) return;
+
+    container.querySelectorAll(".nav-section").forEach((panel) => {
+        panel.style.display = panel.id === id ? "" : "none";
+    });
+
+    document.querySelectorAll("#reportTabsBar .top-nav-link").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-tab") === id);
+    });
+
+    if (skipScroll) return;
+
+    const el = document.getElementById(id);
+    if (el) {
+        openFirstCollapsed(el);
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 }
 

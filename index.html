@@ -13,10 +13,12 @@
         <nav class="top-nav" id="topNav">
             <div class="top-nav-inner">
                 <span class="top-nav-title">📊 تحليلات Monefy</span>
-                <div class="top-nav-links" id="topNavLinks"></div>
                 <div class="top-nav-actions">
                     <button class="top-nav-icon-btn" id="themeToggleBtn" onclick="toggleDarkModeFinancialApp()" title="تبديل المظهر">🌙</button>
                     <button class="top-nav-icon-btn" onclick="toggleCurrencyCalcModal(true)" title="حاسبة العملات">🧮</button>
+                    <button class="top-nav-icon-btn" onclick="toggleBudgetModal(true)" title="ميزانية التصنيفات">💰</button>
+                    <button class="top-nav-icon-btn" onclick="exportAnalysisToCSV()" title="تصدير التقرير (CSV)">📥</button>
+                    <button class="top-nav-icon-btn" onclick="toggleSearchModal(true)" title="البحث">🔍</button>
                     <button class="top-nav-icon-btn" onclick="scrollToTop()" title="العودة للأعلى">⬆️</button>
                 </div>
             </div>
@@ -48,8 +50,12 @@
         <div class="calc-modal-overlay" id="searchModalOverlay" onclick="if(event.target===this) toggleSearchModal(false)">
             <div class="calc-modal-content" style="max-width: 900px;">
                 <div class="calc-modal-header">
-                    <h3>🔍 نتائج البحث</h3>
+                    <h3>🔍 البحث</h3>
                     <button class="calc-close-btn" onclick="toggleSearchModal(false)">✖</button>
+                </div>
+                <div class="search-row" style="margin-bottom: 12px;">
+                    <input type="text" id="globalSearchInput" placeholder="اكتب كلمة للبحث في كل المصاريف المحللة..." onkeydown="if(event.key==='Enter') openSearchResults()" />
+                    <button onclick="openSearchResults()" style="width:auto; margin-top:0;">بحث 🔍</button>
                 </div>
                 <div id="searchResultsCount" style="margin-bottom: 10px; font-weight: bold; color: var(--text-muted);"></div>
                 <div style="max-height: 60vh; overflow-y: auto;">
@@ -83,55 +89,36 @@
         <div class="container">
             <button id="installBtn" style="display: none">Install App</button>
 
-            <h2>📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة</h2>
+            <h2 class="form-collapse-header" onclick="toggleFormCollapse()" style="cursor:pointer; user-select:none;">
+                <span class="collapse-icon" id="formCollapseIcon">▲</span> 📊 لوحة تحليلات ومخططات مصاريف Monefy الشاملة
+            </h2>
+            <div id="formCollapseBody">
 
-            <!-- قسم البيانات والفترة -->
-            <div class="form-section">
-                <div class="form-section-title">📂 البيانات والفترة</div>
-                <div class="form-group">
-                    <label for="csvFile">📄 ملف البيانات الصادر (CSV):</label>
+            <div class="compact-input-row">
+                <div class="compact-field compact-field-file">
+                    <label for="csvFile">📄 ملف CSV</label>
                     <input type="file" id="csvFile" accept=".csv" />
                 </div>
-                <div class="date-row">
-                    <div class="form-group">
-                        <label for="startDate">📅 تاريخ البدء:</label>
-                        <input type="date" id="startDate" value="2026-05-01" />
-                    </div>
-                    <div class="form-group">
-                        <label for="endDate">📅 تاريخ النهاية (مشمول):</label>
-                        <input type="date" id="endDate" />
-                    </div>
+                <div class="compact-field">
+                    <label for="startDate">📅 من</label>
+                    <input type="date" id="startDate" value="2026-05-01" />
                 </div>
-                <div class="form-group">
-                    <label for="initial-carryover-input">📥 مبلغ مدوّر من الشهر السابق ($):</label>
-                    <input
-                        type="number"
-                        id="initial-carryover-input"
-                        value="0"
-                        oninput="triggerConditionalCalculation()"
-                    />
+                <div class="compact-field">
+                    <label for="endDate">📅 إلى</label>
+                    <input type="date" id="endDate" />
                 </div>
+                <div class="compact-field">
+                    <label for="initial-carryover-input">📥 مدوّر سابق</label>
+                    <input type="number" id="initial-carryover-input" value="0" oninput="triggerConditionalCalculation()" />
+                </div>
+                <button onclick="processAndDisplay(true)" class="btn-primary compact-analyze-btn">تحليل 🚀</button>
             </div>
+            </div><!-- /formCollapseBody -->
 
-            <!-- قسم الإجراءات -->
-            <div class="form-section">
-                <div class="form-section-title">⚡ الإجراءات</div>
-                <button onclick="processAndDisplay(true)" class="btn-primary">تحليل وعرض الحسابات والمخططات فورا 🚀</button>
-                <div class="btn-row">
-                    <button onclick="exportAnalysisToCSV()" class="calc-btn-secondary" style="background-color: #38A169 !important;">📥 تصدير التقرير (CSV)</button>
-                    <button onclick="toggleBudgetModal(true)" class="calc-btn-secondary">💰 الميزانية</button>
-                </div>
-            </div>
-
-            <!-- قسم البحث -->
-            <div class="form-section">
-                <div class="form-section-title">🔍 البحث</div>
-                <div class="search-row">
-                    <input type="text" id="globalSearchInput" placeholder="اكتب كلمة للبحث في كل المصاريف المحللة..." onkeydown="if(event.key==='Enter') openSearchResults()" />
-                    <button onclick="openSearchResults()">بحث 🔍</button>
-                </div>
-            </div>
         </div>
+
+        <!-- شريط تبويبات أقسام التقرير (منفصل عن شريط التنقل العلوي) -->
+        <div id="reportTabsBar" class="report-tabs-bar"></div>
 
         <div id="resultsContainer"></div>
 

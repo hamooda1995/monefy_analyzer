@@ -264,6 +264,9 @@ function recalculateAndRenderUI() {
 
     resultsContainer.appendChild(fragment);
 
-    // بناء روابط شريط التنقل العلوي
+    // بناء تبويبات أقسام التقرير في الشريط المنفصل
     if (typeof buildTopNav === "function") buildTopNav();
+
+    // طي نموذج الإدخال تلقائياً بعد التحليل لعرض النتائج مباشرة
+    if (typeof collapseInputForm === "function") collapseInputForm();
 }

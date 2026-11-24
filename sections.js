@@ -29,10 +29,13 @@ function renderSubscriptionsSection(data) {
     AppState.parsedRowsData.forEach((row) => {
         if (row.monthKey > maxMonthKey) maxMonthKey = row.monthKey;
         const norm = normalize(row.description);
-        if (!norm || norm === "بدون وصف") return;
-        if (!groups[norm]) {
-            groups[norm] = {
-                display: row.description,
+        if (!norm) return;
+        // صفوف "بدون وصف" نجمّعها حسب التصنيف حتى لا تندمج مصاريف غير مترابطة
+        const isNoDesc = norm === "بدون وصف";
+        const key = isNoDesc ? "بدون وصف|" + (row.category || "") : norm;
+        if (!groups[key]) {
+            groups[key] = {
+                display: isNoDesc ? `بدون وصف (${row.category})` : row.description,
                 months: new Set(),
                 amounts: [],
                 categories: new Set(),
@@ -41,7 +44,7 @@ function renderSubscriptionsSection(data) {
                 total: 0
             };
         }
-        const g = groups[norm];
+        const g = groups[key];
         g.months.add(row.monthKey);
         g.amounts.push(row.amount || 0);
         g.categories.add(row.category);
@@ -113,6 +116,119 @@ function renderSubscriptionsSection(data) {
         <h2 onclick="toggleSectionBox('${boxId}', this)" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
             <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 📦 كاشف الاشتراكات الثابتة والمصاريف الدورية المتكررة
         </h2>
+        <div id='${boxId}' style='display: none;'>
+        ${bodyContent}</div></div>`;
+}
+
+// --- القسم: تنبيهات المصاريف المتكررة (فواتير منسية / غلاء مفاجئ) ---
+function renderRecurringAlertsSection(data) {
+    const boxId = "recurring_alerts_body_box";
+
+    const normalize = (s) => (s || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+    // تجميع المصاريف حسب الوصف المطبّع -> مجموع كل شهر
+    const groups = {};
+    const monthSet = new Set();
+    AppState.parsedRowsData.forEach((row) => {
+        if (row.isTransfer) return;
+        const norm = normalize(row.description);
+        if (!norm) return;
+        const isNoDesc = norm === "بدون وصف";
+        const key = isNoDesc ? "بدون وصف|" + (row.category || "") : norm;
+        monthSet.add(row.monthKey);
+        if (!groups[key]) groups[key] = { display: isNoDesc ? `بدون وصف (${row.category})` : row.description, months: {}, total: 0 };
+        const g = groups[key];
+        g.months[row.monthKey] = (g.months[row.monthKey] || 0) + (row.amount || 0);
+        g.total += row.amount || 0;
+    });
+
+    const allMonths = Array.from(monthSet).sort();
+    if (allMonths.length < 2) {
+        return `<div class='global-block-wrapper' style='border: 2px solid #E53E3E; margin-top: 25px;'>
+            <h2 style='color:#E53E3E; text-align:center;'>🚨 تنبيهات المصاريف المتكررة</h2>
+            <p style='text-align:center; color:var(--text-muted);'>تحتاج بيانات شهرين على الأقل لكشف التنبيهات يا حمودة.</p>
+        </div>`;
+    }
+
+    const latestMonth = allMonths[allMonths.length - 1];
+    const monthIndex = (mk) => {
+        const parts = (mk || "").split("-").map(Number);
+        return parts[0] * 12 + (parts[1] - 1);
+    };
+    const latestIdx = monthIndex(latestMonth);
+
+    const alerts = [];
+
+    Object.values(groups).forEach((g) => {
+        const mKeys = Object.keys(g.months).sort();
+        const monthCount = mKeys.length;
+        if (monthCount < 3) return; // لا يُعتبر متكرراً إلا بعد 3 أشهر على الأقل
+
+        const firstIdx = monthIndex(mKeys[0]);
+        const lastIdx = monthIndex(mKeys[mKeys.length - 1]);
+        const span = lastIdx - firstIdx + 1;
+        const coverage = monthCount / span;
+        const avg = g.total / monthCount;
+        const lastMonthKey = mKeys[mKeys.length - 1];
+        const isActive = latestIdx - monthIndex(lastMonthKey) <= 1;
+        if (!isActive) return;
+
+        const current = g.months[latestMonth] || 0;
+        const prevMonths = mKeys.filter((k) => k !== latestMonth);
+        const prevAvg = prevMonths.length
+            ? prevMonths.reduce((s, k) => s + g.months[k], 0) / prevMonths.length
+            : 0;
+
+        // 1) فاتتك هالشهر (متكرر بانتظام وما ظهر بالشهر الأخير)
+        if (!current && coverage >= 0.7) {
+            alerts.push({ type: "missed", name: g.display, month: latestMonth, avg });
+        }
+        // 2) ارتفعت بشكل ملحوظ (+40% عن متوسط الأشهر السابقة)
+        else if (prevAvg > 0 && current > prevAvg * 1.4) {
+            alerts.push({ type: "increase", name: g.display, current, prevAvg });
+        }
+    });
+
+    // ترتيب: الفواتير المنسية أولاً ثم الأعلى نسبة ارتفاعاً
+    alerts.sort((a, b) => {
+        if (a.type !== b.type) return a.type === "missed" ? -1 : 1;
+        if (a.type === "increase") return (b.current / b.prevAvg) - (a.current / a.prevAvg);
+        return b.avg - a.avg;
+    });
+
+    const missedCount = alerts.filter((a) => a.type === "missed").length;
+    const increaseCount = alerts.length - missedCount;
+
+    let bodyContent;
+    if (!alerts.length) {
+        bodyContent = `<p style='text-align:center; color:var(--text-muted);'>✅ ما في تنبيهات — كل المصاريف المتكررة منتظمة يا حمودة.</p>`;
+    } else {
+        const rowsHtml = alerts.map((a) => {
+            if (a.type === "missed") {
+                return `<div style='display:flex; align-items:flex-start; gap:10px; padding:10px 14px; margin:8px 0; background:var(--kpi-bg); border:1px solid var(--glass-border-soft); border-radius:10px;'>
+                    <span class='budget-badge budget-warn' style='flex-shrink:0;'>⚠️ فاتتك</span>
+                    <span style='font-weight:600;'>ما دفعت «${a.name}» بشهر <strong>${a.month}</strong> — المعتاد $${formatMoney(a.avg)}</span>
+                </div>`;
+            }
+            return `<div style='display:flex; align-items:flex-start; gap:10px; padding:10px 14px; margin:8px 0; background:var(--kpi-bg); border:1px solid var(--glass-border-soft); border-radius:10px;'>
+                <span class='budget-badge budget-over' style='flex-shrink:0;'>📈 ارتفعت</span>
+                <span style='font-weight:600;'>«${a.name}» صارت $${formatMoney(a.current)} مقابل متوسط $${formatMoney(a.prevAvg)}</span>
+            </div>`;
+        }).join("");
+
+        bodyContent = `
+            <div style='text-align:center; margin-bottom:15px;'>
+                <span class='budget-badge budget-warn' style='font-size:13pt;'>⚠️ ${missedCount} فاتتك</span>
+                <span class='budget-badge budget-over' style='font-size:13pt; margin-right:8px;'>📈 ${increaseCount} ارتفعت</span>
+            </div>
+            ${rowsHtml}`;
+    }
+
+    return `<div class='global-block-wrapper' style='border: 2px solid #E53E3E; margin-top: 25px;'>
+        <h2 onclick="toggleSectionBox('${boxId}', this)" style='text-align:center; margin-top:10px; cursor:pointer; user-select:none;'>
+            <span class='collapse-icon' style='font-size:11pt; margin-left:5px;'>▼</span> 🚨 تنبيهات المصاريف المتكررة (فواتير منسية / غلاء مفاجئ)
+        </h2>
+        <p style='text-align:center; color:var(--text-muted); font-size:14px; margin-bottom:20px;'>يرصد العمليات المتكررة التي فاتتك هذا الشهر أو ارتفع سعرها أكثر من 40% عن متوسطها</p>
         <div id='${boxId}' style='display: none;'>
         ${bodyContent}</div></div>`;
 }
@@ -762,12 +878,12 @@ function renderPersonalAccountsSection(data) {
 // ===============================================================
 const ReportSectionsRegistry = [
     { key: "subscriptions",    label: "🔁 الاشتراكات",      render: renderSubscriptionsSection },
+    { key: "recurringAlerts",  label: "🚨 التنبيهات",        render: renderRecurringAlertsSection },
     { key: "categoryTrends",   label: "🗂️ التصنيفات",       render: renderCategoryTrendsSection },
     { key: "benchmark",        label: "📈 المقارنة",         render: renderBenchmarkSection },
     { key: "expenseTrends",    label: "📉 الاتجاهات",        render: renderExpenseTrendsSection },
     { key: "savingsRate",      label: "💰 الادخار",          render: renderSavingsRateSection },
     { key: "projection",       label: "🔮 التوقع",           render: renderProjectionSection },
     { key: "friendsDebts",     label: "🤝 الديون",           render: renderFriendsDebtsSection },
-    { key: "budgetCalculator", label: "🧮 حاسبة الميزانية",  render: renderBudgetCalculatorSection },
     { key: "personalAccounts", label: "🏦 الحسابات",         render: renderPersonalAccountsSection }
 ];
